@@ -182,7 +182,7 @@ if __name__ == "__main__":
     # sys	0m11.843s
     for _ in range(n):
         # Slower for simple functions and data types, much faster for complex functions
-        test_rust_chess()  # Around 3.5 times faster python chess :) (for this test)
+        test_rust_chess()  # Around 3.5 times faster python-chess :) (for this test)
 
     print("---------------------------------------")
 

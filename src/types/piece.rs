@@ -12,6 +12,31 @@ pub(crate) const QUEEN: PyPieceType = PyPieceType(chess::Piece::Queen);
 pub(crate) const KING: PyPieceType = PyPieceType(chess::Piece::King);
 pub(crate) const PIECES: [PyPieceType; 6] = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING];
 
+// Colored piece constants
+#[rustfmt::skip]
+pub(crate) mod colored_pieces{
+    use crate::{PyPiece, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, WHITE, BLACK};
+    
+    pub(crate) const WHITE_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: WHITE };
+    pub(crate) const WHITE_KNIGHT: PyPiece = PyPiece { piece_type: KNIGHT, color: WHITE };
+    pub(crate) const WHITE_BISHOP: PyPiece = PyPiece { piece_type: BISHOP, color: WHITE };
+    pub(crate) const WHITE_ROOK: PyPiece = PyPiece { piece_type: ROOK, color: WHITE };
+    pub(crate) const WHITE_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: WHITE };
+    pub(crate) const WHITE_KING: PyPiece = PyPiece { piece_type: KING, color: WHITE };
+    
+    pub(crate) const BLACK_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: BLACK };
+    pub(crate) const BLACK_KNIGHT: PyPiece = PyPiece { piece_type: KNIGHT, color: BLACK };
+    pub(crate) const BLACK_BISHOP: PyPiece = PyPiece { piece_type: BISHOP, color: BLACK };
+    pub(crate) const BLACK_ROOK: PyPiece = PyPiece { piece_type: ROOK, color: BLACK };
+    pub(crate) const BLACK_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: BLACK };
+    pub(crate) const BLACK_KING: PyPiece = PyPiece { piece_type: KING, color: BLACK };
+    
+    pub(crate) const COLORED_PIECES: [PyPiece; 12] = [
+        WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
+        BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
+    ];
+}
+
 /// Piece type enum class.
 /// Represents the different types of chess pieces.
 /// Indexing starts at 0 (PAWN) and ends at 5 (KING).

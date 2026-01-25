@@ -81,7 +81,7 @@ impl PyBoard {
                 let board = chess::Board::default();
 
                 // We can assume the GIL is acquired, since this function is only called from Python
-                let py = unsafe { Python::assume_gil_acquired() };
+                let py = unsafe { Python::assume_attached() };
 
                 // Create a new move generator using the chess crate
                 let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
@@ -171,7 +171,7 @@ impl PyBoard {
             .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
 
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
         let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
@@ -318,7 +318,7 @@ impl PyBoard {
         };
 
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
         let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?;
@@ -358,7 +358,7 @@ impl PyBoard {
         };
 
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
         let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?;
@@ -399,7 +399,7 @@ impl PyBoard {
         self.board = temp_board;
 
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
         self.move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&temp_board)))?;
@@ -454,7 +454,7 @@ impl PyBoard {
     // #[inline]
     // fn get_moves_remaining(&self) -> usize {
     //     // We can assume the GIL is acquired, since this function is only called from Python
-    //     let py = unsafe { Python::assume_gil_acquired() };
+    //     let py = unsafe { Python::assume_attached() };
     //
     //     // Get the length of the move generator
     //     self.move_gen.borrow(py).0.len()
@@ -467,7 +467,7 @@ impl PyBoard {
     #[inline]
     fn remove_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Remove the move from the generator
         self.move_gen.borrow_mut(py).0.remove_move(chess_move.0);
@@ -477,7 +477,7 @@ impl PyBoard {
     #[inline]
     fn reset_move_generator(&mut self) -> PyResult<()> {
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
         self.move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&self.board)))?;
@@ -492,7 +492,7 @@ impl PyBoard {
     #[inline]
     fn next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Get the next move from the generator
         self.move_gen.borrow_mut(py).__next__()
@@ -505,7 +505,7 @@ impl PyBoard {
     #[inline]
     fn generate_legal_moves(&mut self) -> Py<PyMoveGenerator> {
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Set the iterator mask to everything (check all legal moves)
         self.move_gen
@@ -527,7 +527,7 @@ impl PyBoard {
         let targets_mask = self.board.color_combined(!self.board.side_to_move());
 
         // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_gil_acquired() };
+        let py = unsafe { Python::assume_attached() };
 
         // Set the iterator mask to the targets mask (check all legal captures [moves onto enemy pieces])
         self.move_gen

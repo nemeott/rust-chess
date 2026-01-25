@@ -7,13 +7,13 @@ name = "rust_chess"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python",
 ]
 dynamic = ["version"]
 
 [tool.maturin]
 profile = "release" # Use release profile for building
+strip = true # Remove debug symbols
 features = ["pyo3/extension-module"]
 rustc-args = [
     "-C",

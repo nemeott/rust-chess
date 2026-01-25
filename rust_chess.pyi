@@ -23,6 +23,12 @@ __all__ = [
     "B8",
     "BISHOP",
     "BLACK",
+    "BLACK_BISHOP",
+    "BLACK_KING",
+    "BLACK_KNIGHT",
+    "BLACK_PAWN",
+    "BLACK_QUEEN",
+    "BLACK_ROOK",
     "Bitboard",
     "Board",
     "BoardStatus",
@@ -34,6 +40,7 @@ __all__ = [
     "C6",
     "C7",
     "C8",
+    "COLORED_PIECES",
     "COLORS",
     "Color",
     "D1",
@@ -86,8 +93,15 @@ __all__ = [
     "PieceType",
     "QUEEN",
     "ROOK",
+    "SQUARES",
     "Square",
     "WHITE",
+    "WHITE_BISHOP",
+    "WHITE_KING",
+    "WHITE_KNIGHT",
+    "WHITE_PAWN",
+    "WHITE_QUEEN",
+    "WHITE_ROOK",
 ]
 
 A1: Square
@@ -108,6 +122,12 @@ B7: Square
 B8: Square
 BISHOP: PieceType
 BLACK: Color
+BLACK_BISHOP: Piece
+BLACK_KING: Piece
+BLACK_KNIGHT: Piece
+BLACK_PAWN: Piece
+BLACK_QUEEN: Piece
+BLACK_ROOK: Piece
 C1: Square
 C2: Square
 C3: Square
@@ -116,6 +136,7 @@ C5: Square
 C6: Square
 C7: Square
 C8: Square
+COLORED_PIECES: builtins.list[Piece]
 COLORS: builtins.list[Color]
 D1: Square
 D2: Square
@@ -163,7 +184,14 @@ PAWN: PieceType
 PIECES: builtins.list[PieceType]
 QUEEN: PieceType
 ROOK: PieceType
+SQUARES: builtins.list[Square]
 WHITE: Color
+WHITE_BISHOP: Piece
+WHITE_KING: Piece
+WHITE_KNIGHT: Piece
+WHITE_PAWN: Piece
+WHITE_QUEEN: Piece
+WHITE_ROOK: Piece
 @typing.final
 class Bitboard:
     r"""

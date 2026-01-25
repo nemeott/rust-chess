@@ -12,7 +12,9 @@ use crate::types::{
     bitboard::PyBitboard,
     board::{PyBoard, PyBoardStatus},
     color::{PyColor, BLACK, COLORS, WHITE},
-    piece::{PyPiece, PyPieceType, BISHOP, KING, KNIGHT, PAWN, PIECES, QUEEN, ROOK, colored_pieces::*},
+    piece::{
+        colored_pieces::*, PyPiece, PyPieceType, BISHOP, KING, KNIGHT, PAWN, PIECES, QUEEN, ROOK,
+    },
     r#move::{PyMove, PyMoveGenerator},
     square::PySquare,
 };
@@ -32,63 +34,47 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyBoardStatus>()?;
     module.add_class::<PyBoard>()?;
 
+    // Define a macro to add constants and their stubs
+    macro_rules! add_constant {
+        ($name:expr, $value:expr, $type:ty) => {
+            module.add($name, $value)?;
+            module_variable!("rust_chess", $name, $type);
+        };
+    }
+
     // Add the constants and stubs to the module
 
     // Add the color constants and their stubs
-    module.add("WHITE", WHITE)?;
-    module_variable!("rust_chess", "WHITE", PyColor);
-    module.add("BLACK", BLACK)?;
-    module_variable!("rust_chess", "BLACK", PyColor);
-    
-    module.add("COLORS", COLORS)?;
-    module_variable!("rust_chess", "COLORS", Vec<PyColor>);
+    add_constant!("WHITE", WHITE, PyColor);
+    add_constant!("BLACK", BLACK, PyColor);
+
+    add_constant!("COLORS", COLORS, Vec<PyColor>);
 
     // Add the piece constants and their stubs
-    module.add("PAWN", PAWN)?;
-    module_variable!("rust_chess", "PAWN", PyPieceType);
-    module.add("KNIGHT", KNIGHT)?;
-    module_variable!("rust_chess", "KNIGHT", PyPieceType);
-    module.add("BISHOP", BISHOP)?;
-    module_variable!("rust_chess", "BISHOP", PyPieceType);
-    module.add("ROOK", ROOK)?;
-    module_variable!("rust_chess", "ROOK", PyPieceType);
-    module.add("QUEEN", QUEEN)?;
-    module_variable!("rust_chess", "QUEEN", PyPieceType);
-    module.add("KING", KING)?;
-    module_variable!("rust_chess", "KING", PyPieceType);
-    
-    module.add("PIECES", PIECES)?;
-    module_variable!("rust_chess", "PIECES", Vec<PyPieceType>);
-    
+    add_constant!("PAWN", PAWN, PyPieceType);
+    add_constant!("KNIGHT", KNIGHT, PyPieceType);
+    add_constant!("BISHOP", BISHOP, PyPieceType);
+    add_constant!("ROOK", ROOK, PyPieceType);
+    add_constant!("QUEEN", QUEEN, PyPieceType);
+    add_constant!("KING", KING, PyPieceType);
+    add_constant!("PIECES", PIECES, Vec<PyPieceType>);
+
     // Add the colored piece constants and their stubs
-    module.add("WHITE_PAWN", WHITE_PAWN)?;
-    module_variable!("rust_chess", "WHITE_PAWN", PyPiece);
-    module.add("WHITE_KNIGHT", WHITE_KNIGHT)?;
-    module_variable!("rust_chess", "WHITE_KNIGHT", PyPiece);
-    module.add("WHITE_BISHOP", WHITE_BISHOP)?;
-    module_variable!("rust_chess", "WHITE_BISHOP", PyPiece);
-    module.add("WHITE_ROOK", WHITE_ROOK)?;
-    module_variable!("rust_chess", "WHITE_ROOK", PyPiece);
-    module.add("WHITE_QUEEN", WHITE_QUEEN)?;
-    module_variable!("rust_chess", "WHITE_QUEEN", PyPiece);
-    module.add("WHITE_KING", WHITE_KING)?;
-    module_variable!("rust_chess", "WHITE_KING", PyPiece);
-    
-    module.add("BLACK_PAWN", BLACK_PAWN)?;
-    module_variable!("rust_chess", "BLACK_PAWN", PyPiece);
-    module.add("BLACK_KNIGHT", BLACK_KNIGHT)?;
-    module_variable!("rust_chess", "BLACK_KNIGHT", PyPiece);
-    module.add("BLACK_BISHOP", BLACK_BISHOP)?;
-    module_variable!("rust_chess", "BLACK_BISHOP", PyPiece);
-    module.add("BLACK_ROOK", BLACK_ROOK)?;
-    module_variable!("rust_chess", "BLACK_ROOK", PyPiece);
-    module.add("BLACK_QUEEN", BLACK_QUEEN)?;
-    module_variable!("rust_chess", "BLACK_QUEEN", PyPiece);
-    module.add("BLACK_KING", BLACK_KING)?;
-    module_variable!("rust_chess", "BLACK_KING", PyPiece);
-    
-    module.add("COLORED_PIECES", COLORED_PIECES)?;
-    module_variable!("rust_chess", "COLORED_PIECES", Vec<PyPiece>);
+    add_constant!("WHITE_PAWN", WHITE_PAWN, PyPiece);
+    add_constant!("WHITE_KNIGHT", WHITE_KNIGHT, PyPiece);
+    add_constant!("WHITE_BISHOP", WHITE_BISHOP, PyPiece);
+    add_constant!("WHITE_ROOK", WHITE_ROOK, PyPiece);
+    add_constant!("WHITE_QUEEN", WHITE_QUEEN, PyPiece);
+    add_constant!("WHITE_KING", WHITE_KING, PyPiece);
+
+    add_constant!("BLACK_PAWN", BLACK_PAWN, PyPiece);
+    add_constant!("BLACK_KNIGHT", BLACK_KNIGHT, PyPiece);
+    add_constant!("BLACK_BISHOP", BLACK_BISHOP, PyPiece);
+    add_constant!("BLACK_ROOK", BLACK_ROOK, PyPiece);
+    add_constant!("BLACK_QUEEN", BLACK_QUEEN, PyPiece);
+    add_constant!("BLACK_KING", BLACK_KING, PyPiece);
+
+    add_constant!("COLORED_PIECES", COLORED_PIECES, Vec<PyPiece>);
 
     // Define a macro to add square constants and stubs directly to the module (e.g. A1, A2, etc.)
     macro_rules! add_square_constants {
@@ -112,6 +98,10 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
         G1, G2, G3, G4, G5, G6, G7, G8,
         H1, H2, H3, H4, H5, H6, H7, H8
     );
+
+    // Add list of square constants
+    let squares: Vec<PySquare> = (0..64).map(|i| PySquare::from_index(i).unwrap()).collect();
+    add_constant!("SQUARES", squares, Vec<PySquare>);
 
     Ok(())
 }

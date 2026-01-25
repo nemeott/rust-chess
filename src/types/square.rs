@@ -91,7 +91,7 @@ impl PySquare {
     /// ```
     #[staticmethod]
     #[inline]
-    fn from_index(index: u8) -> PyResult<Self> {
+    pub(crate) fn from_index(index: u8) -> PyResult<Self> {
         if index > 63 {
             return Err(PyValueError::new_err(
                 "Square index must be between 0 and 63",

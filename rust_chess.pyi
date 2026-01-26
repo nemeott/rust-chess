@@ -242,11 +242,6 @@ class Bitboard:
     Supports bitwise operations and iteration.
     Also supports comparison and equality.
     """
-    def __eq__(self, other: builtins.object) -> builtins.bool: ...
-    def __lt__(self, other: builtins.object) -> builtins.bool: ...
-    def __le__(self, other: builtins.object) -> builtins.bool: ...
-    def __gt__(self, other: builtins.object) -> builtins.bool: ...
-    def __ge__(self, other: builtins.object) -> builtins.bool: ...
     def __new__(cls, bitboard_or_square: typing.Any) -> Bitboard:
         r"""
         Create a new Bitboard from a 64-bit integer or a square
@@ -316,6 +311,30 @@ class Bitboard:
         r"""
         Get the next square in the Bitboard.
         Removes the square from the Bitboard.
+        """
+    def __eq__(self, other: typing.Any) -> builtins.bool:
+        r"""
+        Equality comparison (self == other).
+        """
+    def __ne__(self, other: typing.Any) -> builtins.bool:
+        r"""
+        Inequality comparison (self != other).
+        """
+    def __lt__(self, other: typing.Any) -> builtins.bool:
+        r"""
+        Less than comparison (self < other).
+        """
+    def __le__(self, other: typing.Any) -> builtins.bool:
+        r"""
+        Less than or equal comparison (self <= other).
+        """
+    def __gt__(self, other: typing.Any) -> builtins.bool:
+        r"""
+        Greater than comparison (self > other).
+        """
+    def __ge__(self, other: typing.Any) -> builtins.bool:
+        r"""
+        Greater than or equal comparison (self >= other).
         """
     def __invert__(self) -> Bitboard:
         r"""

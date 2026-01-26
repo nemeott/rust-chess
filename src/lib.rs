@@ -25,6 +25,9 @@ use crate::types::{
 
 // TODO: Remove inline for Python-called only?
 // TODO: Add PSQT table support?
+// TODO: Add transposition key
+// TODO: Add zobrist hashing
+// TODO: Add eq and partial eq for common classes that can be used as int
 
 // Define the Python module
 #[pymodule]

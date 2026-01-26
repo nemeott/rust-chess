@@ -43,7 +43,7 @@ pub(crate) const BB_RANKS: [PyBitboard; 8] = [
 /// Also supports comparison and equality.
 ///
 #[gen_stub_pyclass]
-#[pyclass(name = "Bitboard", eq, ord)]
+#[pyclass(name = "Bitboard")]
 #[derive(PartialEq, Eq, PartialOrd, Clone, Copy, Default, Hash)]
 pub(crate) struct PyBitboard(pub(crate) chess::BitBoard);
 
@@ -159,6 +159,80 @@ impl PyBitboard {
     #[inline]
     fn __next__(&mut self) -> Option<PySquare> {
         self.0.next().map(PySquare)
+    }
+
+    /// Equality comparison (self == other).
+    #[inline]
+    fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+            Ok(self.0 == other_bitboard.0)
+        } else if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(self.0 .0 == other_u64)
+        } else {
+            Ok(false)
+        }
+    }
+
+    /// Inequality comparison (self != other).
+    #[inline]
+    fn __ne__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        Ok(!self.__eq__(other)?)
+    }
+
+    /// Less than comparison (self < other).
+    #[inline]
+    fn __lt__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+            Ok(self.0 < other_bitboard.0)
+        } else if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(self.0 .0 < other_u64)
+        } else {
+            Err(PyValueError::new_err(
+                "Operand must be a Bitboard or an integer",
+            ))
+        }
+    }
+
+    /// Less than or equal comparison (self <= other).
+    #[inline]
+    fn __le__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+            Ok(self.0 <= other_bitboard.0)
+        } else if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(self.0 .0 <= other_u64)
+        } else {
+            Err(PyValueError::new_err(
+                "Operand must be a Bitboard or an integer",
+            ))
+        }
+    }
+
+    /// Greater than comparison (self > other).
+    #[inline]
+    fn __gt__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+            Ok(self.0 > other_bitboard.0)
+        } else if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(self.0 .0 > other_u64)
+        } else {
+            Err(PyValueError::new_err(
+                "Operand must be a Bitboard or an integer",
+            ))
+        }
+    }
+
+    /// Greater than or equal comparison (self >= other).
+    #[inline]
+    fn __ge__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
+        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+            Ok(self.0 >= other_bitboard.0)
+        } else if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(self.0 .0 >= other_u64)
+        } else {
+            Err(PyValueError::new_err(
+                "Operand must be a Bitboard or an integer",
+            ))
+        }
     }
 
     // Bitwise operations
@@ -312,7 +386,7 @@ impl PyBitboard {
             ))
         }
     }
-    
+
     // TODO: Test bitboard shift with bitboard?
 
     /// Left shift operation (self << shift).

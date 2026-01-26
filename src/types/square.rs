@@ -76,6 +76,46 @@ impl PySquare {
         self.0.to_int()
     }
 
+    /// Get the index of the square as an integer for indexing.
+    ///
+    /// ```python
+    /// >>> int(rust_chess.Square("e4"))
+    /// 28
+    /// ```
+    #[inline]
+    fn __index__(&self) -> u8 {
+        self.get_index()
+    }
+
+    /// Get the index of the square as an integer.
+    ///
+    /// ```python
+    /// >>> arr = [1, 2, 3, 4, 5, 6]
+    /// >>> arr[rust_chess.Square("a1")]
+    /// 1
+    /// ```
+    #[inline]
+    fn __int__(&self) -> u8 {
+        self.get_index()
+    }
+
+    /// Hash the square based on its index.
+    ///
+    /// ```python
+    /// >>> hash(rust_chess.E4)
+    /// 28
+    /// ```
+    #[inline]
+    fn __hash__(&self) -> u64 {
+        self.get_index() as u64
+    }
+
+    /// Flips a square (eg. A1 -> A8)
+    #[inline]
+    fn flip(&self) -> PySquare {
+        PySquare(unsafe { chess::Square::new(self.get_index() ^ 56) })
+    }
+
     /// Convert a square to a bitboard
     #[inline]
     fn to_bitboard(&self) -> PyBitboard {
@@ -110,6 +150,27 @@ impl PySquare {
     #[staticmethod]
     #[inline]
     fn from_rank_file(rank: u8, file: u8) -> PyResult<Self> {
+        if rank > 7 || file > 7 {
+            return Err(PyValueError::new_err(
+                "Rank and file must be between 0 and 7",
+            ));
+        }
+        Ok(PySquare(chess::Square::make_square(
+            chess::Rank::from_index(rank as usize),
+            chess::File::from_index(file as usize),
+        )))
+    }
+
+    /// Create a new square from file and rank.
+    /// File and rank are 0-indexed (0-7).
+    ///
+    /// ```python
+    /// >>> rust_chess.Square.from_file_rank(3, 0)
+    /// d1
+    /// ```
+    #[staticmethod]
+    #[inline]
+    fn from_file_rank(file: u8, rank: u8) -> PyResult<Self> {
         if rank > 7 || file > 7 {
             return Err(PyValueError::new_err(
                 "Rank and file must be between 0 and 7",

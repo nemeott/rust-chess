@@ -71,6 +71,11 @@ impl PyColor {
     fn __bool__(&self) -> bool {
         *self == WHITE
     }
+    
+    #[inline]
+    fn __hash__(&self) -> u64 {
+        self.__bool__() as u64
+    }
 
     /// Get the color as a boolean string.
     ///

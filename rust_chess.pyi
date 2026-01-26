@@ -21,6 +21,26 @@ __all__ = [
     "B6",
     "B7",
     "B8",
+    "BB_EMPTY",
+    "BB_FILES",
+    "BB_FILE_A",
+    "BB_FILE_B",
+    "BB_FILE_C",
+    "BB_FILE_D",
+    "BB_FILE_E",
+    "BB_FILE_F",
+    "BB_FILE_G",
+    "BB_FILE_H",
+    "BB_FULL",
+    "BB_RANKS",
+    "BB_RANK_1",
+    "BB_RANK_2",
+    "BB_RANK_3",
+    "BB_RANK_4",
+    "BB_RANK_5",
+    "BB_RANK_6",
+    "BB_RANK_7",
+    "BB_RANK_8",
     "BISHOP",
     "BLACK",
     "BLACK_BISHOP",
@@ -120,6 +140,26 @@ B5: Square
 B6: Square
 B7: Square
 B8: Square
+BB_EMPTY: Bitboard
+BB_FILES: builtins.list[Bitboard]
+BB_FILE_A: Bitboard
+BB_FILE_B: Bitboard
+BB_FILE_C: Bitboard
+BB_FILE_D: Bitboard
+BB_FILE_E: Bitboard
+BB_FILE_F: Bitboard
+BB_FILE_G: Bitboard
+BB_FILE_H: Bitboard
+BB_FULL: Bitboard
+BB_RANKS: builtins.list[Bitboard]
+BB_RANK_1: Bitboard
+BB_RANK_2: Bitboard
+BB_RANK_3: Bitboard
+BB_RANK_4: Bitboard
+BB_RANK_5: Bitboard
+BB_RANK_6: Bitboard
+BB_RANK_7: Bitboard
+BB_RANK_8: Bitboard
 BISHOP: PieceType
 BLACK: Color
 BLACK_BISHOP: Piece
@@ -230,6 +270,10 @@ class Bitboard:
         r"""
         Convert the Bitboard to an unsigned 64-bit integer
         """
+    def __int__(self) -> builtins.int:
+        r"""
+        Convert the Bitboard to an integer
+        """
     def get_string(self) -> builtins.str:
         r"""
         Convert the Bitboard to a string.
@@ -329,9 +373,9 @@ class Bitboard:
         r"""
         Left shift operation (self << shift).
         """
-    def __rlshift__(self, _other: typing.Any) -> Bitboard:
+    def __rlshift__(self, other: typing.Any) -> Bitboard:
         r"""
-        Reflected left shift operation (not typically used)
+        Reflected left shift operation (other << self)
         """
     def __ilshift__(self, shift: builtins.int) -> None:
         r"""
@@ -341,9 +385,9 @@ class Bitboard:
         r"""
         Right shift operation (self >> shift).
         """
-    def __rrshift__(self, _other: typing.Any) -> Bitboard:
+    def __rrshift__(self, other: typing.Any) -> Bitboard:
         r"""
-        Reflected right shift operation (not typically used)
+        Reflected right shift operation (other >> self)
         """
     def __irshift__(self, shift: builtins.int) -> None:
         r"""
@@ -450,6 +494,10 @@ class Board:
         >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
         ```
+        """
+    def is_en_passant(self, mv: Move) -> builtins.bool:
+        r"""
+        Check if a move is en passant.
         """
     def get_piece_type_on(self, square: Square) -> typing.Optional[PieceType]:
         r"""
@@ -698,6 +746,7 @@ class Color:
         False
         ```
         """
+    def __hash__(self) -> builtins.int: ...
     def __repr__(self) -> builtins.str:
         r"""
         Get the color as a boolean string.
@@ -888,7 +937,7 @@ class Piece:
     def __le__(self, other: builtins.object) -> builtins.bool: ...
     def __gt__(self, other: builtins.object) -> builtins.bool: ...
     def __ge__(self, other: builtins.object) -> builtins.bool: ...
-    def __new__(cls, piece_type: PieceType, color: Color) -> Piece:
+    def __new__(cls, piece_type: PieceType, color_or_bool: typing.Any) -> Piece:
         r"""
         Create a new piece from a piece type and color
         """
@@ -948,6 +997,17 @@ class PieceType:
         ```python
         >>> rust_chess.BISHOP.get_index()
         2
+        ```
+        """
+    def __index__(self) -> builtins.int:
+        r"""
+        Allow the piece type to be used as an index.
+        Returns the index of the piece.
+        
+        ```python
+        >>> arr = [1, 2, 3, 4, 5, 6]
+        >>> arr[rust_chess.BISHOP]
+        3
         ```
         """
     def get_string(self, color: Color = True) -> builtins.str:
@@ -1033,6 +1093,38 @@ class Square:
         28
         ```
         """
+    def __index__(self) -> builtins.int:
+        r"""
+        Get the index of the square as an integer for indexing.
+        
+        ```python
+        >>> int(rust_chess.Square("e4"))
+        28
+        ```
+        """
+    def __int__(self) -> builtins.int:
+        r"""
+        Get the index of the square as an integer.
+        
+        ```python
+        >>> arr = [1, 2, 3, 4, 5, 6]
+        >>> arr[rust_chess.Square("a1")]
+        1
+        ```
+        """
+    def __hash__(self) -> builtins.int:
+        r"""
+        Hash the square based on its index.
+        
+        ```python
+        >>> hash(rust_chess.E4)
+        28
+        ```
+        """
+    def flip(self) -> Square:
+        r"""
+        Flips a square (eg. A1 -> A8)
+        """
     def to_bitboard(self) -> Bitboard:
         r"""
         Convert a square to a bitboard
@@ -1056,6 +1148,17 @@ class Square:
         
         ```python
         >>> rust_chess.Square.from_rank_file(0, 3)
+        d1
+        ```
+        """
+    @staticmethod
+    def from_file_rank(file: builtins.int, rank: builtins.int) -> Square:
+        r"""
+        Create a new square from file and rank.
+        File and rank are 0-indexed (0-7).
+        
+        ```python
+        >>> rust_chess.Square.from_file_rank(3, 0)
         d1
         ```
         """

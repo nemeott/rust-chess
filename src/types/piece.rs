@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::types::color::{PyColor, WHITE};
@@ -10,11 +10,12 @@ pub(crate) const BISHOP: PyPieceType = PyPieceType(chess::Piece::Bishop);
 pub(crate) const ROOK: PyPieceType = PyPieceType(chess::Piece::Rook);
 pub(crate) const QUEEN: PyPieceType = PyPieceType(chess::Piece::Queen);
 pub(crate) const KING: PyPieceType = PyPieceType(chess::Piece::King);
-pub(crate) const PIECES: [PyPieceType; 6] = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING];
+
+pub(crate) const PIECE_TYPES: [PyPieceType; 6] = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING];
 
 // Colored piece constants
 #[rustfmt::skip]
-pub(crate) mod colored_pieces{
+pub(crate) mod pieces{
     use crate::{PyPiece, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, WHITE, BLACK};
     
     pub(crate) const WHITE_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: WHITE };
@@ -31,7 +32,7 @@ pub(crate) mod colored_pieces{
     pub(crate) const BLACK_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: BLACK };
     pub(crate) const BLACK_KING: PyPiece = PyPiece { piece_type: KING, color: BLACK };
     
-    pub(crate) const COLORED_PIECES: [PyPiece; 12] = [
+    pub(crate) const PIECES: [PyPiece; 12] = [
         WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
         BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
     ];
@@ -80,6 +81,19 @@ impl PyPieceType {
         self.0.to_index() as u8
     }
 
+    /// Allow the piece type to be used as an index.
+    /// Returns the index of the piece.
+    ///
+    /// ```python
+    /// >>> arr = [1, 2, 3, 4, 5, 6]
+    /// >>> arr[rust_chess.BISHOP]
+    /// 3
+    /// ```
+    #[inline]
+    fn __index__(&self) -> u8 {
+        self.get_index()
+    }
+
     /// Convert the piece to a string.
     /// Returns the capital piece type letter.
     ///
@@ -88,7 +102,7 @@ impl PyPieceType {
     /// P
     /// ```
     #[inline]
-    #[pyo3(signature = (color = WHITE))]
+    #[pyo3(signature = (color = WHITE))] // Default piece color is white (capital letter)
     fn get_string(&self, color: PyColor) -> String {
         self.0.to_string(color.0)
     }
@@ -145,8 +159,21 @@ impl PyPiece {
     /// Create a new piece from a piece type and color
     #[new]
     #[inline]
-    fn new(piece_type: PyPieceType, color: PyColor) -> Self {
-        PyPiece { piece_type, color }
+    fn new(piece_type: PyPieceType, color_or_bool: &Bound<'_, PyAny>) -> PyResult<Self> {
+        if let Ok(color) = color_or_bool.extract::<PyColor>() {
+            Ok(PyPiece { piece_type, color })
+        } else if let Ok(boolean) = color_or_bool.extract::<bool>() {
+            Ok(PyPiece {
+                piece_type,
+                color: PyColor(if boolean {
+                    chess::Color::White
+                } else {
+                    chess::Color::Black
+                }),
+            })
+        } else {
+            Err(PyValueError::new_err("Color must be a color or bool."))
+        }
     }
 
     /// Get the index of the piece (0-5)

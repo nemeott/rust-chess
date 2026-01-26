@@ -4,7 +4,11 @@ use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
 
 use crate::types::{
-    bitboard::PyBitboard, color::PyColor, r#move::{PyMove, PyMoveGenerator}, piece::{PAWN, PyPiece, PyPieceType}, square::PySquare
+    bitboard::PyBitboard,
+    color::PyColor,
+    piece::{PyPiece, PyPieceType, PAWN},
+    r#move::{PyMove, PyMoveGenerator},
+    square::PySquare,
 };
 
 /// Board status enum class.
@@ -213,6 +217,19 @@ impl PyBoard {
     #[inline]
     fn get_en_passant(&self) -> Option<PySquare> {
         self.board.en_passant().map(PySquare)
+    }
+
+    /// Check if a move is en passant.
+    #[inline]
+    fn is_en_passant(&self, mv: PyMove) -> bool {
+        let source = mv.0.get_source();
+        let dest = mv.0.get_dest();
+
+        self.board.en_passant() == Some(dest)
+            && self.board.piece_on(source) == Some(chess::Piece::Pawn)
+            // && (dest as i8 - source as i8).abs() == 7 || == 9
+            && ((dest.to_index() as i8 - source.to_index() as i8).abs() == 7 || (dest.to_index() as i8 - source.to_index() as i8).abs() == 9)
+            && self.board.piece_on(dest).is_none()
     }
 
     /// Get the piece type on a square, otherwise None.

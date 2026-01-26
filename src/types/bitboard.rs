@@ -1,7 +1,39 @@
+use std::u64::MAX;
+
+use chess::EMPTY;
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyAny};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::types::square::PySquare;
+
+pub(crate) const BB_EMPTY: PyBitboard = PyBitboard(EMPTY);
+pub(crate) const BB_FULL: PyBitboard = PyBitboard(chess::BitBoard(MAX));
+
+pub(crate) const BB_FILE_A: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 0));
+pub(crate) const BB_FILE_B: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 1));
+pub(crate) const BB_FILE_C: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 2));
+pub(crate) const BB_FILE_D: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 3));
+pub(crate) const BB_FILE_E: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 4));
+pub(crate) const BB_FILE_F: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 5));
+pub(crate) const BB_FILE_G: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 6));
+pub(crate) const BB_FILE_H: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 7));
+
+pub(crate) const BB_FILES: [PyBitboard; 8] = [
+    BB_FILE_A, BB_FILE_B, BB_FILE_C, BB_FILE_D, BB_FILE_E, BB_FILE_F, BB_FILE_G, BB_FILE_H,
+];
+
+pub(crate) const BB_RANK_1: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 0)));
+pub(crate) const BB_RANK_2: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 1)));
+pub(crate) const BB_RANK_3: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 2)));
+pub(crate) const BB_RANK_4: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 3)));
+pub(crate) const BB_RANK_5: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 4)));
+pub(crate) const BB_RANK_6: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 5)));
+pub(crate) const BB_RANK_7: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 6)));
+pub(crate) const BB_RANK_8: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 7)));
+
+pub(crate) const BB_RANKS: [PyBitboard; 8] = [
+    BB_RANK_1, BB_RANK_2, BB_RANK_3, BB_RANK_4, BB_RANK_5, BB_RANK_6, BB_RANK_7, BB_RANK_8,
+];
 
 /// Bitboard class.
 /// Represents a 64-bit unsigned integer.
@@ -59,6 +91,12 @@ impl PyBitboard {
     #[inline]
     fn to_uint(&self) -> u64 {
         self.0 .0
+    }
+
+    /// Convert the Bitboard to an integer
+    #[inline]
+    fn __int__(&self) -> u64 {
+        self.to_uint()
     }
 
     /// Convert the Bitboard to a string.
@@ -274,6 +312,8 @@ impl PyBitboard {
             ))
         }
     }
+    
+    // TODO: Test bitboard shift with bitboard?
 
     /// Left shift operation (self << shift).
     #[inline]
@@ -281,12 +321,14 @@ impl PyBitboard {
         PyBitboard::from_uint(self.0 .0 << shift)
     }
 
-    /// Reflected left shift operation (not typically used)
+    /// Reflected left shift operation (other << self)
     #[inline]
-    fn __rlshift__(&self, _other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Err(PyValueError::new_err(
-            "Cannot perform shift with Bitboard on right",
-        ))
+    fn __rlshift__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
+        if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(PyBitboard::from_uint(other_u64 << self.0 .0))
+        } else {
+            Err(PyValueError::new_err("Operand must be an integer"))
+        }
     }
 
     /// In-place left shift operation (self <<= shift).
@@ -301,12 +343,14 @@ impl PyBitboard {
         PyBitboard::from_uint(self.0 .0 >> shift)
     }
 
-    /// Reflected right shift operation (not typically used)
+    /// Reflected right shift operation (other >> self)
     #[inline]
-    fn __rrshift__(&self, _other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        Err(PyValueError::new_err(
-            "Cannot perform shift with Bitboard on right",
-        ))
+    fn __rrshift__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
+        if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(PyBitboard::from_uint(other_u64 >> self.0 .0))
+        } else {
+            Err(PyValueError::new_err("Operand must be an integer"))
+        }
     }
 
     /// In-place right shift operation (self >>= shift).

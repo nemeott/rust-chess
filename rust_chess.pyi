@@ -625,7 +625,7 @@ class Board:
         r"""
         Reset the move generator for the current board
         """
-    def next_move(self) -> typing.Optional[Move]:
+    def generate_next_move(self) -> typing.Optional[Move]:
         r"""
         Get the next remaining move of the generator.
         Updates the move generator to the next move.
@@ -1311,4 +1311,3 @@ class BoardStatus(enum.Enum):
     INSUFFICIENT_MATERIAL = ...
     STALEMATE = ...
     CHECKMATE = ...
-

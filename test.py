@@ -2,8 +2,12 @@ import chess
 
 import rust_chess as rc
 
-piece_color = rc.WHITE
-a1 = rc.Bitboard(38069524960387072)
-a2 = 38069524960387072
 
-print(a1 == a2)
+board = rc.Board()               # Create a board
+move = rc.Move.from_uci("e2e4")  # Create move from UCI
+
+print(list(board.generate_legal_moves()))
+
+board.remove_move(move) # FIXME
+
+print(list(board.generate_legal_moves()))

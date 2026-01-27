@@ -11,10 +11,12 @@ use crate::types::{
     square::PySquare,
 };
 
+// TODO: Comparision and partial ord
+
 /// Board status enum class.
 /// Represents the status of a chess board.
 /// The status can be one of the following:
-///     Ongoing, five-fold repetition, seventy-five moves, insufficient material, stalemate, or checkmate.
+///     Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
 /// Supports comparison and equality.
 ///
 #[gen_stub_pyclass_enum]
@@ -23,10 +25,10 @@ use crate::types::{
 pub(crate) enum PyBoardStatus {
     #[pyo3(name = "ONGOING")]
     Ongoing,
-    #[pyo3(name = "FIVE_FOLD_REPETITION")]
-    FiveFoldRepetition,
     #[pyo3(name = "SEVENTY_FIVE_MOVES")]
     SeventyFiveMoves,
+    #[pyo3(name = "FIVE_FOLD_REPETITION")]
+    FiveFoldRepetition,
     #[pyo3(name = "INSUFFICIENT_MATERIAL")]
     InsufficientMaterial,
     #[pyo3(name = "STALEMATE")]
@@ -34,6 +36,8 @@ pub(crate) enum PyBoardStatus {
     #[pyo3(name = "CHECKMATE")]
     Checkmate,
 }
+
+// TODO: Comparison and partial ord
 
 /// Board class.
 /// Represents the state of a chess board.
@@ -220,16 +224,22 @@ impl PyBoard {
     }
 
     /// Check if a move is en passant.
+    ///
+    /// Assumes the move is legal.
+    /// TODO:
     #[inline]
     fn is_en_passant(&self, mv: PyMove) -> bool {
         let source = mv.0.get_source();
         let dest = mv.0.get_dest();
 
         self.board.en_passant() == Some(dest)
-            && self.board.piece_on(source) == Some(chess::Piece::Pawn)
-            // && (dest as i8 - source as i8).abs() == 7 || == 9
-            && ((dest.to_index() as i8 - source.to_index() as i8).abs() == 7 || (dest.to_index() as i8 - source.to_index() as i8).abs() == 9)
-            && self.board.piece_on(dest).is_none()
+            && self.board.piece_on(source) == Some(chess::Piece::Pawn) // Moving pawn
+            && {
+                // Moving diagonally
+                let diff = (dest.to_index() as i8 - source.to_index() as i8).abs();
+                diff == 7 || diff == 9
+            }
+            && self.board.piece_on(dest).is_none() // Target square is empty
     }
 
     /// Get the piece type on a square, otherwise None.
@@ -279,15 +289,17 @@ impl PyBoard {
         })
     }
 
-    /// Get the king square of a certain color
+    /// Get the king square of a color
+    /// TODO:
     #[inline]
     fn get_king_square(&self, color: PyColor) -> PySquare {
         PySquare(self.board.king_square(color.0))
     }
 
     /// Check if a move is a capture or a pawn move.
-    /// Doesn't check legality.
     ///
+    /// Doesn't check legality.
+    /// TODO:
     #[inline]
     fn is_zeroing(&self, chess_move: PyMove) -> bool {
         self.get_piece_type_on(chess_move.get_source()) == Some(PAWN) // Pawn move
@@ -350,7 +362,7 @@ impl PyBoard {
 
     /// Make a move onto a new board
     ///
-    #[pyo3(signature = (chess_move, check_legality = false))]
+    #[pyo3(signature = (chess_move, check_legality = true))]
     fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {
         // If we are checking legality, check if the move is legal
         if check_legality && !self.is_legal_move(chess_move) {
@@ -390,7 +402,7 @@ impl PyBoard {
 
     /// Make a move on the current board
     ///
-    #[pyo3(signature = (chess_move, check_legality = false))]
+    #[pyo3(signature = (chess_move, check_legality = true))]
     fn make_move(&mut self, chess_move: PyMove, check_legality: bool) -> PyResult<()> {
         // If we are checking legality, check if the move is legal
         if check_legality && !self.is_legal_move(chess_move) {
@@ -423,6 +435,8 @@ impl PyBoard {
 
         Ok(())
     }
+    
+    // TODO: Docs
 
     /// Get the bitboard of the side to move's pinned pieces
     #[inline]
@@ -434,12 +448,6 @@ impl PyBoard {
     #[inline]
     fn get_checkers_bitboard(&self) -> PyBitboard {
         PyBitboard(*self.board.checkers())
-    }
-
-    /// Get the bitboard of all the pieces
-    #[inline]
-    fn get_all_bitboard(&self) -> PyBitboard {
-        PyBitboard(*self.board.combined())
     }
 
     /// Get the bitboard of all the pieces of a certain color
@@ -460,10 +468,16 @@ impl PyBoard {
         PyBitboard(self.board.pieces(piece.piece_type.0) & self.board.color_combined(piece.color.0))
     }
 
+    /// Get the bitboard of all the pieces
+    #[inline]
+    fn get_all_bitboard(&self) -> PyBitboard {
+        PyBitboard(*self.board.combined())
+    }
+
     // TODO: set_iterator_mask, will have to implement PyBitboard
     // TODO: remove_mask
 
-    // Fixme
+    // FIXME
     // /// Get the number of moves remaining in the move generator.
     // /// This is the number of remaining moves that can be generated.
     // /// The default mask is all legal moves.
@@ -481,6 +495,7 @@ impl PyBoard {
     /// Prevents the move from being generated.
     /// Useful if you already have a certain move and don't need to generate it again.
     ///
+    /// FIXME
     #[inline]
     fn remove_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -502,18 +517,20 @@ impl PyBoard {
         Ok(())
     }
 
-    /// Get the next remaining move of the generator.
+    /// Get the next remaining move in the generator.
     /// Updates the move generator to the next move.
     /// Unless the mask is set, this will return the next legal move by default.
     ///
     #[inline]
-    fn next_move(&mut self) -> Option<PyMove> {
+    fn generate_next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
         // Get the next move from the generator
         self.move_gen.borrow_mut(py).__next__()
     }
+    
+    // TODO: generate_moves() (after setting bitboard)
 
     /// Generate the next remaining legal moves for the current board.
     /// Exhausts the move generator if fully iterated over.
@@ -554,6 +571,30 @@ impl PyBoard {
 
         // Share ownership with Python
         self.move_gen.clone_ref(py)
+    }
+
+    /// Checks if the halfmoves since the last pawn move or capture is >= 100
+    /// and the game is ongoing (not checkmate or stalemate).
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().is_fifty_moves
+    /// False
+    /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 1").is_fifty_moves()
+    /// True
+    /// ```
+    #[inline]
+    fn is_fifty_moves(&self) -> bool {
+        self.halfmove_clock >= 100 && self.board.status() == chess::BoardStatus::Ongoing
+    }
+
+    /// Checks if the halfmoves since the last pawn move or capture is >= 150
+    /// and the game is ongoing according to the chess crate (not checkmate or stalemate).
+    ///
+    /// This is an automatic draw according to FIDE rules.
+    ///
+    #[inline]
+    fn is_seventy_five_moves(&self) -> bool {
+        self.halfmove_clock >= 150 && self.board.status() == chess::BoardStatus::Ongoing
     }
 
     /// Checks if the side to move has insufficient material to checkmate the opponent.
@@ -616,31 +657,20 @@ impl PyBoard {
         false
     }
 
-    /// Checks if the halfmoves since the last pawn move or capture is >= 100
-    /// and the game is ongoing (not checkmate or stalemate).
-    ///
-    /// ```python
-    /// >>> rust_chess.Board().is_fifty_moves
-    /// False
-    /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 1").is_fifty_moves()
-    /// True
-    /// ```
-    #[inline]
-    fn is_fifty_moves(&self) -> bool {
-        self.halfmove_clock >= 100 && self.board.status() == chess::BoardStatus::Ongoing
-    }
-
-    /// Checks if the halfmoves since the last pawn move or capture is >= 150
-    /// and the game is ongoing (not checkmate or stalemate).
-    ///
-    #[inline]
-    fn is_seventy_five_moves(&self) -> bool {
-        self.halfmove_clock >= 150 && self.board.status() == chess::BoardStatus::Ongoing
-    }
-
     // TODO: Check threefold and fivefold repetition
 
+    /// Checks if the game is in a threefold repetition.
+    ///
+    /// This is a claimable draw according to FIDE rules.
+    /// TODO: Currently not implementable due to no storage of past moves
+    #[inline]
+    fn is_threefold_repetition(&self) -> bool {
+        false
+    }
+
     /// Checks if the game is in a fivefold repetition.
+    ///
+    /// This is an automatic draw according to FIDE rules.
     /// TODO: Currently not implementable due to no storage of past moves
     #[inline]
     fn is_fivefold_repetition(&self) -> bool {
@@ -659,6 +689,8 @@ impl PyBoard {
     fn is_check(&self) -> bool {
         *self.board.checkers() != chess::EMPTY
     }
+    
+    // TODO: Docs
 
     /// Checks if the side to move is in stalemate
     #[inline]
@@ -672,24 +704,23 @@ impl PyBoard {
         self.board.status() == chess::BoardStatus::Checkmate
     }
 
-    /// Get the status of the board
+    /// Get the status of the board (ongoing, draw, or game-ending).
     #[inline]
     fn get_status(&self) -> PyBoardStatus {
-        let status = self.board.status();
-        match status {
-            chess::BoardStatus::Checkmate => PyBoardStatus::Checkmate,
-            chess::BoardStatus::Stalemate => PyBoardStatus::Stalemate,
+        match self.board.status() {
             chess::BoardStatus::Ongoing => {
-                if self.is_insufficient_material() {
-                    PyBoardStatus::InsufficientMaterial
-                } else if self.is_seventy_five_moves() {
+                if self.is_seventy_five_moves() {
                     PyBoardStatus::SeventyFiveMoves
+                } else if self.is_insufficient_material() {
+                    PyBoardStatus::InsufficientMaterial
                 } else if self.is_fivefold_repetition() {
                     PyBoardStatus::FiveFoldRepetition
                 } else {
                     PyBoardStatus::Ongoing
                 }
             }
+            chess::BoardStatus::Stalemate => PyBoardStatus::Stalemate,
+            chess::BoardStatus::Checkmate => PyBoardStatus::Checkmate,
         }
     }
 }

@@ -96,7 +96,7 @@ def test_rust_chess() -> None:  # noqa: PLR0915
     # board4 = board2.make_move_new(move2, check_legality=True) # Will panic
     # print(board4)
 
-    print(board.next_move())  # -3.21s
+    print(board.generate_next_move())  # -3.21s
     board.reset_move_generator()  # Takes 0.16s
 
     board3 = rc.Board(

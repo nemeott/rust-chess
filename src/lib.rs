@@ -23,6 +23,8 @@ use crate::types::{
     square::PySquare,
 };
 
+// TODO: Add testing suite
+
 // TODO: Remove inline for Python-called only?
 // TODO: Add PSQT table support?
 // TODO: Add transposition key
@@ -35,8 +37,8 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyColor>()?;
     module.add_class::<PyPieceType>()?;
     module.add_class::<PyPiece>()?;
-    module.add_class::<PyBitboard>()?;
     module.add_class::<PySquare>()?;
+    module.add_class::<PyBitboard>()?;
     module.add_class::<PyMove>()?;
     module.add_class::<PyMoveGenerator>()?;
     module.add_class::<PyBoardStatus>()?;
@@ -66,7 +68,7 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     add_constant!("QUEEN", QUEEN, PyPieceType);
     add_constant!("KING", KING, PyPieceType);
 
-    add_constant!("PIECES", PIECE_TYPES, Vec<PyPieceType>);
+    add_constant!("PIECE_TYPES", PIECE_TYPES, Vec<PyPieceType>);
 
     // Add the piece constants and their stubs
     add_constant!("WHITE_PAWN", WHITE_PAWN, PyPiece);
@@ -83,7 +85,7 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     add_constant!("BLACK_QUEEN", BLACK_QUEEN, PyPiece);
     add_constant!("BLACK_KING", BLACK_KING, PyPiece);
 
-    add_constant!("COLORED_PIECES", PIECES, Vec<PyPiece>);
+    add_constant!("PIECES", PIECES, Vec<PyPiece>);
 
     add_constant!("BB_EMPTY", BB_EMPTY, PyBitboard);
     add_constant!("BB_FULL", BB_FULL, PyBitboard);

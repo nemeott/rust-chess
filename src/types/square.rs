@@ -53,10 +53,10 @@ impl PySquare {
     /// ```
     #[new]
     #[inline]
-    fn new(square: &Bound<'_, PyAny>) -> PyResult<Self> {
-        if let Ok(index) = square.extract::<u8>() {
+    fn new(square_index_or_name: &Bound<'_, PyAny>) -> PyResult<Self> {
+        if let Ok(index) = square_index_or_name.extract::<u8>() {
             return PySquare::from_index(index);
-        } else if let Ok(square_name) = square.extract::<&str>() {
+        } else if let Ok(square_name) = square_index_or_name.extract::<&str>() {
             return PySquare::from_name(square_name);
         }
         Err(PyValueError::new_err(

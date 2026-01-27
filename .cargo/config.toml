@@ -1,3 +1,8 @@
-[target.x86_64-unknown-linux-gnu]
-linker = "clang"
+[build]
+rustflags = [
+    "-C", "target-cpu=native", # Gain access to CPU popcnt and ctzl (recommended by chess crate)
+    # "-Z", "threads=8" # Enable experimental parallel building (requires nightly)
+]
+
+[target.'cfg(target_os = "linux")']
 rustflags = ["-C", "link-arg=-fuse-ld=mold"]

@@ -135,12 +135,9 @@ cd rust-chess
 
 ```sh
 ./build
-pip install target/wheels/rust_chess-0.2.0-cp313-cp313-linux_x86_64.whl
+pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
 # Or
-uv pip install target/wheels/rust_chess-0.2.0-cp313-cp313-linux_x86_64.whl
-
-# Or build and install into current virtual environment
-./develop
+uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
 ```
 
 ## Roadmap

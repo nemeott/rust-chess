@@ -2,10 +2,6 @@
 name = "rust-chess"
 version = "0.2.1"
 edition = "2024"
-description = "A bridge between the Rust chess crate and Python."
-repository = "https://github.com/nemeott/rust-chess"
-readme = "README.md"
-license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
@@ -20,8 +16,16 @@ pyo3-stub-gen = "0.18.0" # Enable auto generating pyo3 stub files
 [lints.clippy]
 pedantic = "warn"
 
+[profile.dev]
+lto = "thin" # Faster build time
+opt-level = 3
+panic = "unwind"
+strip = "debuginfo" # Keep symbols to make stacktrace readable
+incremental = true # Store previous build (also sets codegen-units to 256)
+
 [profile.release] # Release profile optimizations
 lto = true
 codegen-units = 1
-panic = "abort"
 opt-level = 3
+panic = "abort"
+strip = true

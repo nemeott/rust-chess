@@ -21,11 +21,8 @@ Repository = "https://github.com/nemeott/rust-chess"
 
 [tool.maturin]
 profile = "release" # Use release profile for building
-strip = true # Remove debug symbols
 features = ["pyo3/extension-module"]
 rustc-args = [
-    "-C",
-    "target-cpu=native",           # Gain access to CPU popcnt and ctzl (recommended by chess crate)
     "--cfg",
     "pyo3_disable_reference_pool", # Disable the global reference pool: reduces overhead crossing Py-Rust boundary when creating objects in Python
 ]

@@ -1,7 +1,7 @@
 [build]
 rustflags = [
     "-C", "target-cpu=native", # Gain access to CPU popcnt and ctzl (recommended by chess crate)
-    # "-Z", "threads=8" # Enable experimental parallel building (requires nightly)
+    "-Z", "threads=8" # Enable experimental parallel building (requires nightly)
 ]
 
 [target.'cfg(target_os = "linux")']

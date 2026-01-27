@@ -60,7 +60,6 @@ __all__ = [
     "C6",
     "C7",
     "C8",
-    "COLORED_PIECES",
     "COLORS",
     "Color",
     "D1",
@@ -109,6 +108,7 @@ __all__ = [
     "MoveGenerator",
     "PAWN",
     "PIECES",
+    "PIECE_TYPES",
     "Piece",
     "PieceType",
     "QUEEN",
@@ -176,7 +176,6 @@ C5: Square
 C6: Square
 C7: Square
 C8: Square
-COLORED_PIECES: builtins.list[Piece]
 COLORS: builtins.list[Color]
 D1: Square
 D2: Square
@@ -221,7 +220,8 @@ H8: Square
 KING: PieceType
 KNIGHT: PieceType
 PAWN: PieceType
-PIECES: builtins.list[PieceType]
+PIECES: builtins.list[Piece]
+PIECE_TYPES: builtins.list[PieceType]
 QUEEN: PieceType
 ROOK: PieceType
 SQUARES: builtins.list[Square]
@@ -517,6 +517,9 @@ class Board:
     def is_en_passant(self, mv: Move) -> builtins.bool:
         r"""
         Check if a move is en passant.
+        
+        Assumes the move is legal.
+        TODO:
         """
     def get_piece_type_on(self, square: Square) -> typing.Optional[PieceType]:
         r"""
@@ -556,12 +559,15 @@ class Board:
         """
     def get_king_square(self, color: Color) -> Square:
         r"""
-        Get the king square of a certain color
+        Get the king square of a color
+        TODO:
         """
     def is_zeroing(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is a capture or a pawn move.
+        
         Doesn't check legality.
+        TODO:
         """
     def is_legal_move(self, chess_move: Move) -> builtins.bool:
         r"""
@@ -583,11 +589,11 @@ class Board:
         Make a null move onto a new board.
         Returns None if the current player is in check.
         """
-    def make_move_new(self, chess_move: Move, check_legality: builtins.bool = False) -> Board:
+    def make_move_new(self, chess_move: Move, check_legality: builtins.bool = True) -> Board:
         r"""
         Make a move onto a new board
         """
-    def make_move(self, chess_move: Move, check_legality: builtins.bool = False) -> None:
+    def make_move(self, chess_move: Move, check_legality: builtins.bool = True) -> None:
         r"""
         Make a move on the current board
         """
@@ -598,10 +604,6 @@ class Board:
     def get_checkers_bitboard(self) -> Bitboard:
         r"""
         Get the bitboard of the pieces putting the side to move in check
-        """
-    def get_all_bitboard(self) -> Bitboard:
-        r"""
-        Get the bitboard of all the pieces
         """
     def get_color_bitboard(self, color: Color) -> Bitboard:
         r"""
@@ -615,11 +617,17 @@ class Board:
         r"""
         Get the bitboard of all the pieces of a certain color and type
         """
+    def get_all_bitboard(self) -> Bitboard:
+        r"""
+        Get the bitboard of all the pieces
+        """
     def remove_move(self, chess_move: Move) -> None:
         r"""
         Remove a move from the move generator.
         Prevents the move from being generated.
         Useful if you already have a certain move and don't need to generate it again.
+        
+        FIXME
         """
     def reset_move_generator(self) -> None:
         r"""
@@ -627,7 +635,7 @@ class Board:
         """
     def generate_next_move(self) -> typing.Optional[Move]:
         r"""
-        Get the next remaining move of the generator.
+        Get the next remaining move in the generator.
         Updates the move generator to the next move.
         Unless the mask is set, this will return the next legal move by default.
         """
@@ -642,6 +650,25 @@ class Board:
         Generate the next remaining legal captures for the current board.
         Exhausts the move generator if fully iterated over.
         Updates the move generator.
+        """
+    def is_fifty_moves(self) -> builtins.bool:
+        r"""
+        Checks if the halfmoves since the last pawn move or capture is >= 100
+        and the game is ongoing (not checkmate or stalemate).
+        
+        ```python
+        >>> rust_chess.Board().is_fifty_moves
+        False
+        >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 1").is_fifty_moves()
+        True
+        ```
+        """
+    def is_seventy_five_moves(self) -> builtins.bool:
+        r"""
+        Checks if the halfmoves since the last pawn move or capture is >= 150
+        and the game is ongoing according to the chess crate (not checkmate or stalemate).
+        
+        This is an automatic draw according to FIDE rules.
         """
     def is_insufficient_material(self) -> builtins.bool:
         r"""
@@ -667,26 +694,18 @@ class Board:
         True
         ```
         """
-    def is_fifty_moves(self) -> builtins.bool:
+    def is_threefold_repetition(self) -> builtins.bool:
         r"""
-        Checks if the halfmoves since the last pawn move or capture is >= 100
-        and the game is ongoing (not checkmate or stalemate).
+        Checks if the game is in a threefold repetition.
         
-        ```python
-        >>> rust_chess.Board().is_fifty_moves
-        False
-        >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 1").is_fifty_moves()
-        True
-        ```
-        """
-    def is_seventy_five_moves(self) -> builtins.bool:
-        r"""
-        Checks if the halfmoves since the last pawn move or capture is >= 150
-        and the game is ongoing (not checkmate or stalemate).
+        This is a claimable draw according to FIDE rules.
+        TODO: Currently not implementable due to no storage of past moves
         """
     def is_fivefold_repetition(self) -> builtins.bool:
         r"""
         Checks if the game is in a fivefold repetition.
+        
+        This is an automatic draw according to FIDE rules.
         TODO: Currently not implementable due to no storage of past moves
         """
     def is_check(self) -> builtins.bool:
@@ -710,7 +729,7 @@ class Board:
         """
     def get_status(self) -> BoardStatus:
         r"""
-        Get the status of the board
+        Get the status of the board (ongoing, draw, or game-ending).
         """
 
 @typing.final
@@ -1091,7 +1110,7 @@ class Square:
     TODO
     ```
     """
-    def __new__(cls, square: typing.Any) -> Square:
+    def __new__(cls, square_index_or_name: typing.Any) -> Square:
         r"""
         Creates a new square from an integer (0-63) or a string (e.g. "e4").
         
@@ -1302,12 +1321,13 @@ class BoardStatus(enum.Enum):
     Board status enum class.
     Represents the status of a chess board.
     The status can be one of the following:
-        Ongoing, five-fold repetition, seventy-five moves, insufficient material, stalemate, or checkmate.
+        Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
     Supports comparison and equality.
     """
     ONGOING = ...
-    FIVE_FOLD_REPETITION = ...
     SEVENTY_FIVE_MOVES = ...
+    FIVE_FOLD_REPETITION = ...
     INSUFFICIENT_MATERIAL = ...
     STALEMATE = ...
     CHECKMATE = ...
+

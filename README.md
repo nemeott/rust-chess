@@ -90,28 +90,48 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 
 ## Installation
 
-Currently no pip package is available, but you can build from source.
+Requires Python 3.10+.
 
-1. Clone the repository:
+A pip package is available at: (https://pypi.org/project/rust-chess)[https://pypi.org/project/rust-chess]
+
+1. Set up a virtual environment:
+
+```sh
+python -m venv .venv
+source .venv/bin/activate
+# Or
+uv venv
+source .venv/bin/activate
+```
+
+2. Use the pip package:
+
+```sh
+pip install rust-chess
+# Or
+uv pip install rust-chess
+```
+
+### Building From Source
+
+1. Set up a virtual environment:
+
+```sh
+python -m venv .venv
+source .venv/bin/activate
+# Or
+uv venv
+source .venv/bin/activate
+```
+
+2. Clone the repository:
 
 ```sh
 git clone https://github.com/nemeott/rust-chess.git
 cd rust-chess
 ```
 
-2. Set up a virtual environment:
-
-```sh
-python -m venv .venv
-source .venv/bin/activate
-
-# Or
-
-uv venv
-source .venv/bin/activate
-```
-
-3. Build and install the Python package
+3. Build and install the Python package:
 
 ```sh
 ./build

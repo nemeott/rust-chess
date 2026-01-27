@@ -1,11 +1,15 @@
 [package]
 name = "rust-chess"
-version = "0.2.0"
-edition = "2021"
+version = "0.2.1"
+edition = "2024"
+description = "A bridge between the Rust chess crate and Python."
+repository = "https://github.com/nemeott/rust-chess"
+readme = "README.md"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "rust_chess" # (Rust doesn't allow dashes in package names)
+name = "rust_chess" # (Rust doesn't allow dashes in modules)
 crate-type = ["cdylib", "rlib"] # For PyO3 stub gen
 
 [dependencies]

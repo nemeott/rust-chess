@@ -19,25 +19,35 @@ Quick usage example:
 ```python
 import rust_chess as rc
 
-board = rc.Board()               # Create a board
+board = rc.Board()  # Create a board
 move = rc.Move.from_uci("e2e4")  # Create move from UCI
 
 # Check if the move is legal for the current board
 if board.is_legal_move(move):
     # Make a move on the current board
-    board.make_move(move, check_legality=False)  # Disable the legality check since we already know the move is legal
+    # Disable the legality check since we already know the move is legal
+    board.make_move(move, check_legality=False)
 
-new_board = board.make_move_new(rc.Move("e7e5"))  # Make move onto a new board
+# Make move onto a new board
+new_board = board.make_move_new(rc.Move("e7e5"))
 
 # Get the FEN of the current board
 print(board.get_fen())
 
-move = board.generate_next_move()           # Generate the next move
-moves = list(board.generate_legal_moves())  # Create a list of all legal moves (exhausts the generator)
-assert move not in moves                    # The generator saves state
-board.reset_move_generator()                # Reset the generator to be able to generate moves again
+# Generate the next move
+move = board.generate_next_move()
 
-captures = list(board.generate_legal_captures())  # Generate legal captures
+# Create a list of all legal moves (exhausts the generator)
+moves = list(board.generate_legal_moves())
+
+# The generator saves state
+assert move not in moves
+
+# Reset the generator to be able to generate moves again
+board.reset_move_generator()
+
+# Generate legal captures
+captures = list(board.generate_legal_captures())
 ```
 
 Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed function signatures and documentation. Actual documentation coming soon (TM).

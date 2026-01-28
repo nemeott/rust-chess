@@ -17,11 +17,11 @@ pyo3-stub-gen = "0.18.0" # Enable auto generating pyo3 stub files
 pedantic = "warn"
 
 [profile.dev] # Not actually used currently
-lto = "thin" # Faster build time
-opt-level = 3
+lto = false # Faster build time
 panic = "unwind"
-strip = "debuginfo" # Keep symbols to make stacktrace readable
+strip = "none"
 incremental = true # Store previous build (also sets codegen-units to 256)
+debug = 0
 
 [profile.release] # Release profile optimizations
 lto = true

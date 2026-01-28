@@ -110,13 +110,35 @@ impl PySquare {
         self.get_index() as u64
     }
 
-    /// Flips a square (eg. A1 -> A8)
+    /// Flips a square (eg. A1 -> A8).
+    ///
+    /// ```python
+    /// >>> rust_chess.A1.flip()
+    /// a8
+    /// >>> rust_chess.H8.flip()
+    /// h1
+    /// ```
     #[inline]
     fn flip(&self) -> PySquare {
         PySquare(unsafe { chess::Square::new(self.get_index() ^ 56) })
     }
 
-    /// Convert a square to a bitboard
+    /// Convert a square to a bitboard.
+    ///
+    /// ```python
+    /// >>> bitboard = rust_chess.E4.to_bitboard()
+    /// >>> bitboard.popcnt()
+    /// 1
+    /// >>> bitboard
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn to_bitboard(&self) -> PyBitboard {
         PyBitboard::from_square(*self)

@@ -515,7 +515,7 @@ class Board:
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
         ```
         """
-    def is_en_passant(self, mv: Move) -> builtins.bool:
+    def is_en_passant(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is en passant.
         
@@ -526,6 +526,25 @@ class Board:
         False
         >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> board.is_en_passant(rust_chess.Move("e5f6"))
+        True
+        ```
+        """
+    def is_capture(self, chess_move: Move) -> builtins.bool:
+        r"""
+        Check if a move is a capture.
+        
+        Assumes the move is legal.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_capture(rust_chess.Move("e2e4"))
+        False
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.make_move(rust_chess.Move("d7d5"))
+        >>> board.is_capture(rust_chess.Move("e4d5"))
+        True
+        >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+        >>> ep_board.is_capture(rust_chess.Move("e5f6"))
         True
         ```
         """

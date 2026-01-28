@@ -134,10 +134,13 @@ cd rust-chess
 3. Build and install the Python package:
 
 ```sh
-./build
+./build.sh
 pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
 # Or
 uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
+
+# Or build and install in current virtual environment
+./develop.sh
 ```
 
 ## Roadmap
@@ -182,6 +185,7 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Flip vertically
   - [x] Iterate over the squares in a bitboard
   - [x] Printing
+    - [ ] Flip printing direction by default?
 - [ ] `Move`
   - [x] Move creation from data types or UCI
   - [ ] Castling move constants
@@ -211,10 +215,12 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
     - [ ] Unicode characters
   - [x] Get color, piece type, and piece on a square
   - [x] Get king square for a color
+  - [x] Get the en passant square
   - [x] Check if move is zeroing
   - [x] Check if move is legal
   - [ ] Quick legality detection
   - [ ] Check if move is a capture
+  - [x] Check if move is en passant
   - [x] Make moves on the current or new board
     - [x] Make null moves
   - [x] Get bitboards
@@ -234,9 +240,13 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
 - [ ] Miscellaneous
   - [ ] Improved Python ergonomics (e.g., more Pythonic wrappers where appropriate)
   - [ ] Comprehensive test suite
+    - [x] Docstring tests
+    - [ ] Other tests
   - [ ] Working GitHub action (😢)
 
 ## Comparison with python-chess
+
+**`python-chess` generates moves in reverse order (H8, H7, ...)\* `rust-chess` generates moves in normal order (A1, A2, ...).**
 
 ### Performance
 

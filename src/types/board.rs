@@ -200,6 +200,12 @@ impl PyBoard {
     /// True
     /// >>> print(board.turn)
     /// WHITE
+    ///
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.turn
+    /// False
+    /// >>> print(board.turn)
+    /// BLACK
     /// ```
     #[getter]
     #[inline]
@@ -214,6 +220,7 @@ impl PyBoard {
     ///
     /// >>> rust_chess.Board().en_passant == None
     /// True
+    ///
     /// >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
     /// >>> board.en_passant
     /// f6
@@ -240,14 +247,15 @@ impl PyBoard {
     /// ```python
     /// >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
     /// False
+    ///
     /// >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
     /// >>> board.is_en_passant(rust_chess.Move("e5f6"))
     /// True
     /// ```
     #[inline]
-    fn is_en_passant(&self, mv: PyMove) -> bool {
-        let source = mv.0.get_source();
-        let dest = mv.0.get_dest();
+    fn is_en_passant(&self, chess_move: PyMove) -> bool {
+        let source = chess_move.0.get_source();
+        let dest = chess_move.0.get_dest();
 
         self.get_en_passant() == Some(PySquare(dest)) // Use our en passant square function since it is accurate
             && self.board.piece_on(source) == Some(chess::Piece::Pawn) // Moving pawn
@@ -257,6 +265,30 @@ impl PyBoard {
                 diff == 7 || diff == 9
             }
             && self.board.piece_on(dest).is_none() // Target square is empty
+    }
+
+    /// Check if a move is a capture.
+    ///
+    /// Assumes the move is legal.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.is_capture(rust_chess.Move("e2e4"))
+    /// False
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    ///
+    /// >>> board.make_move(rust_chess.Move("d7d5"))
+    /// >>> board.is_capture(rust_chess.Move("e4d5"))
+    /// True
+    ///
+    /// >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+    /// >>> ep_board.is_capture(rust_chess.Move("e5f6"))
+    /// True
+    /// ```
+    #[inline]
+    fn is_capture(&self, chess_move: PyMove) -> bool {
+        self.get_piece_type_on(chess_move.get_dest()).is_some() // Capture (moving piece onto other piece)
+            || self.is_en_passant(chess_move) // Or the move is en passant (also a capture)
     }
 
     /// Get the piece type on a square, otherwise None.
@@ -283,6 +315,8 @@ impl PyBoard {
     /// WHITE
     /// >>> rust_chess.Board().get_color_on(rust_chess.E8)
     /// False
+    /// >>> print(rust_chess.Board().get_color_on(rust_chess.E8))
+    /// BLACK
     /// ```
     #[inline]
     fn get_color_on(&self, square: PySquare) -> Option<PyColor> {
@@ -308,7 +342,13 @@ impl PyBoard {
     }
 
     /// Get the king square of a color
-    /// TODO:
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
+    /// e1
+    /// >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
+    /// e8
+    /// ```
     #[inline]
     fn get_king_square(&self, color: PyColor) -> PySquare {
         PySquare(self.board.king_square(color.0))
@@ -318,7 +358,20 @@ impl PyBoard {
     /// "Zeros" the halfmove clock (sets it to 0).
     ///
     /// Doesn't check legality.
-    /// TODO:
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.is_zeroing(rust_chess.Move("e2e4"))
+    /// True
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    ///
+    /// >>> board.is_zeroing(rust_chess.Move("g8f6"))
+    /// False
+    /// >>> board.make_move(rust_chess.Move("d7d5"))
+    ///
+    /// >>> board.is_zeroing(rust_chess.Move("e4d5"))
+    /// True
+    /// ```
     #[inline]
     fn is_zeroing(&self, chess_move: PyMove) -> bool {
         self.get_piece_type_on(chess_move.get_source()) == Some(PAWN) // Pawn move
@@ -333,8 +386,8 @@ impl PyBoard {
     /// >>> move = rust_chess.Move("e2e4")
     /// >>> rust_chess.Board().is_legal_move(move)
     /// True
-    /// >>> move2 = rust_chess.Move("e2e5")
-    /// >>> rust_chess.Board().is_legal_move(move2)
+    /// >>> ill_move = rust_chess.Move("e2e5")
+    /// >>> rust_chess.Board().is_legal_move(ill_move)
     /// False
     /// ```
     #[inline]
@@ -391,11 +444,23 @@ impl PyBoard {
             fullmove_number,
         }))
     }
-    
+
     // TODO: make_null_move (would require move history to undo (probably?))
 
-    /// Make a move onto a new board
+    /// Make a move onto a new board.
     ///
+    /// Defaults to checking move legality, unless the optional legality parameter is `False`.
+    /// Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+    /// Checking legality will return an error if the move is illegal.
+    ///
+    /// ```python
+    /// >>> old_board = rust_chess.Board()
+    /// >>> new_board = old_board.make_move_new(rust_chess.Move("e2e4"))
+    /// >>> print(new_board)
+    /// rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+    /// >>> print(old_board)
+    /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    /// ```
     #[pyo3(signature = (chess_move, check_legality = true))]
     fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {
         // If we are checking legality, check if the move is legal
@@ -434,8 +499,18 @@ impl PyBoard {
         })
     }
 
-    /// Make a move on the current board
+    /// Make a move onto the current board.
     ///
+    /// Defaults to checking move legality, unless the optional legality parameter is `False`.
+    /// Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+    /// Checking legality will return an error if the move is illegal.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> print(board)
+    /// rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+    /// ```
     #[pyo3(signature = (chess_move, check_legality = true))]
     fn make_move(&mut self, chess_move: PyMove, check_legality: bool) -> PyResult<()> {
         // If we are checking legality, check if the move is legal
@@ -472,37 +547,144 @@ impl PyBoard {
 
     // TODO: Docs
 
-    /// Get the bitboard of the side to move's pinned pieces
+    /// Get the bitboard of the side to move's pinned pieces.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.get_pinned_bitboard().popcnt()
+    /// 0
+    ///
+    /// board.make_move(rust_chess.Move("e2e4"))
+    /// board.make_move(rust_chess.Move("d7d5"))
+    /// board.make_move(rust_chess.Move("d1h5"))
+    /// >>> board.get_pinned_bitboard().popcnt()
+    /// 1
+    /// >>> board.get_pinned_bitboard()
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . X . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn get_pinned_bitboard(&self) -> PyBitboard {
         PyBitboard(*self.board.pinned())
     }
 
-    /// Get the bitboard of the pieces putting the side to move in check
+    /// Get the bitboard of the pieces putting the side to move in check.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.get_checkers_bitboard().popcnt()
+    /// 0
+    ///
+    /// board.make_move(rust_chess.Move("e2e4"))
+    /// board.make_move(rust_chess.Move("f2f3"))
+    /// board.make_move(rust_chess.Move("d1h5"))
+    /// >>> board.get_checkers_bitboard().popcnt()
+    /// 1
+    /// >>> board.get_checkers_bitboard()
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . X
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
+    /// ```
     #[inline]
     fn get_checkers_bitboard(&self) -> PyBitboard {
         PyBitboard(*self.board.checkers())
     }
 
-    /// Get the bitboard of all the pieces of a certain color
+    /// Get the bitboard of all the pieces of a certain color.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.get_color_bitboard(rust_chess.WHITE).popcnt()
+    /// 16
+    /// >>> board.get_color_bitboard(rust_chess.WHITE)
+    /// X X X X X X X X
+    /// X X X X . X X X
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn get_color_bitboard(&self, color: PyColor) -> PyBitboard {
         PyBitboard(*self.board.color_combined(color.0))
     }
 
-    /// Get the bitboard of all the pieces of a certain type
+    /// Get the bitboard of all the pieces of a certain type.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.get_piece_type_bitboard(rust_chess.PAWN).popcnt()
+    /// 16
+    /// >>> board.get_piece_type_bitboard(rust_chess.PAWN)
+    /// . . . . . . . .
+    /// X X X X . X X X
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// X X X X X X X X
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn get_piece_type_bitboard(&self, piece_type: PyPieceType) -> PyBitboard {
         PyBitboard(*self.board.pieces(piece_type.0))
     }
 
-    /// Get the bitboard of all the pieces of a certain color and type
+    /// Get the bitboard of all the pieces of a certain color and type.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.get_piece_bitboard(rust_chess.WHITE_PAWN).popcnt()
+    /// 8
+    /// >>> board.get_piece_bitboard(rust_chess.WHITE_PAWN)
+    /// . . . . . . . .
+    /// X X X X . X X X
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn get_piece_bitboard(&self, piece: PyPiece) -> PyBitboard {
         PyBitboard(self.board.pieces(piece.piece_type.0) & self.board.color_combined(piece.color.0))
     }
 
-    /// Get the bitboard of all the pieces
+    /// Get the bitboard of all the pieces.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.get_all_bitboard().popcnt()
+    /// 32
+    /// >>> board.get_all_bitboard()
+    /// X X X X X X X X
+    /// X X X X . X X X
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// X X X X X X X X
+    /// X X X X X X X X
+    /// ```
     #[inline]
     fn get_all_bitboard(&self) -> PyBitboard {
         PyBitboard(*self.board.combined())
@@ -540,6 +722,7 @@ impl PyBoard {
     }
 
     /// Reset the move generator for the current board
+    /// TODO
     #[inline]
     fn reset_move_generator(&mut self) -> PyResult<()> {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -555,6 +738,7 @@ impl PyBoard {
     /// Updates the move generator to the next move.
     /// Unless the mask is set, this will return the next legal move by default.
     ///
+    /// TODO
     #[inline]
     fn generate_next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -570,6 +754,7 @@ impl PyBoard {
     /// Exhausts the move generator if fully iterated over.
     /// Updates the move generator.
     ///
+    /// TODO
     #[inline]
     fn generate_legal_moves(&mut self) -> Py<PyMoveGenerator> {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -585,11 +770,12 @@ impl PyBoard {
         self.move_gen.clone_ref(py)
     }
 
-    #[inline]
     /// Generate the next remaining legal captures for the current board.
     /// Exhausts the move generator if fully iterated over.
     /// Updates the move generator.
     ///
+    /// TODO
+    #[inline]
     fn generate_legal_captures(&mut self) -> Py<PyMoveGenerator> {
         // Get the mask of enemy‐occupied squares
         let targets_mask = self.board.color_combined(!self.board.side_to_move());
@@ -735,18 +921,37 @@ impl PyBoard {
     // TODO: Docs
 
     /// Checks if the side to move is in stalemate
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().is_stalemate()
+    /// False
+    /// ```
+    /// TODO
     #[inline]
     fn is_stalemate(&self) -> bool {
         self.board.status() == chess::BoardStatus::Stalemate
     }
 
     /// Checks if the side to move is in checkmate
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().is_checkmate()
+    /// False
+    /// ```
+    /// TODO
     #[inline]
     fn is_checkmate(&self) -> bool {
         self.board.status() == chess::BoardStatus::Checkmate
     }
 
     /// Get the status of the board (ongoing, draw, or game-ending).
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.get_status()
+    /// BoardStatus.ONGOING
+    /// ```
+    /// TODO
     #[inline]
     fn get_status(&self) -> PyBoardStatus {
         match self.board.status() {

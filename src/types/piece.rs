@@ -168,8 +168,15 @@ impl PyPieceType {
 /// A white piece is considered less than a black piece of the same type.
 ///
 /// ```python
-/// TODO
+/// >>> piece = rust_chess.WHITE_PAWN
+/// >>> piece
+/// P
+/// >>> piece.piece_type
+/// P
+/// >>> piece.color
+/// True
 /// ```
+/// TODO
 #[gen_stub_pyclass]
 #[pyclass(name = "Piece", frozen, eq, ord)]
 #[derive(PartialOrd, PartialEq, Eq, Copy, Clone, Hash)]

@@ -95,11 +95,14 @@ impl PyPieceType {
     }
 
     /// Convert the piece to a string.
-    /// Returns the capital piece type letter.
+    /// Returns the capital piece type letter by default.
+    /// If using the optional color parameter, white is uppercase and black is lowercase.
     ///
     /// ```python
     /// >>> rust_chess.PAWN.get_string()
     /// 'P'
+    /// >>> rust_chess.PAWN.get_string(rust_chess.BLACK)
+    /// 'p'
     /// ```
     #[inline]
     #[pyo3(signature = (color = WHITE))] // Default piece color is white (capital letter)
@@ -129,6 +132,32 @@ impl PyPieceType {
     #[inline]
     fn __repr__(&self) -> String {
         self.get_string(WHITE)
+    }
+
+    /// Convert the piece to a unicode string.
+    /// Returns the hollow unicode piece by default.
+    /// If using the optional color parameter, white is hollow and black is full.
+    ///
+    /// ```python
+    /// >>> rust_chess.PAWN.get_unicode()
+    /// '♙'
+    /// >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK)
+    /// '♟'
+    /// ```
+    #[rustfmt::skip]
+    #[inline]
+    #[pyo3(signature = (color = WHITE))] // Default piece color is white (hollow)
+    fn get_unicode(&self, color: PyColor) -> String {
+        let s = match self.get_string(color).as_str() {
+            "P" => "♙", "p" => "♟",
+            "N" => "♘", "n" => "♞",
+            "B" => "♗", "b" => "♝",
+            "R" => "♖", "r" => "♜",
+            "Q" => "♕", "q" => "♛",
+            "K" => "♔", "k" => "♚",
+            _ => "",
+        };
+        s.to_string()
     }
 }
 
@@ -182,21 +211,59 @@ impl PyPiece {
         self.piece_type.get_index()
     }
 
-    /// Convert the piece to a string
+    /// Convert the piece to a string.
+    /// White is uppercase and black is lowercase.
+    ///
+    /// ```python
+    /// >>> rust_chess.WHITE_PAWN.get_string()
+    /// 'P'
+    /// >>> rust_chess.BLACK_PAWN.get_string()
+    /// 'p'
+    /// ```
     #[inline]
     fn get_string(&self) -> String {
         self.piece_type.get_string(self.color)
     }
 
-    /// Convert the piece to a string
+    /// Convert the piece to a string.
+    /// White is uppercase and black is lowercase.
+    ///
+    /// ```python
+    /// >>> print(rust_chess.WHITE_PAWN)
+    /// P
+    /// >>> print(rust_chess.BLACK_PAWN)
+    /// p
+    /// ```    
     #[inline]
     fn __str__(&self) -> String {
         self.get_string()
     }
 
-    /// Convert the piece to a string
+    /// Convert the piece to a string.
+    /// White is uppercase and black is lowercase.
+    ///
+    /// ```python
+    /// >>> rust_chess.WHITE_PAWN
+    /// P
+    /// >>> rust_chess.BLACK_PAWN
+    /// p
+    /// ```
     #[inline]
     fn __repr__(&self) -> String {
         self.get_string()
+    }
+
+    /// Convert the piece to a unicode string.
+    /// White is hollow and black is full.
+    ///
+    /// ```python
+    /// >>> rust_chess.WHITE_PAWN.get_unicode()
+    /// '♙'
+    /// >>> rust_chess.BLACK_PAWN.get_unicode()
+    /// '♟'
+    /// ```
+    #[inline]
+    fn get_unicode(&self) -> String {
+        self.piece_type.get_unicode(self.color)
     }
 }

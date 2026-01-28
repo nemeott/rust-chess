@@ -214,25 +214,42 @@ impl PyBoard {
     ///
     /// >>> rust_chess.Board().en_passant == None
     /// True
-    /// >>> rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4").en_passant
-    /// f5
+    /// >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+    /// >>> board.en_passant
+    /// f6
     /// ```
     #[getter]
     #[inline]
     fn get_en_passant(&self) -> Option<PySquare> {
-        self.board.en_passant().map(PySquare)
+        // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+        // The actual en passant square is the one that one can move to that would cause en passant.
+        // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
+        self.board.en_passant().map(|sq| {
+            if self.board.side_to_move() == chess::Color::White {
+                PySquare(sq.up().unwrap())
+            } else {
+                PySquare(sq.down().unwrap())
+            }
+        })
     }
 
     /// Check if a move is en passant.
     ///
     /// Assumes the move is legal.
-    /// TODO:
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
+    /// False
+    /// >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+    /// >>> board.is_en_passant(rust_chess.Move("e5f6"))
+    /// True
+    /// ```
     #[inline]
     fn is_en_passant(&self, mv: PyMove) -> bool {
         let source = mv.0.get_source();
         let dest = mv.0.get_dest();
 
-        self.board.en_passant() == Some(dest)
+        self.get_en_passant() == Some(PySquare(dest)) // Use our en passant square function since it is accurate
             && self.board.piece_on(source) == Some(chess::Piece::Pawn) // Moving pawn
             && {
                 // Moving diagonally
@@ -266,6 +283,7 @@ impl PyBoard {
     /// WHITE
     /// >>> rust_chess.Board().get_color_on(rust_chess.E8)
     /// False
+    /// ```
     #[inline]
     fn get_color_on(&self, square: PySquare) -> Option<PyColor> {
         // Get the color of the piece on the square using the chess crate
@@ -297,6 +315,7 @@ impl PyBoard {
     }
 
     /// Check if a move is a capture or a pawn move.
+    /// "Zeros" the halfmove clock (sets it to 0).
     ///
     /// Doesn't check legality.
     /// TODO:
@@ -329,6 +348,19 @@ impl PyBoard {
     /// Make a null move onto a new board.
     /// Returns None if the current player is in check.
     ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> print(board)
+    /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    /// >>> new_board = board.make_null_move_new()
+    /// >>> print(new_board)
+    /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1
+    ///
+    /// >>> board = rust_chess.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
+    /// >>> new_board = board.make_null_move_new()
+    /// >>> print(new_board)
+    /// None
+    /// ```
     #[inline]
     fn make_null_move_new(&self) -> PyResult<Option<Self>> {
         // Get the new board using the chess crate
@@ -359,6 +391,8 @@ impl PyBoard {
             fullmove_number,
         }))
     }
+    
+    // TODO: make_null_move (would require move history to undo (probably?))
 
     /// Make a move onto a new board
     ///

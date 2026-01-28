@@ -149,10 +149,14 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Piece type constants
   - [x] Get internal index representation
   - [x] Printing
+    - [x] Basic characters
+    - [x] Unicode characters
 - [x] `Piece`
   - [x] Piece constants
   - [x] Get internal piece type index representation
   - [x] Printing
+    - [x] Basic characters
+    - [x] Unicode characters
 - [ ] `Square`
   - [x] Square constants
   - [x] Square creation and parsing

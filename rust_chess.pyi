@@ -462,8 +462,9 @@ class Board:
         
         >>> rust_chess.Board().en_passant == None
         True
-        >>> rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4").en_passant
-        f5
+        >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+        >>> board.en_passant
+        f6
         ```
         """
     def __new__(cls, fen: typing.Optional[builtins.str] = None) -> Board:
@@ -519,7 +520,14 @@ class Board:
         Check if a move is en passant.
         
         Assumes the move is legal.
-        TODO:
+        
+        ```python
+        >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
+        False
+        >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+        >>> board.is_en_passant(rust_chess.Move("e5f6"))
+        True
+        ```
         """
     def get_piece_type_on(self, square: Square) -> typing.Optional[PieceType]:
         r"""
@@ -544,6 +552,7 @@ class Board:
         WHITE
         >>> rust_chess.Board().get_color_on(rust_chess.E8)
         False
+        ```
         """
     def get_piece_on(self, square: Square) -> typing.Optional[Piece]:
         r"""
@@ -565,6 +574,7 @@ class Board:
     def is_zeroing(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is a capture or a pawn move.
+        "Zeros" the halfmove clock (sets it to 0).
         
         Doesn't check legality.
         TODO:
@@ -588,6 +598,20 @@ class Board:
         r"""
         Make a null move onto a new board.
         Returns None if the current player is in check.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> print(board)
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        >>> new_board = board.make_null_move_new()
+        >>> print(new_board)
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1
+        
+        >>> board = rust_chess.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
+        >>> new_board = board.make_null_move_new()
+        >>> print(new_board)
+        None
+        ```
         """
     def make_move_new(self, chess_move: Move, check_legality: builtins.bool = True) -> Board:
         r"""
@@ -994,15 +1018,51 @@ class Piece:
         """
     def get_string(self) -> builtins.str:
         r"""
-        Convert the piece to a string
+        Convert the piece to a string.
+        White is uppercase and black is lowercase.
+        
+        ```python
+        >>> rust_chess.WHITE_PAWN.get_string()
+        'P'
+        >>> rust_chess.BLACK_PAWN.get_string()
+        'p'
+        ```
         """
     def __str__(self) -> builtins.str:
         r"""
-        Convert the piece to a string
+        Convert the piece to a string.
+        White is uppercase and black is lowercase.
+        
+        ```python
+        >>> print(rust_chess.WHITE_PAWN)
+        P
+        >>> print(rust_chess.BLACK_PAWN)
+        p
+        ```
         """
     def __repr__(self) -> builtins.str:
         r"""
-        Convert the piece to a string
+        Convert the piece to a string.
+        White is uppercase and black is lowercase.
+        
+        ```python
+        >>> rust_chess.WHITE_PAWN
+        P
+        >>> rust_chess.BLACK_PAWN
+        p
+        ```
+        """
+    def get_unicode(self) -> builtins.str:
+        r"""
+        Convert the piece to a unicode string.
+        White is hollow and black is full.
+        
+        ```python
+        >>> rust_chess.WHITE_PAWN.get_unicode()
+        '♙'
+        >>> rust_chess.BLACK_PAWN.get_unicode()
+        '♟'
+        ```
         """
 
 @typing.final
@@ -1060,11 +1120,14 @@ class PieceType:
     def get_string(self, color: Color = True) -> builtins.str:
         r"""
         Convert the piece to a string.
-        Returns the capital piece type letter.
+        Returns the capital piece type letter by default.
+        If using the optional color parameter, white is uppercase and black is lowercase.
         
         ```python
         >>> rust_chess.PAWN.get_string()
         'P'
+        >>> rust_chess.PAWN.get_string(rust_chess.BLACK)
+        'p'
         ```
         """
     def __str__(self) -> builtins.str:
@@ -1085,6 +1148,19 @@ class PieceType:
         ```python
         >>> rust_chess.PAWN
         P
+        ```
+        """
+    def get_unicode(self, color: Color = True) -> builtins.str:
+        r"""
+        Convert the piece to a unicode string.
+        Returns the hollow unicode piece by default.
+        If using the optional color parameter, white is hollow and black is full.
+        
+        ```python
+        >>> rust_chess.PAWN.get_unicode()
+        '♙'
+        >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK)
+        '♟'
         ```
         """
 

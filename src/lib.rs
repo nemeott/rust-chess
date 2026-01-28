@@ -23,8 +23,6 @@ use crate::types::{
     square::PySquare,
 };
 
-// TODO: Add testing suite
-
 // TODO: Remove inline for Python-called only?
 // TODO: Add PSQT table support?
 // TODO: Add transposition key

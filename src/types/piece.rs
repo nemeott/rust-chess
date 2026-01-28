@@ -99,7 +99,7 @@ impl PyPieceType {
     ///
     /// ```python
     /// >>> rust_chess.PAWN.get_string()
-    /// P
+    /// 'P'
     /// ```
     #[inline]
     #[pyo3(signature = (color = WHITE))] // Default piece color is white (capital letter)

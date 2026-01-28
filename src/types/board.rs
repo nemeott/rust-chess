@@ -6,8 +6,8 @@ use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_py
 use crate::types::{
     bitboard::PyBitboard,
     color::PyColor,
-    piece::{PyPiece, PyPieceType, PAWN},
     r#move::{PyMove, PyMoveGenerator},
+    piece::{PAWN, PyPiece, PyPieceType},
     square::PySquare,
 };
 
@@ -435,7 +435,7 @@ impl PyBoard {
 
         Ok(())
     }
-    
+
     // TODO: Docs
 
     /// Get the bitboard of the side to move's pinned pieces
@@ -529,7 +529,7 @@ impl PyBoard {
         // Get the next move from the generator
         self.move_gen.borrow_mut(py).__next__()
     }
-    
+
     // TODO: generate_moves() (after setting bitboard)
 
     /// Generate the next remaining legal moves for the current board.
@@ -576,10 +576,12 @@ impl PyBoard {
     /// Checks if the halfmoves since the last pawn move or capture is >= 100
     /// and the game is ongoing (not checkmate or stalemate).
     ///
+    /// This is a claimable draw according to FIDE rules.
+    ///
     /// ```python
-    /// >>> rust_chess.Board().is_fifty_moves
+    /// >>> rust_chess.Board().is_fifty_moves()
     /// False
-    /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 1").is_fifty_moves()
+    /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 100 1").is_fifty_moves()
     /// True
     /// ```
     #[inline]
@@ -588,10 +590,16 @@ impl PyBoard {
     }
 
     /// Checks if the halfmoves since the last pawn move or capture is >= 150
-    /// and the game is ongoing according to the chess crate (not checkmate or stalemate).
+    /// and the game is ongoing (not checkmate or stalemate).
     ///
     /// This is an automatic draw according to FIDE rules.
     ///
+    /// ```python
+    /// >>> rust_chess.Board().is_seventy_five_moves()
+    /// False
+    /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 150 1").is_seventy_five_moves()
+    /// True
+    /// ```
     #[inline]
     fn is_seventy_five_moves(&self) -> bool {
         self.halfmove_clock >= 150 && self.board.status() == chess::BoardStatus::Ongoing
@@ -680,7 +688,7 @@ impl PyBoard {
     /// Checks if the side to move is in check.
     ///
     /// ```python
-    /// >>> rust_chess.Board().is_check
+    /// >>> rust_chess.Board().is_check()
     /// False
     /// >>> rust_chess.Board("rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3").is_check()
     /// True
@@ -689,7 +697,7 @@ impl PyBoard {
     fn is_check(&self) -> bool {
         *self.board.checkers() != chess::EMPTY
     }
-    
+
     // TODO: Docs
 
     /// Checks if the side to move is in stalemate

@@ -13,7 +13,7 @@ use crate::types::{
 /// The square is represented as an integer (0-63) or a string (e.g. "e4").
 /// Supports comparison and equality.
 ///
-/// `rust_chess` has constants for each square (e.g. A1, B2, etc.).
+/// rust-chess has constants for each square (e.g. A1, B2, etc.).
 ///
 /// ```python
 /// >>> square = rust_chess.Square(0)

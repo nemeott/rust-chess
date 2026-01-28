@@ -1,2 +1,2 @@
-cargo run --bin stub_gen # Automatically generate the stub file first
+cargo run --bin stub_gen -r # Automatically generate the stub file first
 maturin build

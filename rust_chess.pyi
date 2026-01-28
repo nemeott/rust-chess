@@ -656,19 +656,28 @@ class Board:
         Checks if the halfmoves since the last pawn move or capture is >= 100
         and the game is ongoing (not checkmate or stalemate).
         
+        This is a claimable draw according to FIDE rules.
+        
         ```python
-        >>> rust_chess.Board().is_fifty_moves
+        >>> rust_chess.Board().is_fifty_moves()
         False
-        >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 50 1").is_fifty_moves()
+        >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 100 1").is_fifty_moves()
         True
         ```
         """
     def is_seventy_five_moves(self) -> builtins.bool:
         r"""
         Checks if the halfmoves since the last pawn move or capture is >= 150
-        and the game is ongoing according to the chess crate (not checkmate or stalemate).
+        and the game is ongoing (not checkmate or stalemate).
         
         This is an automatic draw according to FIDE rules.
+        
+        ```python
+        >>> rust_chess.Board().is_seventy_five_moves()
+        False
+        >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 150 1").is_seventy_five_moves()
+        True
+        ```
         """
     def is_insufficient_material(self) -> builtins.bool:
         r"""
@@ -713,7 +722,7 @@ class Board:
         Checks if the side to move is in check.
         
         ```python
-        >>> rust_chess.Board().is_check
+        >>> rust_chess.Board().is_check()
         False
         >>> rust_chess.Board("rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3").is_check()
         True
@@ -823,12 +832,12 @@ class Move:
     a4b1
     >>> rust_chess.Move("a2a1q")
     Move(a2, a1, QUEEN)
-    >>> move.get_uci() == rust_chess.Move.from_uci("a4b1") // FIXME
+    >>> move.get_uci() == rust_chess.Move.from_uci("a4b1")  # FIXME
     True
     >>> move.source
-    a2
-    >>> move.dest
     a4
+    >>> move.dest
+    b1
     >>> move.promotion
     
     >>> move.promotion == None
@@ -871,7 +880,7 @@ class Move:
         True
         >>> move = rust_chess.Move("g2g1q")
         >>> move.promotion
-        QUEEN
+        Q
         ```
         """
     def __eq__(self, other: builtins.object) -> builtins.bool: ...
@@ -1055,7 +1064,7 @@ class PieceType:
         
         ```python
         >>> rust_chess.PAWN.get_string()
-        P
+        'P'
         ```
         """
     def __str__(self) -> builtins.str:
@@ -1087,7 +1096,7 @@ class Square:
     The square is represented as an integer (0-63) or a string (e.g. "e4").
     Supports comparison and equality.
     
-    `rust_chess` has constants for each square (e.g. A1, B2, etc.).
+    rust-chess has constants for each square (e.g. A1, B2, etc.).
     
     ```python
     >>> square = rust_chess.Square(0)

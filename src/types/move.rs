@@ -17,12 +17,12 @@ use crate::types::{piece::PyPieceType, square::PySquare};
 /// a4b1
 /// >>> rust_chess.Move("a2a1q")
 /// Move(a2, a1, QUEEN)
-/// >>> move.get_uci() == rust_chess.Move.from_uci("a4b1") // FIXME
+/// >>> move.get_uci() == rust_chess.Move.from_uci("a4b1")  # FIXME
 /// True
 /// >>> move.source
-/// a2
-/// >>> move.dest
 /// a4
+/// >>> move.dest
+/// b1
 /// >>> move.promotion
 ///
 /// >>> move.promotion == None
@@ -67,7 +67,9 @@ impl PyMove {
             return PyMove::from_uci(uci);
         }
         // If we reach here, the input was invalid
-        Err(PyValueError::new_err("Move must be a UCI string or a source and destination square with optional promotion piece type"))
+        Err(PyValueError::new_err(
+            "Move must be a UCI string or a source and destination square with optional promotion piece type",
+        ))
     }
 
     // TODO: from_san
@@ -167,7 +169,7 @@ impl PyMove {
     /// True
     /// >>> move = rust_chess.Move("g2g1q")
     /// >>> move.promotion
-    /// QUEEN
+    /// Q
     /// ```
     #[getter]
     #[inline]

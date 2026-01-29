@@ -106,7 +106,7 @@ impl PyPieceType {
     /// ```
     #[inline]
     #[pyo3(signature = (color = WHITE))] // Default piece color is white (capital letter)
-    fn get_string(&self, color: PyColor) -> String {
+    pub(crate) fn get_string(&self, color: PyColor) -> String {
         self.0.to_string(color.0)
     }
 

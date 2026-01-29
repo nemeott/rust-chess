@@ -257,8 +257,19 @@ impl PyBoard {
         let source = chess_move.0.get_source();
         let dest = chess_move.0.get_dest();
 
-        self.get_en_passant() == Some(PySquare(dest)) // Use our en passant square function since it is accurate
-            && self.board.piece_on(source) == Some(chess::Piece::Pawn) // Moving pawn
+        // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+        // The actual en passant square is the one that one can move to that would cause en passant.
+        // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
+        let ep_square = self.board.en_passant().and_then(|sq| {
+            if self.board.side_to_move() == chess::Color::White {
+                sq.up()
+            } else {
+                sq.down()
+            }
+        });
+
+        ep_square.is_some_and(|ep_sq| ep_sq == dest) // Use our en passant square function since it is accurate
+            && self.board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
             && {
                 // Moving diagonally
                 let diff = (dest.to_index() as i8 - source.to_index() as i8).abs();
@@ -287,7 +298,7 @@ impl PyBoard {
     /// ```
     #[inline]
     fn is_capture(&self, chess_move: PyMove) -> bool {
-        self.get_piece_type_on(chess_move.get_dest()).is_some() // Capture (moving piece onto other piece)
+        self.board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
             || self.is_en_passant(chess_move) // Or the move is en passant (also a capture)
     }
 
@@ -694,19 +705,26 @@ impl PyBoard {
     // TODO: set_iterator_mask, will have to implement PyBitboard
     // TODO: remove_mask
 
-    // FIXME
-    // /// Get the number of moves remaining in the move generator.
-    // /// This is the number of remaining moves that can be generated.
-    // /// The default mask is all legal moves.
-    // ///
-    // #[inline]
-    // fn get_moves_remaining(&self) -> usize {
-    //     // We can assume the GIL is acquired, since this function is only called from Python
-    //     let py = unsafe { Python::assume_attached() };
-    //
-    //     // Get the length of the move generator
-    //     self.move_gen.borrow(py).0.len()
-    // }
+    /// Get the number of moves remaining in the move generator.
+    /// This is the number of remaining moves that can be generated.
+    /// Does not consume any iterations.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.get_generator_num_remaining()
+    /// 20
+    /// >>> next(board.generate_legal_moves())
+    /// Move(a2, a3, None)
+    /// >>> board.get_generator_num_remaining()
+    /// 19
+    /// ```
+    #[inline]
+    fn get_generator_num_remaining(&self) -> usize {
+        // We can assume the GIL is acquired, since this function is only called from Python
+        let py = unsafe { Python::assume_attached() };
+
+        self.move_gen.borrow(py).__len__()
+    }
 
     /// Remove a move from the move generator.
     /// Prevents the move from being generated.

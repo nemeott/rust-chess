@@ -3,7 +3,7 @@ use std::str::FromStr;
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyAny};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
-use crate::types::{piece::PyPieceType, square::PySquare};
+use crate::types::{color::WHITE, piece::PyPieceType, square::PySquare};
 
 /// Move class.
 /// Represents a chess move.
@@ -16,7 +16,7 @@ use crate::types::{piece::PyPieceType, square::PySquare};
 /// >>> print(move)
 /// a4b1
 /// >>> rust_chess.Move("a2a1q")
-/// Move(a2, a1, QUEEN)
+/// Move(a2, a1, Q)
 /// >>> move == rust_chess.Move.from_uci("a4b1")
 /// True
 /// >>> move.source
@@ -127,11 +127,16 @@ impl PyMove {
     /// ```
     #[inline]
     fn __repr__(&self) -> String {
+        let promotion_str = self
+            .get_promotion()
+            .map(|p| p.get_string(WHITE))
+            .unwrap_or_else(|| String::from("None"));
+
         format!(
-            "Move({}, {}, {:?})",
+            "Move({}, {}, {})",
             self.0.get_source(),
             self.0.get_dest(),
-            self.0.get_promotion() // FIXME: Don't output Some(<PyPiece>)
+            promotion_str
         )
     }
 
@@ -192,7 +197,7 @@ pub(crate) struct PyMoveGenerator(pub(crate) chess::MoveGen);
 #[pymethods]
 impl PyMoveGenerator {
     /// Return an iterator of the generator.
-    /// 
+    ///
     /// The generator for a board saves state, regardless of how it is called.
     ///
     /// ```python
@@ -208,7 +213,7 @@ impl PyMoveGenerator {
     }
 
     /// Get the next move in the generator.
-    /// 
+    ///
     /// The generator for a board saves state, regardless of how it is called.
     ///
     /// ```python
@@ -222,6 +227,25 @@ impl PyMoveGenerator {
     #[inline]
     pub(crate) fn __next__(&mut self) -> Option<PyMove> {
         self.0.next().map(PyMove)
+    }
+
+    /// Get the length of the generator.
+    ///
+    /// Does not consume any iterations.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> moves = board.generate_legal_moves()
+    /// >>> len(moves)
+    /// 20
+    /// >>> next(moves)
+    /// Move(a2, a3, None)
+    /// >>> len(moves)
+    /// 19
+    /// ```
+    #[inline]
+    pub(crate) fn __len__(&self) -> usize {
+        self.0.len()
     }
 
     /// Get the type of the move generator.

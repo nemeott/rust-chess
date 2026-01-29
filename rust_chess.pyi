@@ -1244,6 +1244,22 @@ class Board:
         X X X X X X X X
         ```
         """
+    def get_generator_num_remaining(self) -> builtins.int:
+        r"""
+        Get the number of moves remaining in the move generator.
+        This is the number of remaining moves that can be generated.
+        Does not consume any iterations.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.get_generator_num_remaining()
+        20
+        >>> next(board.generate_legal_moves())
+        Move(a2, a3, None)
+        >>> board.get_generator_num_remaining()
+        19
+        ```
+        """
     def remove_move(self, chess_move: Move) -> None:
         r"""
         Remove a move from the move generator.
@@ -1493,7 +1509,7 @@ class Move:
     >>> print(move)
     a4b1
     >>> rust_chess.Move("a2a1q")
-    Move(a2, a1, QUEEN)
+    Move(a2, a1, Q)
     >>> move == rust_chess.Move.from_uci("a4b1")
     True
     >>> move.source
@@ -1632,6 +1648,23 @@ class MoveGenerator:
         Move(a2, a3, None)
         >>> next(board.generate_legal_moves())
         Move(a2, a4, None)
+        ```
+        """
+    def __len__(self) -> builtins.int:
+        r"""
+        Get the length of the generator.
+        
+        Does not consume any iterations.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> moves = board.generate_legal_moves()
+        >>> len(moves)
+        20
+        >>> next(moves)
+        Move(a2, a3, None)
+        >>> len(moves)
+        19
         ```
         """
     def __repr__(self) -> builtins.str:
@@ -2013,10 +2046,10 @@ class Square:
         Get the color of the square on the chessboard.
         
         ```python
-        >>> rust_chess.A1.get_color()
-        BLACK
-        >>> rust_chess.E4.get_color()
-        WHITE
+        >>> rust_chess.A1.get_color() == rust_chess.BLACK
+        True
+        >>> rust_chess.E4.get_color() == rust_chess.WHITE
+        True
         ```
         """
     @staticmethod

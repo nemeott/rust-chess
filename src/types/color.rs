@@ -1,4 +1,4 @@
-use pyo3::{prelude::*, types::PyAny};
+use pyo3::{basic::CompareOp, prelude::*, types::PyAny};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 // Color constants
@@ -94,22 +94,46 @@ impl PyColor {
         }
     }
 
-    /// Compare the color to another color or boolean.
+    /// Rich comparison operations for Color.
     ///
+    /// Equality (==):
     /// ```python
-    /// >>> rust_chess.WHITE == rust_chess.BLACK
-    /// False
+    /// >>> rust_chess.WHITE == rust_chess.WHITE
+    /// True
     /// >>> rust_chess.WHITE == True
     /// True
+    /// >>> True == rust_chess.WHITE
+    /// True
+    /// ```
+    ///
+    /// Inequality (!=):
+    /// ```python
+    /// >>> rust_chess.WHITE != rust_chess.BLACK
+    /// True
+    /// >>> rust_chess.WHITE != False
+    /// False
+    /// >>> False != rust_chess.WHITE
+    /// False
     /// ```
     #[inline]
-    fn __eq__(&self, other: &Bound<'_, PyAny>) -> bool {
-        if let Ok(other_color) = other.extract::<PyColor>() {
-            self.__bool__() == other_color.__bool__()
+    fn __richcmp__(&self, other: &Bound<'_, PyAny>, op: CompareOp) -> PyResult<bool> {
+        let self_bool = self.__bool__();
+        let other_bool = if let Ok(other_color) = other.extract::<PyColor>() {
+            other_color.__bool__()
         } else if let Ok(other_bool) = other.extract::<bool>() {
-            self.__bool__() == other_bool
+            other_bool
         } else {
-            false
+            return Err(pyo3::exceptions::PyValueError::new_err(
+                "Color must be compared to a Color or bool",
+            ));
+        };
+
+        match op {
+            CompareOp::Eq => Ok(self_bool == other_bool),
+            CompareOp::Ne => Ok(self_bool != other_bool),
+            _ => Err(pyo3::exceptions::PyValueError::new_err(
+                "Colors do not support ordering comparisons",
+            )),
         }
     }
 }

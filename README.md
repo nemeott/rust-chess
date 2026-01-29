@@ -168,12 +168,12 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Get the color of a square
   - [x] Get the index of square
   - [x] Use a square as an index
-  - [ ] Arithmetic operations
-  - [x] Rich comparison operators (TODO: compare to integers?)
+  - [ ] Arithmetic operations (e.g., __add__ for offsets)
+  - [x] Rich comparison operators
   - [x] Flip a square vertically
   - [x] Bitboard conversion
   - [x] Get adjacent squares
-  - [ ] Get diagonal squares
+  - [ ] Get diagonal squares (e.g., up_left, up_right)
   - [x] Printing
 - [ ] `Bitboard`
   - [x] File and rank constants
@@ -194,7 +194,7 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Generate the next move
   - [x] Generate legal moves and captures
   - [x] Support iterating over the generator
-  - [ ] Specify the bitboard the generator will generate for
+  - [ ] Specify the bitboard the generator will generate for (set_iterator_mask)
   - [ ] Remove a move from the generator
   - [x] Reset the generator
 - [ ] `BoardStatus`
@@ -203,10 +203,10 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
     - [x] Stalemate
     - [x] Insufficient material
     - [ ] Fivefold repetition
-    - [x] Seventy-five moves
   - [ ] Potential draw conditions
     - [ ] Threefold repetition
     - [x] Fifty moves
+  - [ ] Comparison operators (PartialOrd, etc.)
 - [ ] `Board`
   - [x] FEN parsing and printing
   - [ ] Human readable printing
@@ -218,11 +218,12 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Get the en passant square
   - [x] Check if move is zeroing
   - [x] Check if move is legal
-  - [ ] Quick legality detection
-  - [ ] Check if move is a capture
+  - [ ] Quick legality detection (is_legal_quick)
+  - [x] Check if move is a capture
   - [x] Check if move is en passant
   - [x] Make moves on the current or new board
     - [x] Make null moves
+    - [ ] Make null moves on new board (make_null_move)
   - [x] Get bitboards
     - [x] Pinned pieces
     - [x] Checking pieces
@@ -237,7 +238,11 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [ ] Move history
     - [ ] Repetition detection
   - [ ] Piece-Square Table support?
+  - [ ] Comparison operators (PartialOrd, etc.)?
 - [ ] Miscellaneous
+  - [ ] PGN support (parsing and writing)
+  - [ ] UCI protocol basics
+  - [ ] Opening book support
   - [ ] Improved Python ergonomics (e.g., more Pythonic wrappers where appropriate)
   - [ ] Comprehensive test suite
     - [x] Docstring tests

@@ -439,115 +439,59 @@ class Bitboard:
         ```
         TODO: Next on bb with multiple squares
         """
-    def __eq__(self, other: typing.Any) -> builtins.bool:
+    def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
         r"""
-        Equality comparison (self == other).
+        Rich comparison operations for the Bitboard type.
         
         ```python
-        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
-        >>> bb1.to_uint()
-        >>> 268435456
-        >>> bb2 = rust_chess.Bitboard(268435456)
-        >>> bb1 == bb2
+        >>> bb_e4 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb_e4_2 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb_d4 = rust_chess.Bitboard.from_square(rust_chess.D4)
+        >>> bb_a2 = rust_chess.Bitboard.from_square(rust_chess.A2)
+        >>> bb_f4 = rust_chess.Bitboard.from_square(rust_chess.F4)
+        # Equality (==)
+        >>> bb_e4 == bb_e4_2
         True
-        >>> bb2 == 12345
+        >>> bb_e4 == bb_e4.to_uint()
+        True
+        >>> bb_e4.to_uint() == bb_e4
+        True
+        # Inequality (!=)
+        >>> bb_e4 != bb_d4
+        True
+        >>> bb_e4 != bb_e4
         False
-        >>> bb1 == 268435456
-        True
-        >>> 268435456 == bb1
-        True
-        ```
-        """
-    def __ne__(self, other: typing.Any) -> builtins.bool:
-        r"""
-        Inequality comparison (self != other).
-        
-        ```python
-        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
-        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
-        >>> bb1 != bb2
-        True
-        >>> bb1 != bb1
+        >>> bb_e4 != bb_e4.to_uint()
         False
-        >>> bb1 != bb1.to_uint()
+        >>> bb_e4.to_uint() != bb_e4
         False
-        >>> bb1.to_uint() != bb1
-        False
-        ```
-        """
-    def __lt__(self, other: typing.Any) -> builtins.bool:
-        r"""
-        Less than comparison (self < other).
-        
-        ```python
-        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.A2)
-        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.F4)
-        >>> bb1 < bb2
+        # Less than (<)
+        >>> bb_a2 < bb_f4
         True
-        >>> bb1.to_uint() < bb2
+        >>> bb_a2.to_uint() < bb_f4
         True
-        >>> bb1 < bb2.to_uint()
+        >>> bb_a2 < bb_f4.to_uint()
         True
-        >>> bb2.to_uint() < bb1
-        False
-        >>> bb2 < bb1.to_uint()
-        False
-        ```
-        """
-    def __le__(self, other: typing.Any) -> builtins.bool:
-        r"""
-        Less than or equal comparison (self <= other).
-        
-        ```python
-        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
-        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.E4)
-        >>> bb1 <= bb2
+        # Less than or equal (<=)
+        >>> bb_e4 <= bb_e4_2
         True
-        >>> bb1.to_uint() <= bb2
+        >>> bb_e4.to_uint() <= bb_e4_2
         True
-        >>> bb1 <= bb2.to_uint()
+        >>> bb_e4 <= bb_e4_2.to_uint()
         True
-        >>> bb1.to_uint() <= bb1
+        # Greater than (>)
+        >>> bb_f4 > bb_a2
         True
-        >>> bb2 <= bb2.to_uint()
+        >>> bb_f4.to_uint() > bb_a2
         True
-        ```
-        """
-    def __gt__(self, other: typing.Any) -> builtins.bool:
-        r"""
-        Greater than comparison (self > other).
-        
-        ```python
-        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.F4)
-        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.A2)
-        >>> bb1 > bb2
+        >>> bb_f4 > bb_a2.to_uint()
         True
-        >>> bb1.to_uint() > bb2
+        # Greater than or equal (>=)
+        >>> bb_e4 >= bb_e4_2
         True
-        >>> bb1 > bb2.to_uint()
+        >>> bb_e4.to_uint() >= bb_e4_2
         True
-        >>> bb2.to_uint() > bb1
-        False
-        >>> bb2 > bb1.to_uint()
-        False
-        ```
-        """
-    def __ge__(self, other: typing.Any) -> builtins.bool:
-        r"""
-        Greater than or equal comparison (self >= other).
-        
-        ```python
-        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
-        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.E4)
-        >>> bb1 >= bb2
-        True
-        >>> bb1.to_uint() >= bb2
-        True
-        >>> bb1 >= bb2.to_uint()
-        True
-        >>> bb1.to_uint() >= bb1
-        True
-        >>> bb2 >= bb2.to_uint()
+        >>> bb_e4 >= bb_e4_2.to_uint()
         True
         ```
         """
@@ -1510,15 +1454,28 @@ class Color:
         False
         ```
         """
-    def __eq__(self, other: typing.Any) -> builtins.bool:
+    def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
         r"""
-        Compare the color to another color or boolean.
+        Rich comparison operations for Color.
         
+        Equality (==):
         ```python
-        >>> rust_chess.WHITE == rust_chess.BLACK
-        False
+        >>> rust_chess.WHITE == rust_chess.WHITE
+        True
         >>> rust_chess.WHITE == True
         True
+        >>> True == rust_chess.WHITE
+        True
+        ```
+        
+        Inequality (!=):
+        ```python
+        >>> rust_chess.WHITE != rust_chess.BLACK
+        True
+        >>> rust_chess.WHITE != False
+        False
+        >>> False != rust_chess.WHITE
+        False
         ```
         """
 

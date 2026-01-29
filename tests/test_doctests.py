@@ -1,62 +1,76 @@
 """Simple testing suite, that tests the docstrings generated from the Rust code."""
 
+import ast
 import doctest
 import textwrap
+from pathlib import Path
 from types import ModuleType
 
 import rust_chess
 
 
 def test_rust_docstrings() -> None:
-    """Run the docstring tests on rust_chess."""
-    run_markdown_doctests(rust_chess)
+    """Run the docstring tests on rust-chess using the .pyi stub file."""
+    stub = Path(__file__).resolve().parents[1] / "rust_chess.pyi"  # ../rust_chess.pyi
+    docs = collect_stub_docstrings(stub)
+    run_stub_doctests(rust_chess, docs)
 
 
-def run_markdown_doctests(module: ModuleType) -> None:
-    """Run doctests on a module, ignoring markdown code block fences (```).
+def collect_stub_docstrings(stub_path: Path) -> dict[str, str]:
+    """Parse the stub file and collect docstrings for classes, methods, properties, and staticmethods."""
+    tree = ast.parse(stub_path.read_text())
+    docs: dict[str, str] = {}
 
-    Markdown code blocks are not supported by doctest, so we need to parse them manually.
-    Doctest doesn't automatically check builtins, so we have to manually check them.
-    Doctest also doesn't run non-Python docstrings, so we have to fake them.
-    """
+    for node in tree.body:
+        if not isinstance(node, ast.ClassDef):
+            continue
+
+        # Class docstring
+        class_doc = ast.get_docstring(node)
+        if class_doc:
+            docs[node.name] = class_doc
+
+        for item in node.body:
+            if not isinstance(item, ast.FunctionDef):
+                continue
+
+            func_doc = ast.get_docstring(item)
+            if not func_doc:
+                continue
+
+            # Qualname for doctest
+            qualname = f"{node.name}.{item.name}"
+
+            # Add docstring
+            docs[qualname] = func_doc
+
+    return docs
+
+
+def run_stub_doctests(module: ModuleType, docs: dict[str, str]) -> None:
+    """Run doctests from a stub docstring mapping against the real module."""
     # Accept ellipsis to ignore some results and normalize whitespace to ignore extra newlines expected
     runner = doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
 
     # Let doctest use the module in its tests
     globs = {"rust_chess": module}
 
-    # Test all classes
-    for name in dir(module):
-        cls = getattr(module, name)
-        if not isinstance(cls, type):  # Skip non-classes
-            continue
-
-        # Test the class docstring
-        run_doctest_on_object(cls, globs, runner)
-
-        # Test all methods of the class
-        for attr_name in dir(cls):
-            method = getattr(cls, attr_name)
-
-            run_doctest_on_object(method, globs, runner, cls_name=name)
+    # Test on all docs
+    for qualname, doc in docs.items():
+        run_doctest_on_doc(qualname, doc, globs, runner)
 
     runner.summarize()
     assert runner.failures == 0
 
 
-def run_doctest_on_object(
-    obj,
+def run_doctest_on_doc(
+    qualname: str,
+    doc: str,
     globs: dict[str, ModuleType],
     runner: doctest.DocTestRunner,
-    cls_name: str | None = None,
 ) -> None:
-    """Run doctest on a single object (class or method)."""
-    # Check if class or method has a docstring
-    doc = getattr(obj, "__doc__", None)
-    if not doc:
-        return
-
-    # Remove markdown fences and TODO comments
+    """Run doctest on a single docstring."""
+    # Remove markdown fences and TODO lines
     lines = doc.splitlines()
     filtered_lines = [
         line for line in lines if not line.strip().startswith("```") and not line.strip().startswith("TODO")
@@ -70,11 +84,10 @@ def run_doctest_on_object(
         return
 
     # Set the test name to the class name, or class.method name
-    test_name = cls_name + "." + obj.__name__ if cls_name else getattr(obj, "__name__", str(obj))
     test = doctest.DocTest(
         examples=examples,
         globs=globs,
-        name=test_name,
+        name=qualname,
         filename=None,
         lineno=0,
         docstring=docstring,

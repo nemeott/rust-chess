@@ -31,6 +31,9 @@ use crate::types::{piece::PyPieceType, square::PySquare};
 #[gen_stub_pyclass]
 #[pyclass(name = "Move", frozen, eq)]
 #[derive(Clone, Copy, Eq, PartialOrd, PartialEq, Default, Hash)]
+
+// TODO: Keeping this as a wrapper for the chess crate for now for more performance in other functions.
+// Small functions are slow however, so maybe also cache my class representations too?
 pub(crate) struct PyMove(pub(crate) chess::ChessMove);
 
 #[gen_stub_pymethods]

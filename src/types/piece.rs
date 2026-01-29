@@ -182,9 +182,11 @@ impl PyPieceType {
 #[derive(PartialOrd, PartialEq, Eq, Copy, Clone, Hash)]
 pub(crate) struct PyPiece {
     /// Get the piece type of the piece
+    /// TODO
     #[pyo3(get)]
     pub(crate) piece_type: PyPieceType,
     /// Get the color of the piece
+    /// TODO
     #[pyo3(get)]
     pub(crate) color: PyColor,
 }

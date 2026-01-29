@@ -5,8 +5,11 @@ use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::types::{
     bitboard::PyBitboard,
-    color::{PyColor, BLACK, WHITE},
+    color::{COLORS, PyColor},
 };
+
+/// Bitboard u64 consisting of dark colored squares (used for color calculation).
+const DARK_SQUARES_BB: u64 = 0xAA55AA55AA55AA55;
 
 /// Square class.
 /// Represents a square on the chessboard.
@@ -238,15 +241,18 @@ impl PySquare {
         self.get_name()
     }
 
-    /// Get the color of the square on the chessboard
+    /// Get the color of the square on the chessboard.
+    ///
+    /// ```python
+    /// >>> rust_chess.A1.get_color() == rust_chess.BLACK
+    /// True
+    /// >>> rust_chess.E4.get_color() == rust_chess.WHITE
+    /// True
+    /// ```
     #[inline]
     pub(crate) fn get_color(&self) -> PyColor {
-        // column % 2 == row % 2
-        if self.get_file() % 2 == self.get_rank() % 2 {
-            WHITE
-        } else {
-            BLACK
-        }
+        let is_dark = ((DARK_SQUARES_BB >> self.get_index()) & 1) as usize; // 1 if true
+        COLORS[is_dark] // [WHITE, BLACK]
     }
 
     /// Create a new square from a name (e.g. "e4").

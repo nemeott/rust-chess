@@ -861,25 +861,26 @@ impl PyBoard {
             return true;
         }
 
-        let remaining_num_pieces = combined_bb.popcnt();
-
-        if remaining_num_pieces <= 2 {
+        let num_remaining_pieces = combined_bb.popcnt();
+        if num_remaining_pieces <= 2 {
             let knights = self.board.pieces(chess::Piece::Knight);
             let bishops = self.board.pieces(chess::Piece::Bishop);
 
             // King vs King + Knight/Bishop: Combined bitboard minus kings and knight/bishop is empty
-            if remaining_num_pieces == 1 && combined_bb & !(knights | bishops) == chess::EMPTY {
+            if num_remaining_pieces == 1 && combined_bb & !(knights | bishops) == chess::EMPTY {
                 return true;
             } else if *knights == chess::EMPTY {
                 // Only bishops left
                 let white_bishops = bishops & white_bb;
                 let black_bishops = bishops & black_bb;
 
-                if white_bishops != chess::EMPTY && black_bishops != chess::EMPTY // Both sides have a bishop
+                // Both sides have a bishop
+                if white_bishops != chess::EMPTY && black_bishops != chess::EMPTY {
+                    let white_bishop_index = white_bishops.to_square().to_index();
+                    let black_bishop_index = black_bishops.to_square().to_index();
+
                     // King + Bishop vs King + Bishop same color: White and black bishops are on the same color square
-                    && PySquare(white_bishops.to_square()).get_color() == PySquare(black_bishops.to_square()).get_color()
-                {
-                    return true;
+                    return ((9 * (white_bishop_index ^ black_bishop_index)) & 8) == 0; // Check if square colors are the same
                 }
             }
         }

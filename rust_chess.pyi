@@ -1669,11 +1669,13 @@ class Piece:
     def piece_type(self) -> PieceType:
         r"""
         Get the piece type of the piece
+        TODO
         """
     @property
     def color(self) -> Color:
         r"""
         Get the color of the piece
+        TODO
         """
     def __eq__(self, other: builtins.object) -> builtins.bool: ...
     def __lt__(self, other: builtins.object) -> builtins.bool: ...
@@ -2008,7 +2010,14 @@ class Square:
         """
     def get_color(self) -> Color:
         r"""
-        Get the color of the square on the chessboard
+        Get the color of the square on the chessboard.
+        
+        ```python
+        >>> rust_chess.A1.get_color()
+        BLACK
+        >>> rust_chess.E4.get_color()
+        WHITE
+        ```
         """
     @staticmethod
     def from_name(square_name: builtins.str) -> Square:

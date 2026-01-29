@@ -24,5 +24,5 @@ profile = "release" # Use release profile for building
 features = ["pyo3/extension-module"]
 rustc-args = [
     "--cfg",
-    "pyo3_disable_reference_pool", # Disable the global reference pool: reduces overhead crossing Py-Rust boundary when creating objects in Python
+    "pyo3_disable_reference_pool", # Reduces overhead crossing Python-Rust boundary when creating objects in Python
 ]

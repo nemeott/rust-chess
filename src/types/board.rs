@@ -557,6 +557,7 @@ impl PyBoard {
     /// board.make_move(rust_chess.Move("e2e4"))
     /// board.make_move(rust_chess.Move("d7d5"))
     /// board.make_move(rust_chess.Move("d1h5"))
+    /// FIXME
     /// >>> board.get_pinned_bitboard().popcnt()
     /// 1
     /// >>> board.get_pinned_bitboard()
@@ -584,6 +585,7 @@ impl PyBoard {
     /// board.make_move(rust_chess.Move("e2e4"))
     /// board.make_move(rust_chess.Move("f2f3"))
     /// board.make_move(rust_chess.Move("d1h5"))
+    /// FIXME
     /// >>> board.get_checkers_bitboard().popcnt()
     /// 1
     /// >>> board.get_checkers_bitboard()
@@ -595,7 +597,6 @@ impl PyBoard {
     /// . . . . . . . .
     /// . . . . . . . .
     /// . . . . . . . .
-    /// ```
     /// ```
     #[inline]
     fn get_checkers_bitboard(&self) -> PyBitboard {

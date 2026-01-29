@@ -65,14 +65,38 @@ impl PyBitboard {
         }
     }
 
-    /// Create a new Bitboard from a square
+    /// Create a new Bitboard from a square.
+    ///
+    /// ```python
+    /// >>> rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[staticmethod]
     #[inline]
     pub(crate) fn from_square(square: PySquare) -> Self {
         PyBitboard(chess::BitBoard::from_square(square.0))
     }
 
-    /// Create a new Bitboard from an unsigned 64-bit integer
+    /// Create a new Bitboard from an unsigned 64-bit integer.
+    ///
+    /// ```python
+    /// >>> rust_chess.Bitboard.from_uint(7)
+    /// X X X . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[staticmethod]
     #[inline]
     fn from_uint(bitboard: u64) -> Self {
@@ -82,18 +106,37 @@ impl PyBitboard {
     /// Convert the Bitboard to a square.
     /// This grabs the least-significant square.
     ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb.to_square()
+    /// e4
+    /// >>> rust_chess.Bitboard(2351).to_square()
+    /// a1
+    /// ```
     #[inline]
     fn to_square(&self) -> PySquare {
         PySquare(self.0.to_square())
     }
 
-    /// Convert the Bitboard to an unsigned 64-bit integer
+    /// Convert the Bitboard to an unsigned 64-bit integer.
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb.to_uint()
+    /// 268435456
+    /// ```
     #[inline]
     fn to_uint(&self) -> u64 {
-        self.0 .0
+        self.0.0
     }
 
-    /// Convert the Bitboard to an integer
+    /// Convert the Bitboard to an integer.
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> int(bb)
+    /// 268435456
+    /// ```
     #[inline]
     fn __int__(&self) -> u64 {
         self.to_uint()
@@ -105,6 +148,18 @@ impl PyBitboard {
     /// To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
     /// Very useful for debugging purposes.
     ///
+    /// ```python```
+    /// >>> bb = rust_chess.Bitboard(16961066976411648)
+    /// >>> for line in bb.get_string().split("\n"):
+    /// ...     print(line)
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . X . . X . .
+    /// . . X . . X . .
+    /// . . . . . . . .
+    /// . X . . . . X .
+    /// . . X X X X . .
+    /// . . . . . . . .
     #[inline]
     fn get_string(&self) -> String {
         self.0.to_string()
@@ -116,6 +171,16 @@ impl PyBitboard {
     /// To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
     /// Very useful for debugging purposes.
     ///
+    /// ```python```
+    /// >>> bb = rust_chess.Bitboard(39737041371648)
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . X . . X . .
+    /// . . X . . X . .
+    /// . . . . . . . .
+    /// . . X X X X . .
+    /// . X . . . . X .
+    /// . . . . . . . .
     #[inline]
     fn __str__(&self) -> String {
         self.get_string()
@@ -127,12 +192,32 @@ impl PyBitboard {
     /// To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
     /// Very useful for debugging purposes.
     ///
+    /// ```python```
+    /// >>> bb = rust_chess.Bitboard(35465847671881728)
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . X . . X . .
+    /// . . X . . X . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . X X X X X X .
+    /// . . . . . . . .
     #[inline]
     fn __repr__(&self) -> String {
         self.get_string()
     }
 
     /// Count the number of squares in the Bitboard
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb.popcnt()
+    /// 1
+    /// >>> rust_chess.Bitboard(0).popcnt()
+    /// 0
+    /// >>> rust_chess.Board().get_all_bitboard().popcnt()
+    /// 32
+    /// ```
     #[inline]
     fn popcnt(&self) -> u32 {
         self.0.popcnt()
@@ -142,12 +227,41 @@ impl PyBitboard {
     /// View it from the opponent's perspective.
     /// Useful for operations that rely on symmetry, like piece-square tables.
     ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard(6781892917204992)
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . X X . . .
+    /// . . X X X X . .
+    /// . X X X X X X .
+    /// . . . X X . . .
+    /// . . . X X . . .
+    /// . . . X X . . .
+    /// . . . . . . . .
+    /// >>> bb.flip_vertical()
+    /// . . . . . . . .
+    /// . . . X X . . .
+    /// . . . X X . . .
+    /// . . . X X . . .
+    /// . X X X X X X .
+    /// . . X X X X . .
+    /// . . . X X . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn flip_vertical(&self) -> Self {
         PyBitboard(self.0.reverse_colors())
     }
 
-    /// Return an iterator of the bitboard
+    /// Return an iterator of the bitboard.
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> list(bb)
+    /// [e4]
+    /// >>> list(rust_chess.Bitboard(1025))
+    /// [a1, c2]
+    /// ```
     #[inline]
     fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
         slf
@@ -156,36 +270,86 @@ impl PyBitboard {
     /// Get the next square in the Bitboard.
     /// Removes the square from the Bitboard.
     ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> next(bb)
+    /// e4
+    /// >>> next(bb)
+    /// ```
+    /// TODO: Next on bb with multiple squares
     #[inline]
     fn __next__(&mut self) -> Option<PySquare> {
         self.0.next().map(PySquare)
     }
 
     /// Equality comparison (self == other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb1.to_uint()
+    /// >>> 268435456
+    /// >>> bb2 = rust_chess.Bitboard(268435456)
+    /// >>> bb1 == bb2
+    /// True
+    /// >>> bb2 == 12345
+    /// False
+    /// >>> bb1 == 268435456
+    /// True
+    /// >>> 268435456 == bb1
+    /// True
+    /// ```
     #[inline]
     fn __eq__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(self.0 == other_bitboard.0)
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(self.0 .0 == other_u64)
+            Ok(self.0.0 == other_u64)
         } else {
             Ok(false)
         }
     }
 
     /// Inequality comparison (self != other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+    /// >>> bb1 != bb2
+    /// True
+    /// >>> bb1 != bb1
+    /// False
+    /// >>> bb1 != bb1.to_uint()
+    /// False
+    /// >>> bb1.to_uint() != bb1
+    /// False
+    /// ```
     #[inline]
     fn __ne__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         Ok(!self.__eq__(other)?)
     }
 
     /// Less than comparison (self < other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.A2)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.F4)
+    /// >>> bb1 < bb2
+    /// True
+    /// >>> bb1.to_uint() < bb2
+    /// True
+    /// >>> bb1 < bb2.to_uint()
+    /// True
+    /// >>> bb2.to_uint() < bb1
+    /// False
+    /// >>> bb2 < bb1.to_uint()
+    /// False
+    /// ```
     #[inline]
     fn __lt__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(self.0 < other_bitboard.0)
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(self.0 .0 < other_u64)
+            Ok(self.0.0 < other_u64)
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -194,12 +358,27 @@ impl PyBitboard {
     }
 
     /// Less than or equal comparison (self <= other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb1 <= bb2
+    /// True
+    /// >>> bb1.to_uint() <= bb2
+    /// True
+    /// >>> bb1 <= bb2.to_uint()
+    /// True
+    /// >>> bb1.to_uint() <= bb1
+    /// True
+    /// >>> bb2 <= bb2.to_uint()
+    /// True
+    /// ```
     #[inline]
     fn __le__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(self.0 <= other_bitboard.0)
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(self.0 .0 <= other_u64)
+            Ok(self.0.0 <= other_u64)
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -208,12 +387,27 @@ impl PyBitboard {
     }
 
     /// Greater than comparison (self > other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.F4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.A2)
+    /// >>> bb1 > bb2
+    /// True
+    /// >>> bb1.to_uint() > bb2
+    /// True
+    /// >>> bb1 > bb2.to_uint()
+    /// True
+    /// >>> bb2.to_uint() > bb1
+    /// False
+    /// >>> bb2 > bb1.to_uint()
+    /// False
+    /// ```
     #[inline]
     fn __gt__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(self.0 > other_bitboard.0)
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(self.0 .0 > other_u64)
+            Ok(self.0.0 > other_u64)
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -222,12 +416,27 @@ impl PyBitboard {
     }
 
     /// Greater than or equal comparison (self >= other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb1 >= bb2
+    /// True
+    /// >>> bb1.to_uint() >= bb2
+    /// True
+    /// >>> bb1 >= bb2.to_uint()
+    /// True
+    /// >>> bb1.to_uint() >= bb1
+    /// True
+    /// >>> bb2 >= bb2.to_uint()
+    /// True
+    /// ```
     #[inline]
     fn __ge__(&self, other: &Bound<'_, PyAny>) -> PyResult<bool> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(self.0 >= other_bitboard.0)
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(self.0 .0 >= other_u64)
+            Ok(self.0.0 >= other_u64)
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -237,19 +446,52 @@ impl PyBitboard {
 
     // Bitwise operations
 
-    /// Bitwise NOT operation
+    /// Bitwise NOT operation (~self).
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> ~bb
+    /// X X X X X X X X
+    /// X X X X X X X X
+    /// X X X X X X X X
+    /// X X X X . X X X
+    /// X X X X X X X X
+    /// X X X X X X X X
+    /// X X X X X X X X
+    /// X X X X X X X X
+    /// ```
     #[inline]
     fn __invert__(&self) -> Self {
         PyBitboard(!self.0)
     }
 
     /// Bitwise AND operation (self & other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+    /// >>> bb1 & bb1
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> (bb1 & bb1) == (bb1 & bb1.to_uint())
+    /// True
+    /// >>> (bb1 & bb2).popcnt() == 0
+    /// True
+    /// >>> (bb1 & bb2) == (bb1 & bb2.to_uint())
+    /// True
+    /// ```
     #[inline]
     fn __and__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(PyBitboard(self.0 & other_bitboard.0))
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(PyBitboard::from_uint(self.0 .0 & other_u64))
+            Ok(PyBitboard::from_uint(self.0.0 & other_u64))
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -258,19 +500,60 @@ impl PyBitboard {
     }
 
     /// Reflected bitwise AND operation (other & self).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+    /// >>> bb1 & bb1
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> (bb1 & bb1) == (bb1.to_uint() & bb1)
+    /// True
+    /// >>> (bb2 & bb1).popcnt() == 0
+    /// True
+    /// >>> (bb2 & bb1) == (bb2.to_uint() & bb1)
+    /// True
+    /// ```
     #[inline]
     fn __rand__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         self.__and__(other)
     }
 
     /// In-place bitwise AND operation (self &= other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+    /// >>> bb1 &= bb1
+    /// >>> bb1
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb1 &= bb1.to_uint()
+    /// >>> bb1 == rust_chess.Bitboard.from_square(rust_chess.E4))
+    /// True
+    /// >>> bb1 &= bb2
+    /// >>> bb1.popcnt() == 0
+    /// True
+    /// ```
     #[inline]
     fn __iand__(&mut self, other: &Bound<'_, PyAny>) -> PyResult<()> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             self.0 &= other_bitboard.0;
             Ok(())
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            self.0 .0 &= other_u64;
+            self.0.0 &= other_u64;
             Ok(())
         } else {
             Err(PyValueError::new_err(
@@ -280,12 +563,28 @@ impl PyBitboard {
     }
 
     /// Bitwise OR operation (self | other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+    /// >>> bb1 | bb2
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . X X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> (bb1 | bb2) == (bb1 | bb2.to_uint())
+    /// True
+    /// ```
     #[inline]
     fn __or__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(PyBitboard(self.0 | other_bitboard.0))
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(PyBitboard::from_uint(self.0 .0 | other_u64))
+            Ok(PyBitboard::from_uint(self.0.0 | other_u64))
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -294,19 +593,60 @@ impl PyBitboard {
     }
 
     /// Reflected bitwise OR operation (other | self).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+    /// >>> bb2 | bb1
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . X X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> (bb2 | bb1) == (bb2.to_uint() | bb1)
+    /// True
+    /// ```
     #[inline]
     fn __ror__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         self.__or__(other)
     }
 
     /// In-place bitwise OR operation (self |= other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+    /// >>> bb1 |= bb2
+    /// >>> bb1
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . X X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb1 |= bb2.to_uint()
+    /// >>> bb1
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . X X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn __ior__(&mut self, other: &Bound<'_, PyAny>) -> PyResult<()> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             self.0 |= other_bitboard.0;
             Ok(())
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            self.0 .0 |= other_u64;
+            self.0.0 |= other_u64;
             Ok(())
         } else {
             Err(PyValueError::new_err(
@@ -316,12 +656,28 @@ impl PyBitboard {
     }
 
     /// Bitwise XOR operation (self ^ other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+    /// >>> bb1 ^ bb2
+    /// . . . . . . . .
+    /// . X . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> (bb1 ^ bb2) == (bb1 ^ bb2.to_uint())
+    /// True
+    /// ```
     #[inline]
     fn __xor__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             Ok(PyBitboard(self.0 ^ other_bitboard.0))
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(PyBitboard::from_uint(self.0 .0 ^ other_u64))
+            Ok(PyBitboard::from_uint(self.0.0 ^ other_u64))
         } else {
             Err(PyValueError::new_err(
                 "Operand must be a Bitboard or an integer",
@@ -330,19 +686,60 @@ impl PyBitboard {
     }
 
     /// Reflected bitwise XOR operation (other ^ self).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+    /// >>> bb2 ^ bb1
+    /// . . . . . . . .
+    /// . X . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> (bb2 ^ bb1) == (bb2.to_uint() ^ bb1)
+    /// True
+    /// ```
     #[inline]
     fn __rxor__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         self.__xor__(other)
     }
 
     /// In-place bitwise XOR operation (self ^= other).
+    ///
+    /// ```python
+    /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+    /// >>> bb1 ^= bb2
+    /// >>> bb1
+    /// . . . . . . . .
+    /// . X . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb1 ^= bb2.to_uint()
+    /// >>> bb1
+    /// . . . . . . . .
+    /// . X . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn __ixor__(&mut self, other: &Bound<'_, PyAny>) -> PyResult<()> {
         if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
             self.0 ^= other_bitboard.0;
             Ok(())
         } else if let Ok(other_u64) = other.extract::<u64>() {
-            self.0 .0 ^= other_u64;
+            self.0.0 ^= other_u64;
             Ok(())
         } else {
             Err(PyValueError::new_err(
@@ -350,86 +747,118 @@ impl PyBitboard {
             ))
         }
     }
-
-    /// Multiplication operation (self * other).
-    #[inline]
-    fn __mul__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
-            Ok(PyBitboard(self.0 * other_bitboard.0))
-        } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(PyBitboard::from_uint(self.0 .0 * other_u64))
-        } else {
-            Err(PyValueError::new_err(
-                "Operand must be a Bitboard or an integer",
-            ))
-        }
-    }
-
-    /// Reflected multiplication operation (other * self).
-    #[inline]
-    fn __rmul__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        self.__mul__(other)
-    }
-
-    /// In-place multiplication operation (self *= other).
-    #[inline]
-    fn __imul__(&mut self, other: &Bound<'_, PyAny>) -> PyResult<()> {
-        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
-            self.0 = self.0 * other_bitboard.0;
-            Ok(())
-        } else if let Ok(other_u64) = other.extract::<u64>() {
-            self.0 .0 *= other_u64;
-            Ok(())
-        } else {
-            Err(PyValueError::new_err(
-                "Operand must be a Bitboard or an integer",
-            ))
-        }
-    }
-
-    // TODO: Test bitboard shift with bitboard?
 
     /// Left shift operation (self << shift).
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb << 2
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . X .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn __lshift__(&self, shift: u32) -> Self {
-        PyBitboard::from_uint(self.0 .0 << shift)
-    }
-
-    /// Reflected left shift operation (other << self)
-    #[inline]
-    fn __rlshift__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(PyBitboard::from_uint(other_u64 << self.0 .0))
-        } else {
-            Err(PyValueError::new_err("Operand must be an integer"))
-        }
+        PyBitboard::from_uint(self.0.0 << shift)
     }
 
     /// In-place left shift operation (self <<= shift).
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb <<= 2
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . X . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn __ilshift__(&mut self, shift: u32) {
-        self.0 .0 <<= shift;
+        self.0.0 <<= shift;
     }
 
     /// Right shift operation (self >> shift).
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb >> 2
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . X . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn __rshift__(&self, shift: u32) -> Self {
-        PyBitboard::from_uint(self.0 .0 >> shift)
-    }
-
-    /// Reflected right shift operation (other >> self)
-    #[inline]
-    fn __rrshift__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
-        if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(PyBitboard::from_uint(other_u64 >> self.0 .0))
-        } else {
-            Err(PyValueError::new_err("Operand must be an integer"))
-        }
+        PyBitboard::from_uint(self.0.0 >> shift)
     }
 
     /// In-place right shift operation (self >>= shift).
+    ///
+    /// ```python
+    /// >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . X . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// >>> bb >>= 2
+    /// >>> bb
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . X . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// ```
     #[inline]
     fn __irshift__(&mut self, shift: u32) {
-        self.0 .0 >>= shift;
+        self.0.0 >>= shift;
     }
 }

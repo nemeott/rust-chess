@@ -19,8 +19,8 @@ def run_markdown_doctests(module: ModuleType) -> None:
     Doctest doesn't automatically check builtins, so we have to manually check them.
     Doctest also doesn't run non-Python docstrings, so we have to fake them.
     """
-    runner = doctest.DocTestRunner()
-    # runner = doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
+    # Accept ellipsis to ignore some results and normalize whitespace to ignore extra newlines expected
+    runner = doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
 
     # Let doctest use the module in its tests
     globs = {"rust_chess": module}

@@ -249,25 +249,69 @@ class Bitboard:
     @staticmethod
     def from_square(square: Square) -> Bitboard:
         r"""
-        Create a new Bitboard from a square
+        Create a new Bitboard from a square.
+        
+        ```python
+        >>> rust_chess.Bitboard.from_square(rust_chess.E4)
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     @staticmethod
     def from_uint(bitboard: builtins.int) -> Bitboard:
         r"""
-        Create a new Bitboard from an unsigned 64-bit integer
+        Create a new Bitboard from an unsigned 64-bit integer.
+        
+        ```python
+        >>> rust_chess.Bitboard.from_uint(7)
+        X X X . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def to_square(self) -> Square:
         r"""
         Convert the Bitboard to a square.
         This grabs the least-significant square.
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb.to_square()
+        e4
+        >>> rust_chess.Bitboard(2351).to_square()
+        a1
+        ```
         """
     def to_uint(self) -> builtins.int:
         r"""
-        Convert the Bitboard to an unsigned 64-bit integer
+        Convert the Bitboard to an unsigned 64-bit integer.
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb.to_uint()
+        268435456
+        ```
         """
     def __int__(self) -> builtins.int:
         r"""
-        Convert the Bitboard to an integer
+        Convert the Bitboard to an integer.
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> int(bb)
+        268435456
+        ```
         """
     def get_string(self) -> builtins.str:
         r"""
@@ -276,6 +320,19 @@ class Bitboard:
         a1 is the top-left corner, h8 is the bottom-right corner.
         To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
         Very useful for debugging purposes.
+        
+        ```python```
+        >>> bb = rust_chess.Bitboard(16961066976411648)
+        >>> for line in bb.get_string().split("\n"):
+        ...     print(line)
+        . . . . . . . .
+        . . . . . . . .
+        . . X . . X . .
+        . . X . . X . .
+        . . . . . . . .
+        . X . . . . X .
+        . . X X X X . .
+        . . . . . . . .
         """
     def __str__(self) -> builtins.str:
         r"""
@@ -284,6 +341,17 @@ class Bitboard:
         a1 is the top-left corner, h8 is the bottom-right corner.
         To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
         Very useful for debugging purposes.
+        
+        ```python```
+        >>> bb = rust_chess.Bitboard(39737041371648)
+        . . . . . . . .
+        . . . . . . . .
+        . . X . . X . .
+        . . X . . X . .
+        . . . . . . . .
+        . . X X X X . .
+        . X . . . . X .
+        . . . . . . . .
         """
     def __repr__(self) -> builtins.str:
         r"""
@@ -292,125 +360,530 @@ class Bitboard:
         a1 is the top-left corner, h8 is the bottom-right corner.
         To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
         Very useful for debugging purposes.
+        
+        ```python```
+        >>> bb = rust_chess.Bitboard(35465847671881728)
+        . . . . . . . .
+        . . . . . . . .
+        . . X . . X . .
+        . . X . . X . .
+        . . . . . . . .
+        . . . . . . . .
+        . X X X X X X .
+        . . . . . . . .
         """
     def popcnt(self) -> builtins.int:
         r"""
         Count the number of squares in the Bitboard
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb.popcnt()
+        1
+        >>> rust_chess.Bitboard(0).popcnt()
+        0
+        >>> rust_chess.Board().get_all_bitboard().popcnt()
+        32
+        ```
         """
     def flip_vertical(self) -> Bitboard:
         r"""
         Flip a bitboard vertically.
         View it from the opponent's perspective.
         Useful for operations that rely on symmetry, like piece-square tables.
+        
+        ```python
+        >>> bb = rust_chess.Bitboard(6781892917204992)
+        >>> bb
+        . . . . . . . .
+        . . . X X . . .
+        . . X X X X . .
+        . X X X X X X .
+        . . . X X . . .
+        . . . X X . . .
+        . . . X X . . .
+        . . . . . . . .
+        >>> bb.flip_vertical()
+        . . . . . . . .
+        . . . X X . . .
+        . . . X X . . .
+        . . . X X . . .
+        . X X X X X X .
+        . . X X X X . .
+        . . . X X . . .
+        . . . . . . . .
+        ```
         """
     def __iter__(self) -> Bitboard:
         r"""
-        Return an iterator of the bitboard
+        Return an iterator of the bitboard.
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> list(bb)
+        [e4]
+        >>> list(rust_chess.Bitboard(1025))
+        [a1, c2]
+        ```
         """
     def __next__(self) -> typing.Optional[Square]:
         r"""
         Get the next square in the Bitboard.
         Removes the square from the Bitboard.
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> next(bb)
+        e4
+        >>> next(bb)
+        ```
+        TODO: Next on bb with multiple squares
         """
     def __eq__(self, other: typing.Any) -> builtins.bool:
         r"""
         Equality comparison (self == other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb1.to_uint()
+        >>> 268435456
+        >>> bb2 = rust_chess.Bitboard(268435456)
+        >>> bb1 == bb2
+        True
+        >>> bb2 == 12345
+        False
+        >>> bb1 == 268435456
+        True
+        >>> 268435456 == bb1
+        True
+        ```
         """
     def __ne__(self, other: typing.Any) -> builtins.bool:
         r"""
         Inequality comparison (self != other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+        >>> bb1 != bb2
+        True
+        >>> bb1 != bb1
+        False
+        >>> bb1 != bb1.to_uint()
+        False
+        >>> bb1.to_uint() != bb1
+        False
+        ```
         """
     def __lt__(self, other: typing.Any) -> builtins.bool:
         r"""
         Less than comparison (self < other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.A2)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.F4)
+        >>> bb1 < bb2
+        True
+        >>> bb1.to_uint() < bb2
+        True
+        >>> bb1 < bb2.to_uint()
+        True
+        >>> bb2.to_uint() < bb1
+        False
+        >>> bb2 < bb1.to_uint()
+        False
+        ```
         """
     def __le__(self, other: typing.Any) -> builtins.bool:
         r"""
         Less than or equal comparison (self <= other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb1 <= bb2
+        True
+        >>> bb1.to_uint() <= bb2
+        True
+        >>> bb1 <= bb2.to_uint()
+        True
+        >>> bb1.to_uint() <= bb1
+        True
+        >>> bb2 <= bb2.to_uint()
+        True
+        ```
         """
     def __gt__(self, other: typing.Any) -> builtins.bool:
         r"""
         Greater than comparison (self > other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.F4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.A2)
+        >>> bb1 > bb2
+        True
+        >>> bb1.to_uint() > bb2
+        True
+        >>> bb1 > bb2.to_uint()
+        True
+        >>> bb2.to_uint() > bb1
+        False
+        >>> bb2 > bb1.to_uint()
+        False
+        ```
         """
     def __ge__(self, other: typing.Any) -> builtins.bool:
         r"""
         Greater than or equal comparison (self >= other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb1 >= bb2
+        True
+        >>> bb1.to_uint() >= bb2
+        True
+        >>> bb1 >= bb2.to_uint()
+        True
+        >>> bb1.to_uint() >= bb1
+        True
+        >>> bb2 >= bb2.to_uint()
+        True
+        ```
         """
     def __invert__(self) -> Bitboard:
         r"""
-        Bitwise NOT operation
+        Bitwise NOT operation (~self).
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> ~bb
+        X X X X X X X X
+        X X X X X X X X
+        X X X X X X X X
+        X X X X . X X X
+        X X X X X X X X
+        X X X X X X X X
+        X X X X X X X X
+        X X X X X X X X
+        ```
         """
     def __and__(self, other: typing.Any) -> Bitboard:
         r"""
         Bitwise AND operation (self & other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+        >>> bb1 & bb1
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> (bb1 & bb1) == (bb1 & bb1.to_uint())
+        True
+        >>> (bb1 & bb2).popcnt() == 0
+        True
+        >>> (bb1 & bb2) == (bb1 & bb2.to_uint())
+        True
+        ```
         """
     def __rand__(self, other: typing.Any) -> Bitboard:
         r"""
         Reflected bitwise AND operation (other & self).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+        >>> bb1 & bb1
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> (bb1 & bb1) == (bb1.to_uint() & bb1)
+        True
+        >>> (bb2 & bb1).popcnt() == 0
+        True
+        >>> (bb2 & bb1) == (bb2.to_uint() & bb1)
+        True
+        ```
         """
     def __iand__(self, other: typing.Any) -> None:
         r"""
         In-place bitwise AND operation (self &= other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+        >>> bb1 &= bb1
+        >>> bb1
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb1 &= bb1.to_uint()
+        >>> bb1 == rust_chess.Bitboard.from_square(rust_chess.E4))
+        True
+        >>> bb1 &= bb2
+        >>> bb1.popcnt() == 0
+        True
+        ```
         """
     def __or__(self, other: typing.Any) -> Bitboard:
         r"""
         Bitwise OR operation (self | other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+        >>> bb1 | bb2
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . X X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> (bb1 | bb2) == (bb1 | bb2.to_uint())
+        True
+        ```
         """
     def __ror__(self, other: typing.Any) -> Bitboard:
         r"""
         Reflected bitwise OR operation (other | self).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+        >>> bb2 | bb1
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . X X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> (bb2 | bb1) == (bb2.to_uint() | bb1)
+        True
+        ```
         """
     def __ior__(self, other: typing.Any) -> None:
         r"""
         In-place bitwise OR operation (self |= other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
+        >>> bb1 |= bb2
+        >>> bb1
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . X X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb1 |= bb2.to_uint()
+        >>> bb1
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . X X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def __xor__(self, other: typing.Any) -> Bitboard:
         r"""
         Bitwise XOR operation (self ^ other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+        >>> bb1 ^ bb2
+        . . . . . . . .
+        . X . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> (bb1 ^ bb2) == (bb1 ^ bb2.to_uint())
+        True
+        ```
         """
     def __rxor__(self, other: typing.Any) -> Bitboard:
         r"""
         Reflected bitwise XOR operation (other ^ self).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+        >>> bb2 ^ bb1
+        . . . . . . . .
+        . X . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> (bb2 ^ bb1) == (bb2.to_uint() ^ bb1)
+        True
+        ```
         """
     def __ixor__(self, other: typing.Any) -> None:
         r"""
         In-place bitwise XOR operation (self ^= other).
-        """
-    def __mul__(self, other: typing.Any) -> Bitboard:
-        r"""
-        Multiplication operation (self * other).
-        """
-    def __rmul__(self, other: typing.Any) -> Bitboard:
-        r"""
-        Reflected multiplication operation (other * self).
-        """
-    def __imul__(self, other: typing.Any) -> None:
-        r"""
-        In-place multiplication operation (self *= other).
+        
+        ```python
+        >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
+        >>> bb1 ^= bb2
+        >>> bb1
+        . . . . . . . .
+        . X . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb1 ^= bb2.to_uint()
+        >>> bb1
+        . . . . . . . .
+        . X . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def __lshift__(self, shift: builtins.int) -> Bitboard:
         r"""
         Left shift operation (self << shift).
-        """
-    def __rlshift__(self, other: typing.Any) -> Bitboard:
-        r"""
-        Reflected left shift operation (other << self)
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb << 2
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . X .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def __ilshift__(self, shift: builtins.int) -> None:
         r"""
         In-place left shift operation (self <<= shift).
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb <<= 2
+        >>> bb
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . X . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def __rshift__(self, shift: builtins.int) -> Bitboard:
         r"""
         Right shift operation (self >> shift).
-        """
-    def __rrshift__(self, other: typing.Any) -> Bitboard:
-        r"""
-        Reflected right shift operation (other >> self)
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb >> 2
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . X . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def __irshift__(self, shift: builtins.int) -> None:
         r"""
         In-place right shift operation (self >>= shift).
+        
+        ```python
+        >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
+        >>> bb
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        >>> bb >>= 2
+        >>> bb
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . X . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
 
 @typing.final
@@ -450,6 +923,12 @@ class Board:
         True
         >>> print(board.turn)
         WHITE
+        
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.turn
+        False
+        >>> print(board.turn)
+        BLACK
         ```
         """
     @property
@@ -462,6 +941,7 @@ class Board:
         
         >>> rust_chess.Board().en_passant == None
         True
+        
         >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> board.en_passant
         f6
@@ -524,6 +1004,7 @@ class Board:
         ```python
         >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
         False
+        
         >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> board.is_en_passant(rust_chess.Move("e5f6"))
         True
@@ -540,9 +1021,11 @@ class Board:
         >>> board.is_capture(rust_chess.Move("e2e4"))
         False
         >>> board.make_move(rust_chess.Move("e2e4"))
+        
         >>> board.make_move(rust_chess.Move("d7d5"))
         >>> board.is_capture(rust_chess.Move("e4d5"))
         True
+        
         >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> ep_board.is_capture(rust_chess.Move("e5f6"))
         True
@@ -571,6 +1054,8 @@ class Board:
         WHITE
         >>> rust_chess.Board().get_color_on(rust_chess.E8)
         False
+        >>> print(rust_chess.Board().get_color_on(rust_chess.E8))
+        BLACK
         ```
         """
     def get_piece_on(self, square: Square) -> typing.Optional[Piece]:
@@ -588,7 +1073,13 @@ class Board:
     def get_king_square(self, color: Color) -> Square:
         r"""
         Get the king square of a color
-        TODO:
+        
+        ```python
+        >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
+        e1
+        >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
+        e8
+        ```
         """
     def is_zeroing(self, chess_move: Move) -> builtins.bool:
         r"""
@@ -596,7 +1087,20 @@ class Board:
         "Zeros" the halfmove clock (sets it to 0).
         
         Doesn't check legality.
-        TODO:
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_zeroing(rust_chess.Move("e2e4"))
+        True
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        
+        >>> board.is_zeroing(rust_chess.Move("g8f6"))
+        False
+        >>> board.make_move(rust_chess.Move("d7d5"))
+        
+        >>> board.is_zeroing(rust_chess.Move("e4d5"))
+        True
+        ```
         """
     def is_legal_move(self, chess_move: Move) -> builtins.bool:
         r"""
@@ -608,8 +1112,8 @@ class Board:
         >>> move = rust_chess.Move("e2e4")
         >>> rust_chess.Board().is_legal_move(move)
         True
-        >>> move2 = rust_chess.Move("e2e5")
-        >>> rust_chess.Board().is_legal_move(move2)
+        >>> ill_move = rust_chess.Move("e2e5")
+        >>> rust_chess.Board().is_legal_move(ill_move)
         False
         ```
         """
@@ -634,35 +1138,167 @@ class Board:
         """
     def make_move_new(self, chess_move: Move, check_legality: builtins.bool = True) -> Board:
         r"""
-        Make a move onto a new board
+        Make a move onto a new board.
+        
+        Defaults to checking move legality, unless the optional legality parameter is `False`.
+        Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+        Checking legality will return an error if the move is illegal.
+        
+        ```python
+        >>> old_board = rust_chess.Board()
+        >>> new_board = old_board.make_move_new(rust_chess.Move("e2e4"))
+        >>> print(new_board)
+        rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+        >>> print(old_board)
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        ```
         """
     def make_move(self, chess_move: Move, check_legality: builtins.bool = True) -> None:
         r"""
-        Make a move on the current board
+        Make a move onto the current board.
+        
+        Defaults to checking move legality, unless the optional legality parameter is `False`.
+        Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+        Checking legality will return an error if the move is illegal.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> print(board)
+        rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+        ```
         """
     def get_pinned_bitboard(self) -> Bitboard:
         r"""
-        Get the bitboard of the side to move's pinned pieces
+        Get the bitboard of the side to move's pinned pieces.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.get_pinned_bitboard().popcnt()
+        0
+        
+        board.make_move(rust_chess.Move("e2e4"))
+        board.make_move(rust_chess.Move("d7d5"))
+        board.make_move(rust_chess.Move("d1h5"))
+        FIXME
+        >>> board.get_pinned_bitboard().popcnt()
+        1
+        >>> board.get_pinned_bitboard()
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . X . .
+        . . . . . . . .
+        ```
         """
     def get_checkers_bitboard(self) -> Bitboard:
         r"""
-        Get the bitboard of the pieces putting the side to move in check
+        Get the bitboard of the pieces putting the side to move in check.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.get_checkers_bitboard().popcnt()
+        0
+        
+        board.make_move(rust_chess.Move("e2e4"))
+        board.make_move(rust_chess.Move("f2f3"))
+        board.make_move(rust_chess.Move("d1h5"))
+        FIXME
+        >>> board.get_checkers_bitboard().popcnt()
+        1
+        >>> board.get_checkers_bitboard()
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . X
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def get_color_bitboard(self, color: Color) -> Bitboard:
         r"""
-        Get the bitboard of all the pieces of a certain color
+        Get the bitboard of all the pieces of a certain color.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.get_color_bitboard(rust_chess.WHITE).popcnt()
+        16
+        >>> board.get_color_bitboard(rust_chess.WHITE)
+        X X X X X X X X
+        X X X X . X X X
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def get_piece_type_bitboard(self, piece_type: PieceType) -> Bitboard:
         r"""
-        Get the bitboard of all the pieces of a certain type
+        Get the bitboard of all the pieces of a certain type.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.get_piece_type_bitboard(rust_chess.PAWN).popcnt()
+        16
+        >>> board.get_piece_type_bitboard(rust_chess.PAWN)
+        . . . . . . . .
+        X X X X . X X X
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        X X X X X X X X
+        . . . . . . . .
+        ```
         """
     def get_piece_bitboard(self, piece: Piece) -> Bitboard:
         r"""
-        Get the bitboard of all the pieces of a certain color and type
+        Get the bitboard of all the pieces of a certain color and type.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.get_piece_bitboard(rust_chess.WHITE_PAWN).popcnt()
+        8
+        >>> board.get_piece_bitboard(rust_chess.WHITE_PAWN)
+        . . . . . . . .
+        X X X X . X X X
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     def get_all_bitboard(self) -> Bitboard:
         r"""
-        Get the bitboard of all the pieces
+        Get the bitboard of all the pieces.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.get_all_bitboard().popcnt()
+        32
+        >>> board.get_all_bitboard()
+        X X X X X X X X
+        X X X X . X X X
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        X X X X X X X X
+        X X X X X X X X
+        ```
         """
     def remove_move(self, chess_move: Move) -> None:
         r"""
@@ -675,24 +1311,31 @@ class Board:
     def reset_move_generator(self) -> None:
         r"""
         Reset the move generator for the current board
+        TODO
         """
     def generate_next_move(self) -> typing.Optional[Move]:
         r"""
         Get the next remaining move in the generator.
         Updates the move generator to the next move.
         Unless the mask is set, this will return the next legal move by default.
+        
+        TODO
         """
     def generate_legal_moves(self) -> MoveGenerator:
         r"""
         Generate the next remaining legal moves for the current board.
         Exhausts the move generator if fully iterated over.
         Updates the move generator.
+        
+        TODO
         """
     def generate_legal_captures(self) -> MoveGenerator:
         r"""
         Generate the next remaining legal captures for the current board.
         Exhausts the move generator if fully iterated over.
         Updates the move generator.
+        
+        TODO
         """
     def is_fifty_moves(self) -> builtins.bool:
         r"""
@@ -774,14 +1417,33 @@ class Board:
     def is_stalemate(self) -> builtins.bool:
         r"""
         Checks if the side to move is in stalemate
+        
+        ```python
+        >>> rust_chess.Board().is_stalemate()
+        False
+        ```
+        TODO
         """
     def is_checkmate(self) -> builtins.bool:
         r"""
         Checks if the side to move is in checkmate
+        
+        ```python
+        >>> rust_chess.Board().is_checkmate()
+        False
+        ```
+        TODO
         """
     def get_status(self) -> BoardStatus:
         r"""
         Get the status of the board (ongoing, draw, or game-ending).
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.get_status()
+        BoardStatus.ONGOING
+        ```
+        TODO
         """
 
 @typing.final
@@ -875,7 +1537,7 @@ class Move:
     a4b1
     >>> rust_chess.Move("a2a1q")
     Move(a2, a1, QUEEN)
-    >>> move.get_uci() == rust_chess.Move.from_uci("a4b1")  # FIXME
+    >>> move == rust_chess.Move.from_uci("a4b1")
     True
     >>> move.source
     a4
@@ -988,15 +1650,42 @@ class MoveGenerator:
     """
     def __iter__(self) -> MoveGenerator:
         r"""
-        Return an iterator of the generator
+        Return an iterator of the generator.
+        
+        The generator for a board saves state, regardless of how it is called.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> list(board.generate_legal_moves())
+        [Move(a2, a3, None), Move(a2, a4, None), ..., Move(g1, h3, None)]
+        >>> list(board.generate_legal_moves())
+        []
+        ```
         """
     def __next__(self) -> typing.Optional[Move]:
         r"""
-        Get the next move in the generator
+        Get the next move in the generator.
+        
+        The generator for a board saves state, regardless of how it is called.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> moves = board.generate_legal_moves()
+        >>> next(moves)
+        Move(a2, a3, None)
+        >>> next(board.generate_legal_moves())
+        Move(a2, a4, None)
+        ```
         """
     def __repr__(self) -> builtins.str:
         r"""
-        Get the type of the move generator
+        Get the type of the move generator.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.generate_legal_moves()
+        MoveGenerator()
+        ```
         """
 
 @typing.final
@@ -1009,8 +1698,15 @@ class Piece:
     A white piece is considered less than a black piece of the same type.
     
     ```python
-    TODO
+    >>> piece = rust_chess.WHITE_PAWN
+    >>> piece
+    P
+    >>> piece.piece_type
+    P
+    >>> piece.color
+    True
     ```
+    TODO
     """
     @property
     def piece_type(self) -> PieceType:
@@ -1265,11 +1961,33 @@ class Square:
         """
     def flip(self) -> Square:
         r"""
-        Flips a square (eg. A1 -> A8)
+        Flips a square (eg. A1 -> A8).
+        
+        ```python
+        >>> rust_chess.A1.flip()
+        a8
+        >>> rust_chess.H8.flip()
+        h1
+        ```
         """
     def to_bitboard(self) -> Bitboard:
         r"""
-        Convert a square to a bitboard
+        Convert a square to a bitboard.
+        
+        ```python
+        >>> bitboard = rust_chess.E4.to_bitboard()
+        >>> bitboard.popcnt()
+        1
+        >>> bitboard
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . X . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        ```
         """
     @staticmethod
     def from_index(index: builtins.int) -> Square:

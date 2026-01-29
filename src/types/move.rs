@@ -17,7 +17,7 @@ use crate::types::{piece::PyPieceType, square::PySquare};
 /// a4b1
 /// >>> rust_chess.Move("a2a1q")
 /// Move(a2, a1, QUEEN)
-/// >>> move.get_uci() == rust_chess.Move.from_uci("a4b1")  # FIXME
+/// >>> move == rust_chess.Move.from_uci("a4b1")
 /// True
 /// >>> move.source
 /// a4
@@ -188,19 +188,46 @@ pub(crate) struct PyMoveGenerator(pub(crate) chess::MoveGen);
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyMoveGenerator {
-    /// Return an iterator of the generator
+    /// Return an iterator of the generator.
+    /// 
+    /// The generator for a board saves state, regardless of how it is called.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> list(board.generate_legal_moves())
+    /// [Move(a2, a3, None), Move(a2, a4, None), ..., Move(g1, h3, None)]
+    /// >>> list(board.generate_legal_moves())
+    /// []
+    /// ```
     #[inline]
     fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
         slf
     }
 
-    /// Get the next move in the generator
+    /// Get the next move in the generator.
+    /// 
+    /// The generator for a board saves state, regardless of how it is called.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> moves = board.generate_legal_moves()
+    /// >>> next(moves)
+    /// Move(a2, a3, None)
+    /// >>> next(board.generate_legal_moves())
+    /// Move(a2, a4, None)
+    /// ```
     #[inline]
     pub(crate) fn __next__(&mut self) -> Option<PyMove> {
         self.0.next().map(PyMove)
     }
 
-    /// Get the type of the move generator
+    /// Get the type of the move generator.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.generate_legal_moves()
+    /// MoveGenerator()
+    /// ```
     #[inline]
     fn __repr__(&self) -> String {
         "MoveGenerator()".to_string()

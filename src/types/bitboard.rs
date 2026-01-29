@@ -187,7 +187,8 @@ impl PyBitboard {
     /// Very useful for debugging purposes.
     ///
     /// ```python```
-    /// >>> bb = rust_chess.Bitboard(39737041371648)
+    /// >>> bb = rust_chess.Bitboard(18643319766908928)
+    /// >>> print(bb)
     /// . . . . . . . .
     /// . . . . . . . .
     /// . . X . . X . .
@@ -209,6 +210,7 @@ impl PyBitboard {
     ///
     /// ```python```
     /// >>> bb = rust_chess.Bitboard(35465847671881728)
+    /// >>> bb
     /// . . . . . . . .
     /// . . . . . . . .
     /// . . X . . X . .
@@ -290,6 +292,8 @@ impl PyBitboard {
     /// >>> next(bb)
     /// e4
     /// >>> next(bb)
+    /// Traceback (most recent call last):
+    /// Exception: message
     /// ```
     /// TODO: Next on bb with multiple squares
     #[inline]
@@ -375,6 +379,8 @@ impl PyBitboard {
     }
 
     // Bitwise operations
+    
+    // FIXME: Can't do "${op}=" with self
 
     /// Bitwise NOT operation (~self).
     ///
@@ -464,7 +470,7 @@ impl PyBitboard {
     /// . . . . . . . .
     /// . . . . . . . .
     /// >>> bb1 &= bb1.to_uint()
-    /// >>> bb1 == rust_chess.Bitboard.from_square(rust_chess.E4))
+    /// >>> bb1 == rust_chess.Bitboard.from_square(rust_chess.E4)
     /// True
     /// >>> bb1 &= bb2
     /// >>> bb1.popcnt() == 0
@@ -618,7 +624,7 @@ impl PyBitboard {
     /// >>> bb1 ^= bb2.to_uint()
     /// >>> bb1
     /// . . . . . . . .
-    /// . X . . . . . .
+    /// . . . . . . . .
     /// . . . . . . . .
     /// . . . . X . . .
     /// . . . . . . . .
@@ -679,7 +685,7 @@ impl PyBitboard {
     /// . . . . . . . .
     /// . . . . . . . .
     /// . . . . . . . .
-    /// . . X . . . . .
+    /// . . . . . . X .
     /// . . . . . . . .
     /// . . . . . . . .
     /// . . . . . . . .

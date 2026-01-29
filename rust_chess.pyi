@@ -343,7 +343,8 @@ class Bitboard:
         Very useful for debugging purposes.
         
         ```python```
-        >>> bb = rust_chess.Bitboard(39737041371648)
+        >>> bb = rust_chess.Bitboard(18643319766908928)
+        >>> print(bb)
         . . . . . . . .
         . . . . . . . .
         . . X . . X . .
@@ -363,6 +364,7 @@ class Bitboard:
         
         ```python```
         >>> bb = rust_chess.Bitboard(35465847671881728)
+        >>> bb
         . . . . . . . .
         . . . . . . . .
         . . X . . X . .
@@ -436,6 +438,8 @@ class Bitboard:
         >>> next(bb)
         e4
         >>> next(bb)
+        Traceback (most recent call last):
+        Exception: message
         ```
         TODO: Next on bb with multiple squares
         """
@@ -578,7 +582,7 @@ class Bitboard:
         . . . . . . . .
         . . . . . . . .
         >>> bb1 &= bb1.to_uint()
-        >>> bb1 == rust_chess.Bitboard.from_square(rust_chess.E4))
+        >>> bb1 == rust_chess.Bitboard.from_square(rust_chess.E4)
         True
         >>> bb1 &= bb2
         >>> bb1.popcnt() == 0
@@ -714,7 +718,7 @@ class Bitboard:
         >>> bb1 ^= bb2.to_uint()
         >>> bb1
         . . . . . . . .
-        . X . . . . . .
+        . . . . . . . .
         . . . . . . . .
         . . . . X . . .
         . . . . . . . .
@@ -769,7 +773,7 @@ class Bitboard:
         . . . . . . . .
         . . . . . . . .
         . . . . . . . .
-        . . X . . . . .
+        . . . . . . X .
         . . . . . . . .
         . . . . . . . .
         . . . . . . . .
@@ -1489,8 +1493,12 @@ class Color:
         >>> rust_chess.WHITE != rust_chess.BLACK
         True
         >>> rust_chess.WHITE != False
+        True
+        >>> rust_chess.WHITE != True
         False
         >>> False != rust_chess.WHITE
+        True
+        >>> True != rust_chess.WHITE
         False
         ```
         """
@@ -1568,9 +1576,9 @@ class Move:
         
         ```python
         >>> rust_chess.Move(rust_chess.A2, rust_chess.A4)
-        (a2, a4, None)
+        Move(a2, a4, None)
         >>> rust_chess.Move("g2g1q")
-        (g2, g1, QUEEN)
+        Move(g2, g1, Q)
         ```
         """
     @staticmethod
@@ -1608,7 +1616,7 @@ class Move:
         Get the internal representation of the move (e.g. "Move(e2, e4, None)").
         
         ```python
-        >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
+        >>> move = rust_chess.Move(rust_chess.E2, rust_chess.E4)
         >>> move
         Move(e2, e4, None)
         ```

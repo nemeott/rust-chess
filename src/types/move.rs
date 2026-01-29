@@ -43,9 +43,9 @@ impl PyMove {
     ///
     /// ```python
     /// >>> rust_chess.Move(rust_chess.A2, rust_chess.A4)
-    /// (a2, a4, None)
+    /// Move(a2, a4, None)
     /// >>> rust_chess.Move("g2g1q")
-    /// (g2, g1, QUEEN)
+    /// Move(g2, g1, Q)
     /// ```
     #[new]
     #[pyo3(signature = (source_or_uci, dest = None, promotion = None))] // Default dest (enable UCI option) and promotion to None
@@ -121,7 +121,7 @@ impl PyMove {
     /// Get the internal representation of the move (e.g. "Move(e2, e4, None)").
     ///
     /// ```python
-    /// >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
+    /// >>> move = rust_chess.Move(rust_chess.E2, rust_chess.E4)
     /// >>> move
     /// Move(e2, e4, None)
     /// ```

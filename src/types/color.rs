@@ -111,8 +111,12 @@ impl PyColor {
     /// >>> rust_chess.WHITE != rust_chess.BLACK
     /// True
     /// >>> rust_chess.WHITE != False
+    /// True
+    /// >>> rust_chess.WHITE != True
     /// False
     /// >>> False != rust_chess.WHITE
+    /// True
+    /// >>> True != rust_chess.WHITE
     /// False
     /// ```
     #[inline]

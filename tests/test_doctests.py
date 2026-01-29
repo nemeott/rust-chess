@@ -1,4 +1,8 @@
-"""Simple testing suite, that tests the docstrings generated from the Rust code."""
+"""Simple testing suite, that tests the docstrings generated from the Rust code.
+
+Usage:
+    Run `pytest` from the main directory.
+"""
 
 import ast
 import doctest
@@ -50,7 +54,9 @@ def collect_stub_docstrings(stub_path: Path) -> dict[str, str]:
 def run_stub_doctests(module: ModuleType, docs: dict[str, str]) -> None:
     """Run doctests from a stub docstring mapping against the real module."""
     # Accept ellipsis to ignore some results and normalize whitespace to ignore extra newlines expected
-    runner = doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
+    runner = doctest.DocTestRunner(
+        optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.IGNORE_EXCEPTION_DETAIL
+    )
 
     # Let doctest use the module in its tests
     globs = {"rust_chess": module}
@@ -72,9 +78,7 @@ def run_doctest_on_doc(
     """Run doctest on a single docstring."""
     # Remove markdown fences and TODO lines
     lines = doc.splitlines()
-    filtered_lines = [
-        line for line in lines if not line.strip().startswith("```") and not line.strip().startswith("TODO")
-    ]
+    filtered_lines = [line for line in lines if not line.strip().startswith(("```", "TODO", "#"))]
     docstring = textwrap.dedent("\n".join(filtered_lines))
 
     # Check if there are examples in the markdown codeblocks

@@ -7,6 +7,13 @@ Depth 3:       8902 nodes in  0.002s (5.23 Mnps)
 Depth 4:     197281 nodes in  0.030s (6.47 Mnps)
 Depth 5:    4865609 nodes in  0.635s (7.66 Mnps)
 Depth 6:  119060324 nodes in 15.406s (7.73 Mnps)
+
+python-chess:
+Depth 1:         20 nodes in  0.000s (0.11 Mnps)
+Depth 2:        400 nodes in  0.002s (0.19 Mnps)
+Depth 3:       8902 nodes in  0.036s (0.25 Mnps)
+Depth 4:     197281 nodes in  0.817s (0.24 Mnps)
+Depth 5:    4865609 nodes in 17.763s (0.27 Mnps)
 """
 
 from timeit import default_timer

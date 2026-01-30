@@ -256,7 +256,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
 
 ### Performance
 
-`compare.py` was used for a quick benchmark and comparison between the same operations for `rust-chess` and `python-chess`. The comparison script was run with large iteration counts ($n = 100,000$) and profiled using PySpy. The key observations from that analysis are as follows:
+`compare.py` was used for a quick benchmark and comparison between the same operations for `rust-chess` and `python-chess`. The comparison script was run with large iteration counts (n = 100,000) and profiled using PySpy. The key observations from that analysis are as follows:
 
 - Small/simple operations (e.g., some tiny getters, Python-exposed primitives) can be slightly slower because of Rust<->Python boundary costs.
 - Complex and heavy operations are substantially faster in `rust-chess`:

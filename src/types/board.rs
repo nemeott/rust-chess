@@ -927,6 +927,8 @@ impl PyBoard {
 
         self.move_gen.borrow_mut(py).__next__()
     }
+    
+    // TODO: Generate moves_list (PyList<PyMove>)
 
     /// Generate the next remaining moves for the current board.
     /// Exhausts the move generator if fully iterated over.

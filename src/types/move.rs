@@ -127,16 +127,13 @@ impl PyMove {
     /// ```
     #[inline]
     fn __repr__(&self) -> String {
-        let promotion_str = self
-            .get_promotion()
-            .map(|p| p.get_string(WHITE))
-            .unwrap_or_else(|| String::from("None"));
-
         format!(
             "Move({}, {}, {})",
             self.0.get_source(),
             self.0.get_dest(),
-            promotion_str
+            self.get_promotion()
+                .map(|p| p.get_string(WHITE))
+                .unwrap_or_else(|| String::from("None"))
         )
     }
 
@@ -256,7 +253,7 @@ impl PyMoveGenerator {
     /// MoveGenerator()
     /// ```
     #[inline]
-    fn __repr__(&self) -> String {
-        "MoveGenerator()".to_string()
+    fn __repr__(&self) -> &'static str {
+        "MoveGenerator()"
     }
 }

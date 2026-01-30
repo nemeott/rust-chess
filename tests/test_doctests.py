@@ -87,6 +87,8 @@ def run_doctest_on_doc(
     if not examples:
         return
 
+    # print(qualname)  # Uncomment to check which doctests are being run
+
     # Set the test name to the class name, or class.method name
     test = doctest.DocTest(
         examples=examples,

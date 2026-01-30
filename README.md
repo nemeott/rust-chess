@@ -135,9 +135,9 @@ cd rust-chess
 
 ```sh
 ./build.sh
-pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
+pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
 # Or
-uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
+uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
 
 # Or build and install in current virtual environment
 ./develop.sh
@@ -168,19 +168,19 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Get the color of a square
   - [x] Get the index of square
   - [x] Use a square as an index
-  - [ ] Arithmetic operations (e.g., __add__ for offsets)
+  - [ ] Arithmetic operations (e.g., \_\_add__ for offsets)
   - [x] Rich comparison operators
   - [x] Flip a square vertically
   - [x] Bitboard conversion
   - [x] Get adjacent squares
-  - [ ] Get diagonal squares (e.g., up_left, up_right)
+  - [ ] Get diagonal squares? (e.g., up_left, up_right)
   - [x] Printing
 - [ ] `Bitboard`
   - [x] File and rank constants
   - [x] Creation from a square or integer
-  - [ ] Bitboard operations
+  - [x] Bitboard operations
     - [x] Between bitboards
-    - [ ] Between a bitboard and integer
+    - [x] Between a bitboard and integer
   - [x] Count the number of bits
   - [x] Flip vertically
   - [x] Iterate over the squares in a bitboard
@@ -191,11 +191,12 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [ ] Castling move constants
   - [ ] Null move constant?
 - [ ] `MoveGenerator`
-  - [x] Generate the next move
-  - [x] Generate legal moves and captures
+  - [x] Generate the next move, legal move, and legal capture
+  - [x] Generate moves, legal moves, and legal captures
   - [x] Support iterating over the generator
-  - [ ] Specify the bitboard the generator will generate for (set_iterator_mask)
-  - [ ] Remove a move from the generator
+  - [x] Specify the generator mask (bitboard of squares the generator will generate for)
+  - [x] Remove a generator mask (bitboard of squares the generator will avoid)
+  - [x] Remove a move from the generator
   - [x] Reset the generator
 - [ ] `BoardStatus`
   - [ ] Game-ending conditions
@@ -218,15 +219,15 @@ uv pip install target/wheels/rust_chess-0.2.1-cp313-cp313-linux_x86_64.whl
   - [x] Get the en passant square
   - [x] Check if move is zeroing
   - [x] Check if move is legal
-  - [ ] Quick legality detection (is_legal_quick)
+  - [x] Quick legality detection for psuedo-legal moves
   - [x] Check if move is a capture
   - [x] Check if move is en passant
   - [x] Make moves on the current or new board
-    - [x] Make null moves
-    - [ ] Make null moves on new board (make_null_move)
+    - [ ] Make null moves (make_null_move)
+    - [x] Make null moves on new board
   - [x] Get bitboards
-    - [x] Pinned pieces
-    - [x] Checking pieces
+    - [ ] Pinned pieces
+    - [ ] Checking pieces
     - [x] Color pieces
     - [x] Piece type
     - [x] Piece

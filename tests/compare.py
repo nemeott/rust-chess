@@ -176,20 +176,20 @@ if __name__ == "__main__":
     n = 1
     n = 100_000
 
-    # time (v0.1.0): # TODO: UPDATE
-    # real	0m40.811s
-    # user	0m28.648s
-    # sys	0m11.843s
+    # time (v0.3.0):
+    # real	0m39.834s
+    # user	0m28.011s
+    # sys	0m11.533s
     for _ in range(n):
         # Slower for simple functions and data types, much faster for complex functions
         test_rust_chess()  # Around 3.5 times faster python-chess :) (for this test)
 
     print("---------------------------------------")
 
-    # time (v0.1.0): # TODO: UPDATE
-    # real	2m22.639s
-    # user	2m10.662s
-    # sys	0m10.804s
-    for _ in range(n):
-        # Biggest slow down is creating with fen, displaying fen, legality, pushing moves, generating moves
-        test_chess()
+    # # time:
+    # # real	2m22.639s
+    # # user	2m10.662s
+    # # sys	0m10.804s
+    # for _ in range(n):
+    #     # Biggest slow down is creating with fen, displaying fen, legality, pushing moves, generating moves
+    #     test_chess()

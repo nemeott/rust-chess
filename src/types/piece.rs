@@ -147,8 +147,8 @@ impl PyPieceType {
     #[rustfmt::skip]
     #[inline]
     #[pyo3(signature = (color = WHITE))] // Default piece color is white (hollow)
-    fn get_unicode(&self, color: PyColor) -> String {
-        let s = match self.get_string(color).as_str() {
+    fn get_unicode(&self, color: PyColor) -> &'static str {
+        match self.get_string(color).as_str() {
             "P" => "♙", "p" => "♟",
             "N" => "♘", "n" => "♞",
             "B" => "♗", "b" => "♝",
@@ -156,8 +156,7 @@ impl PyPieceType {
             "Q" => "♕", "q" => "♛",
             "K" => "♔", "k" => "♚",
             _ => "",
-        };
-        s.to_string()
+        }
     }
 }
 
@@ -272,7 +271,7 @@ impl PyPiece {
     /// '♟'
     /// ```
     #[inline]
-    fn get_unicode(&self) -> String {
+    fn get_unicode(&self) -> &'static str {
         self.piece_type.get_unicode(self.color)
     }
 }

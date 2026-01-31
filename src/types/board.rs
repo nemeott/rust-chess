@@ -11,7 +11,9 @@ use crate::types::{
     square::PySquare,
 };
 
-// TODO: Comparision and partial ord
+// TODO: Comparision and partial ord (use Zobrist?)
+//
+// TODO: Get castle rights
 
 /// Board status enum class.
 /// Represents the status of a chess board.
@@ -193,6 +195,74 @@ impl PyBoard {
             halfmove_clock,
             fullmove_number,
         })
+    }
+
+    // Get the Zobrist hash of the board
+    //
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.zobrist_hash
+    /// 9023329949471135578
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.zobrist_hash
+    /// 9322854110900140515
+    /// ```
+    #[getter]
+    #[inline]
+    fn get_zobrist_hash(&self) -> u64 {
+        self.board.get_hash()
+    }
+
+    /// Get the hash of the board based on its Zobrist hash.
+    /// **This is not the same as the `zobrist_hash` field since Python doesn't support unsigned 64-bit integers for this function.**
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> hash(board)
+    /// 9023329949471135578
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> hash(board)
+    /// -9123889962809411101
+    /// >>> board.zobrist_hash
+    /// 9322854110900140515
+    /// >>> hash(board) == board.zobrist_hash
+    /// False
+    /// ```
+    #[inline]
+    fn __hash__(&self) -> u64 {
+        self.get_zobrist_hash()
+    }
+
+    /// Check if two boards are equal based on their Zobrist hash.
+    ///
+    /// ```python
+    /// >>> board1 = rust_chess.Board()
+    /// >>> board2 = rust_chess.Board()
+    /// >>> board1 == board2
+    /// True
+    /// >>> board1.make_move(rust_chess.Move("e2e4"))
+    /// >>> board1 == board2
+    /// False
+    /// ```
+    #[inline]
+    fn __eq__(&self, other: &PyBoard) -> bool {
+        self.get_zobrist_hash() == other.get_zobrist_hash()
+    }
+
+    /// Check if two boards are not equal based on their Zobrist hash.
+    ///
+    /// ```python
+    /// >>> board1 = rust_chess.Board()
+    /// >>> board2 = rust_chess.Board()
+    /// >>> board1 != board2
+    /// False
+    /// >>> board1.make_move(rust_chess.Move("e2e4"))
+    /// >>> board1 != board2
+    /// True
+    /// ```
+    #[inline]
+    fn __ne__(&self, other: &PyBoard) -> bool {
+        !self.__eq__(&other)
     }
 
     /// Get the current player to move.
@@ -580,10 +650,9 @@ impl PyBoard {
     /// >>> board.get_pinned_bitboard().popcnt()
     /// 0
     ///
-    /// board.make_move(rust_chess.Move("e2e4"))
-    /// board.make_move(rust_chess.Move("d7d5"))
-    /// board.make_move(rust_chess.Move("d1h5"))
-    /// FIXME
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.make_move(rust_chess.Move("d7d5"))
+    /// >>> board.make_move(rust_chess.Move("d1h5"))
     /// >>> board.get_pinned_bitboard().popcnt()
     /// 1
     /// >>> board.get_pinned_bitboard()
@@ -608,10 +677,9 @@ impl PyBoard {
     /// >>> board.get_checkers_bitboard().popcnt()
     /// 0
     ///
-    /// board.make_move(rust_chess.Move("e2e4"))
-    /// board.make_move(rust_chess.Move("f2f3"))
-    /// board.make_move(rust_chess.Move("d1h5"))
-    /// FIXME
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.make_move(rust_chess.Move("f7f6"))
+    /// >>> board.make_move(rust_chess.Move("d1h5"))
     /// >>> board.get_checkers_bitboard().popcnt()
     /// 1
     /// >>> board.get_checkers_bitboard()
@@ -784,6 +852,8 @@ impl PyBoard {
     /// >>> len(board.generate_moves())
     /// 0
     /// ```
+    
+    // FIXME: Sometimes consumes the entire generator (length -> 0) (maybe only when using next move?)
     #[inline]
     fn remove_generator_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -850,7 +920,7 @@ impl PyBoard {
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())
     /// 20
-    /// >>> board.remove_generator_move(rust_chess.Move("a2a3"))
+    /// >>> board.remove_generator_move(rust_chess.Move("a2a3"))  # FIXME: Currently makes len -> 0
     /// >>> len(board.generate_moves())
     /// 19
     /// >>> board.generate_next_move()
@@ -927,7 +997,7 @@ impl PyBoard {
 
         self.move_gen.borrow_mut(py).__next__()
     }
-    
+
     // TODO: Generate moves_list (PyList<PyMove>)
 
     /// Generate the next remaining moves for the current board.
@@ -940,11 +1010,11 @@ impl PyBoard {
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())
     /// 20
-    /// >>> board.set_generator_mask(rust_chess.Bitboard(11063835754496))
+    /// >>> board.set_generator_mask(rust_chess.Bitboard(402915328))
     /// >>> len(board.generate_moves())
-    /// 3
+    /// 4
     /// >>> list(board.generate_moves())
-    /// [Move(b2, b3, None), Move(d2, d3, None), Move(e2, e4, None)]
+    /// [Move(c2, c3, None), Move(d2, d4, None), Move(e2, e4, None), Move(b1, c3, None)]
     /// >>> len(board.generate_moves())
     /// 0
     /// ```

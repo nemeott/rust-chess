@@ -47,21 +47,6 @@ pub(crate) const BB_RANKS: [PyBitboard; 8] = [
 #[derive(PartialEq, Eq, PartialOrd, Clone, Copy, Default, Hash)]
 pub(crate) struct PyBitboard(pub(crate) chess::BitBoard);
 
-impl PyBitboard {
-    #[inline]
-    fn extract_bitboard_or_u64(&self, other: &Bound<'_, PyAny>) -> PyResult<u64> {
-        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
-            Ok(other_bitboard.0.0)
-        } else if let Ok(other_u64) = other.extract::<u64>() {
-            Ok(other_u64)
-        } else {
-            Err(PyValueError::new_err(
-                "Operand must be a Bitboard or an integer",
-            ))
-        }
-    }
-}
-
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyBitboard {
@@ -293,12 +278,26 @@ impl PyBitboard {
     /// e4
     /// >>> next(bb)
     /// Traceback (most recent call last):
-    /// Exception: message
+    /// ...
+    /// StopIteration
     /// ```
     /// TODO: Next on bb with multiple squares
     #[inline]
     fn __next__(&mut self) -> Option<PySquare> {
         self.0.next().map(PySquare)
+    }
+
+    #[inline]
+    fn extract_bitboard_or_u64(&self, other: &Bound<'_, PyAny>) -> PyResult<u64> {
+        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+            Ok(other_bitboard.0.0)
+        } else if let Ok(other_u64) = other.extract::<u64>() {
+            Ok(other_u64)
+        } else {
+            Err(PyValueError::new_err(
+                "Operand must be a Bitboard or an integer",
+            ))
+        }
     }
 
     /// Rich comparison operations for the Bitboard type.
@@ -357,16 +356,7 @@ impl PyBitboard {
     #[inline]
     fn __richcmp__(&self, other: &Bound<'_, PyAny>, op: CompareOp) -> PyResult<bool> {
         let self_value = self.0.0;
-
-        let other_value = if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
-            other_bitboard.0.0
-        } else if let Ok(other_u64) = other.extract::<u64>() {
-            other_u64
-        } else {
-            return Err(PyValueError::new_err(
-                "Bitboard must be an integer or a Bitboard",
-            ));
-        };
+        let other_value = self.extract_bitboard_or_u64(other)?;
 
         Ok(match op {
             CompareOp::Eq => self_value == other_value,
@@ -379,7 +369,7 @@ impl PyBitboard {
     }
 
     // Bitwise operations
-    
+
     // FIXME: Can't do "${op}=" with self
 
     /// Bitwise NOT operation (~self).
@@ -455,11 +445,11 @@ impl PyBitboard {
     }
 
     /// In-place bitwise AND operation (self &= other).
+    /// Can't do self &= self.
     ///
     /// ```python
     /// >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
     /// >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
-    /// >>> bb1 &= bb1
     /// >>> bb1
     /// . . . . . . . .
     /// . . . . . . . .

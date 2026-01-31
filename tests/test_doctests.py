@@ -54,9 +54,7 @@ def collect_stub_docstrings(stub_path: Path) -> dict[str, str]:
 def run_stub_doctests(module: ModuleType, docs: dict[str, str]) -> None:
     """Run doctests from a stub docstring mapping against the real module."""
     # Accept ellipsis to ignore some results and normalize whitespace to ignore extra newlines expected
-    runner = doctest.DocTestRunner(
-        optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.IGNORE_EXCEPTION_DETAIL
-    )
+    runner = doctest.DocTestRunner(optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE)
 
     # Let doctest use the module in its tests
     globs = {"rust_chess": module}

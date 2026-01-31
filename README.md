@@ -168,7 +168,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Get the color of a square
   - [x] Get the index of square
   - [x] Use a square as an index
-  - [ ] Arithmetic operations (e.g., \_\_add__ for offsets)
+  - [ ] Arithmetic operations (e.g., \_\_add\_\_ for offsets)
   - [x] Rich comparison operators
   - [x] Flip a square vertically
   - [x] Bitboard conversion
@@ -191,12 +191,12 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [ ] Castling move constants
   - [ ] Null move constant?
 - [ ] `MoveGenerator`
-  - [x] Generate the next move, legal move, and legal capture
+  - [x] Generate the next move\*, legal move, and legal capture
   - [x] Generate moves, legal moves, and legal captures
   - [x] Support iterating over the generator
   - [x] Specify the generator mask (bitboard of squares the generator will generate for)
   - [x] Remove a generator mask (bitboard of squares the generator will avoid)
-  - [x] Remove a move from the generator
+  - [ ] Remove a move from the generator
   - [x] Reset the generator
 - [ ] `BoardStatus`
   - [ ] Game-ending conditions

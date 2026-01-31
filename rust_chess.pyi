@@ -439,10 +439,12 @@ class Bitboard:
         e4
         >>> next(bb)
         Traceback (most recent call last):
-        Exception: message
+        ...
+        StopIteration
         ```
         TODO: Next on bb with multiple squares
         """
+    def extract_bitboard_or_u64(self, other: typing.Any) -> builtins.int: ...
     def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
         r"""
         Rich comparison operations for the Bitboard type.
@@ -567,11 +569,11 @@ class Bitboard:
     def __iand__(self, other: typing.Any) -> None:
         r"""
         In-place bitwise AND operation (self &= other).
+        Can't do self &= self.
         
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
-        >>> bb1 &= bb1
         >>> bb1
         . . . . . . . .
         . . . . . . . .
@@ -861,6 +863,18 @@ class Board:
         ```
         """
     @property
+    def zobrist_hash(self) -> builtins.int:
+        r"""
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.zobrist_hash
+        9023329949471135578
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.zobrist_hash
+        9322854110900140515
+        ```
+        """
+    @property
     def turn(self) -> Color:
         r"""
         Get the current player to move.
@@ -941,6 +955,52 @@ class Board:
         ```python
         >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+        ```
+        """
+    def __hash__(self) -> builtins.int:
+        r"""
+        Get the hash of the board based on its Zobrist hash.
+        **This is not the same as the `zobrist_hash` field since Python doesn't support unsigned 64-bit integers for this function.**
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> hash(board)
+        9023329949471135578
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> hash(board)
+        -9123889962809411101
+        >>> board.zobrist_hash
+        9322854110900140515
+        >>> hash(board) == board.zobrist_hash
+        False
+        ```
+        """
+    def __eq__(self, other: Board) -> builtins.bool:
+        r"""
+        Check if two boards are equal based on their Zobrist hash.
+        
+        ```python
+        >>> board1 = rust_chess.Board()
+        >>> board2 = rust_chess.Board()
+        >>> board1 == board2
+        True
+        >>> board1.make_move(rust_chess.Move("e2e4"))
+        >>> board1 == board2
+        False
+        ```
+        """
+    def __ne__(self, other: Board) -> builtins.bool:
+        r"""
+        Check if two boards are not equal based on their Zobrist hash.
+        
+        ```python
+        >>> board1 = rust_chess.Board()
+        >>> board2 = rust_chess.Board()
+        >>> board1 != board2
+        False
+        >>> board1.make_move(rust_chess.Move("e2e4"))
+        >>> board1 != board2
+        True
         ```
         """
     def is_en_passant(self, chess_move: Move) -> builtins.bool:
@@ -1137,10 +1197,9 @@ class Board:
         >>> board.get_pinned_bitboard().popcnt()
         0
         
-        board.make_move(rust_chess.Move("e2e4"))
-        board.make_move(rust_chess.Move("d7d5"))
-        board.make_move(rust_chess.Move("d1h5"))
-        FIXME
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.make_move(rust_chess.Move("d7d5"))
+        >>> board.make_move(rust_chess.Move("d1h5"))
         >>> board.get_pinned_bitboard().popcnt()
         1
         >>> board.get_pinned_bitboard()
@@ -1163,10 +1222,9 @@ class Board:
         >>> board.get_checkers_bitboard().popcnt()
         0
         
-        board.make_move(rust_chess.Move("e2e4"))
-        board.make_move(rust_chess.Move("f2f3"))
-        board.make_move(rust_chess.Move("d1h5"))
-        FIXME
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.make_move(rust_chess.Move("f7f6"))
+        >>> board.make_move(rust_chess.Move("d1h5"))
         >>> board.get_checkers_bitboard().popcnt()
         1
         >>> board.get_checkers_bitboard()
@@ -1371,7 +1429,7 @@ class Board:
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
         20
-        >>> board.remove_generator_move(rust_chess.Move("a2a3"))
+        >>> board.remove_generator_move(rust_chess.Move("a2a3"))  # FIXME: Currently makes len -> 0
         >>> len(board.generate_moves())
         19
         >>> board.generate_next_move()
@@ -1430,11 +1488,11 @@ class Board:
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
         20
-        >>> board.set_generator_mask(rust_chess.Bitboard(11063835754496))
+        >>> board.set_generator_mask(rust_chess.Bitboard(402915328))
         >>> len(board.generate_moves())
-        3
+        4
         >>> list(board.generate_moves())
-        [Move(b2, b3, None), Move(d2, d3, None), Move(e2, e4, None)]
+        [Move(c2, c3, None), Move(d2, d4, None), Move(e2, e4, None), Move(b1, c3, None)]
         >>> len(board.generate_moves())
         0
         ```

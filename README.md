@@ -10,7 +10,7 @@ This repository provides:
 
 ## WARNING
 
-This project is in early alpha/beta phase (pun intended). Expect many breaking changes, refactoring, and new features.
+This project is in alpha/beta phase (pun intended). Expect many breaking changes, refactoring, and new features.
 
 ## Overview
 
@@ -160,7 +160,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Printing
     - [x] Basic characters
     - [x] Unicode characters
-- [ ] `Square`
+- [x] `Square`
   - [x] Square constants
   - [x] Square creation and parsing
   - [x] Get the rank and file from a square
@@ -168,12 +168,11 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Get the color of a square
   - [x] Get the index of square
   - [x] Use a square as an index
-  - [ ] Arithmetic operations (e.g., \_\_add\_\_ for offsets)
   - [x] Rich comparison operators
   - [x] Flip a square vertically
   - [x] Bitboard conversion
   - [x] Get adjacent squares
-  - [ ] Get diagonal squares? (e.g., up_left, up_right)
+  - [x] Get square forward/backward depending on color
   - [x] Printing
 - [ ] `Bitboard`
   - [x] File and rank constants
@@ -211,9 +210,9 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
 - [ ] `Board`
   - [x] FEN parsing and printing
   - [ ] Human readable printing
-    - [ ] Basic characters
+    - [x] Basic characters
     - [ ] ASCII with colors?
-    - [ ] Unicode characters
+    - [x] Unicode characters
   - [x] Get color, piece type, and piece on a square
   - [x] Get king square for a color
   - [x] Get the en passant square
@@ -226,20 +225,17 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
     - [ ] Make null moves (make_null_move)
     - [x] Make null moves on new board
   - [x] Get bitboards
-    - [ ] Pinned pieces
-    - [ ] Checking pieces
+    - [x] Pinned pieces
+    - [x] Checking pieces
     - [x] Color pieces
     - [x] Piece type
     - [x] Piece
     - [x] All pieces
-  - [ ] Transposition table hashes
-    - [ ] Basic hash
-    - [ ] Zobrist hash
-      - [ ] Incremental hashing?
+  - [x] Zobrist hashing
+  - [x] Comparison operators (using Zobrist hash)
   - [ ] Move history
     - [ ] Repetition detection
   - [ ] Piece-Square Table support?
-  - [ ] Comparison operators (PartialOrd, etc.)?
 - [ ] Miscellaneous
   - [ ] PGN support (parsing and writing)
   - [ ] UCI protocol basics

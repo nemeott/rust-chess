@@ -150,8 +150,7 @@ impl PyBitboard {
     ///
     /// ```python```
     /// >>> bb = rust_chess.Bitboard(16961066976411648)
-    /// >>> for line in bb.get_string().split("\n"):
-    /// ...     print(line)
+    /// >>> print(bb.get_string())
     /// . . . . . . . .
     /// . . . . . . . .
     /// . . X . . X . .

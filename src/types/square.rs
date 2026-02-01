@@ -5,7 +5,7 @@ use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::types::{
     bitboard::PyBitboard,
-    color::{COLORS, PyColor},
+    color::{BLACK, COLORS, PyColor, WHITE},
 };
 
 /// Bitboard u64 consisting of dark colored squares (used for color calculation).
@@ -82,8 +82,9 @@ impl PySquare {
     /// Get the index of the square as an integer for indexing.
     ///
     /// ```python
-    /// >>> int(rust_chess.Square("e4"))
-    /// 28
+    /// >>> arr = [1, 2, 3, 4, 5, 6]
+    /// >>> arr[rust_chess.Square("a1")]
+    /// 1
     /// ```
     #[inline]
     fn __index__(&self) -> u8 {
@@ -93,9 +94,8 @@ impl PySquare {
     /// Get the index of the square as an integer.
     ///
     /// ```python
-    /// >>> arr = [1, 2, 3, 4, 5, 6]
-    /// >>> arr[rust_chess.Square("a1")]
-    /// 1
+    /// >>> int(rust_chess.Square("e4"))
+    /// 28
     /// ```
     #[inline]
     fn __int__(&self) -> u8 {
@@ -123,7 +123,7 @@ impl PySquare {
     /// ```
     #[inline]
     fn flip(&self) -> PySquare {
-        PySquare(unsafe { chess::Square::new(self.get_index() ^ 56) })
+        PySquare(unsafe { chess::Square::new(self.0.to_int() ^ 56) })
     }
 
     /// Convert a square to a bitboard.
@@ -366,7 +366,7 @@ impl PySquare {
         self.0.left().map(PySquare)
     }
 
-    /// Returns the square to the right, otherwise None
+    /// Returns the square to the right, otherwise None.
     ///
     /// ```python
     /// >>> rust_chess.H5.right()
@@ -377,5 +377,37 @@ impl PySquare {
     #[inline]
     fn right(&self) -> Option<Self> {
         self.0.right().map(PySquare)
+    }
+
+    /// Returns the square forward in the given color's perspective, otherwise None.
+    ///
+    /// ```python
+    /// >>> rust_chess.E4.forward(rust_chess.WHITE)
+    /// e5
+    /// >>> rust_chess.E4.forward(rust_chess.BLACK)
+    /// e3
+    /// ```
+    #[inline]
+    fn forward(&self, color: &PyColor) -> Option<Self> {
+        match *color {
+            WHITE => self.up(),
+            BLACK => self.down(),
+        }
+    }
+
+    /// Returns the square backward in the given color's perspective, otherwise None.
+    ///
+    /// ```python
+    /// >>> rust_chess.E4.backward(rust_chess.WHITE)
+    /// e3
+    /// >>> rust_chess.E4.backward(rust_chess.BLACK)
+    /// e5
+    /// ```    
+    #[inline]
+    fn backward(&self, color: &PyColor) -> Option<Self> {
+        match *color {
+            WHITE => self.down(),
+            BLACK => self.up(),
+        }
     }
 }

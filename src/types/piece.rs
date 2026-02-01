@@ -1,7 +1,7 @@
 use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
-use crate::types::color::{PyColor, WHITE};
+use crate::types::color::{BLACK, PyColor, WHITE};
 
 // Piece constants
 pub(crate) const PAWN: PyPieceType = PyPieceType(chess::Piece::Pawn);
@@ -135,20 +135,33 @@ impl PyPieceType {
     }
 
     /// Convert the piece to a unicode string.
-    /// Returns the hollow unicode piece by default.
-    /// If using the optional color parameter, white is hollow and black is full.
+    /// Returns the white unicode piece by default.
+    /// 
+    /// The dark mode parameter is enabled by default.
+    /// This inverts the color of the piece, which looks correct on a dark background.
+    /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
+    /// Disable if you are a psychopath and use light mode in your terminal/IDE.
     ///
     /// ```python
     /// >>> rust_chess.PAWN.get_unicode()
-    /// '♙'
+    /// '♟'
     /// >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK)
+    /// '♙'
+    /// >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK, dark_mode=False) # Would look correct as black text on light background
     /// '♟'
     /// ```
     #[rustfmt::skip]
     #[inline]
-    #[pyo3(signature = (color = WHITE))] // Default piece color is white (hollow)
-    fn get_unicode(&self, color: PyColor) -> &'static str {
-        match self.get_string(color).as_str() {
+    #[pyo3(signature = (color = WHITE, dark_mode = true))] // Default piece color is white, and dark mode enabled
+    fn get_unicode(&self, color: PyColor, dark_mode: bool) -> &'static str {
+        // Flip the color if it is dark mode (looks more correct)
+        let actual_color = if dark_mode {
+            if color == WHITE { BLACK } else { WHITE }
+        } else {
+            color
+        };
+        
+        match self.get_string(actual_color).as_str() {
             "P" => "♙", "p" => "♟",
             "N" => "♘", "n" => "♞",
             "B" => "♗", "b" => "♝",
@@ -229,7 +242,7 @@ impl PyPiece {
     /// 'p'
     /// ```
     #[inline]
-    fn get_string(&self) -> String {
+    pub(crate) fn get_string(&self) -> String {
         self.piece_type.get_string(self.color)
     }
 
@@ -260,18 +273,25 @@ impl PyPiece {
     fn __repr__(&self) -> String {
         self.get_string()
     }
-
+    
     /// Convert the piece to a unicode string.
-    /// White is hollow and black is full.
+    /// 
+    /// The dark mode parameter is enabled by default.
+    /// This inverts the color of the piece, which looks correct on a dark background.
+    /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
+    /// Disable if you are a psychopath and use light mode in your terminal/IDE.
     ///
     /// ```python
-    /// >>> rust_chess.WHITE_PAWN.get_unicode()
+    /// >>> rust_chess.PAWN.get_unicode()
+    /// '♟'
+    /// >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK)
     /// '♙'
-    /// >>> rust_chess.BLACK_PAWN.get_unicode()
+    /// >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK, dark_mode=False) # Would look correct as black text on light background
     /// '♟'
     /// ```
+    #[pyo3(signature = (dark_mode = true))]
     #[inline]
-    fn get_unicode(&self) -> &'static str {
-        self.piece_type.get_unicode(self.color)
+    pub(crate) fn get_unicode(&self, dark_mode: bool) -> &'static str {
+        self.piece_type.get_unicode(self.color, dark_mode)
     }
 }

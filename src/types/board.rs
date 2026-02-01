@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::str::FromStr;
 
 use pyo3::{exceptions::PyValueError, prelude::*};
@@ -136,18 +137,7 @@ impl PyBoard {
     /// Get the FEN string representation of the board.
     ///
     /// ```python
-    /// >>> print(rust_chess.Board())
-    /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    /// ```
-    #[inline]
-    fn __str__(&self) -> String {
-        self.get_fen()
-    }
-
-    /// Get the FEN string representation of the board.
-    ///
-    /// ```python
-    /// >>> print(rust_chess.Board())
+    /// >>> rust_chess.Board()
     /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     /// ```
     #[inline]
@@ -195,6 +185,105 @@ impl PyBoard {
             halfmove_clock,
             fullmove_number,
         })
+    }
+
+    /// Get the string representation of the board.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> print(board.display())
+    /// r n b q k b n r
+    /// p p p p p p p p
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// P P P P P P P P
+    /// R N B Q K B N R
+    ///
+    /// ```
+    #[inline]
+    fn display(&self) -> String {
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                if let Some(piece) = self.get_piece_on(square) {
+                    unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
+                } else {
+                    unsafe { write!(s, ". ").unwrap_unchecked() };
+                }
+            }
+            unsafe { write!(s, "\n").unwrap_unchecked() };
+        }
+        s
+    }
+
+    /// Get the string representation of the board.
+    ///
+    /// ```python
+    /// >>> print(rust_chess.Board())
+    /// r n b q k b n r
+    /// p p p p p p p p
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// P P P P P P P P
+    /// R N B Q K B N R
+    ///
+    /// ```
+    #[inline]
+    fn __str__(&self) -> String {
+        self.display()
+    }
+    
+    /// Get the unicode string representation of the board.
+    /// 
+    /// The dark mode parameter is enabled by default.
+    /// This inverts the color of the piece, which looks correct on a dark background.
+    /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
+    /// Disable if you are a psychopath and use light mode in your terminal/IDE.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> print(board.display_unicode())
+    /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+    /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+    /// · · · · · · · ·
+    /// · · · · · · · ·
+    /// · · · · · · · ·
+    /// · · · · · · · ·
+    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    ///
+    /// >>> print(board.display_unicode(dark_mode=False))
+    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// · · · · · · · ·
+    /// · · · · · · · ·
+    /// · · · · · · · ·
+    /// · · · · · · · ·
+    /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+    /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+    ///
+    /// ```
+    #[inline]
+    #[pyo3(signature = (dark_mode = true))]
+    fn display_unicode(&self, dark_mode: bool) -> String {
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                if let Some(piece) = self.get_piece_on(square) {
+                    unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
+                } else {
+                    unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
+                }
+            }
+            unsafe { write!(s, "\n").unwrap_unchecked() };
+        }
+        s
     }
 
     // Get the Zobrist hash of the board
@@ -503,10 +592,10 @@ impl PyBoard {
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
-    /// >>> print(board)
+    /// >>> board
     /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     /// >>> new_board = board.make_null_move_new()
-    /// >>> print(new_board)
+    /// >>> new_board
     /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1
     ///
     /// >>> board = rust_chess.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
@@ -555,9 +644,18 @@ impl PyBoard {
     /// >>> board = rust_chess.Board()
     /// >>> board.make_move(rust_chess.Move("e2e4"))
     /// >>> print(board)
-    /// rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+    /// r n b q k b n r
+    /// p p p p p p p p
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . P . . .
+    /// . . . . . . . .
+    /// P P P P . P P P
+    /// R N B Q K B N R
+    ///
     /// ```
     #[pyo3(signature = (chess_move, check_legality = true))]
+    #[inline]
     fn make_move(&mut self, chess_move: PyMove, check_legality: bool) -> PyResult<()> {
         // If we are checking legality, check if the move is legal
         if check_legality && !self.is_legal_move(chess_move) {
@@ -601,11 +699,28 @@ impl PyBoard {
     /// >>> old_board = rust_chess.Board()
     /// >>> new_board = old_board.make_move_new(rust_chess.Move("e2e4"))
     /// >>> print(new_board)
-    /// rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+    /// r n b q k b n r
+    /// p p p p p p p p
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . P . . .
+    /// . . . . . . . .
+    /// P P P P . P P P
+    /// R N B Q K B N R
+    ///
     /// >>> print(old_board)
-    /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    /// r n b q k b n r
+    /// p p p p p p p p
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// . . . . . . . .
+    /// P P P P P P P P
+    /// R N B Q K B N R
+    ///
     /// ```
     #[pyo3(signature = (chess_move, check_legality = true))]
+    #[inline]
     fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {
         // If we are checking legality, check if the move is legal
         if check_legality && !self.is_legal_move(chess_move) {
@@ -852,7 +967,7 @@ impl PyBoard {
     /// >>> len(board.generate_moves())
     /// 0
     /// ```
-    
+
     // FIXME: Sometimes consumes the entire generator (length -> 0) (maybe only when using next move?)
     #[inline]
     fn remove_generator_move(&mut self, chess_move: PyMove) {

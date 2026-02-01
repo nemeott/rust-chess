@@ -323,8 +323,7 @@ class Bitboard:
         
         ```python```
         >>> bb = rust_chess.Bitboard(16961066976411648)
-        >>> for line in bb.get_string().split("\n"):
-        ...     print(line)
+        >>> print(bb.get_string())
         . . . . . . . .
         . . . . . . . .
         . . X . . X . .
@@ -929,21 +928,12 @@ class Board:
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         ```
         """
-    def __str__(self) -> builtins.str:
-        r"""
-        Get the FEN string representation of the board.
-        
-        ```python
-        >>> print(rust_chess.Board())
-        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-        ```
-        """
     def __repr__(self) -> builtins.str:
         r"""
         Get the FEN string representation of the board.
         
         ```python
-        >>> print(rust_chess.Board())
+        >>> rust_chess.Board()
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
         ```
         """
@@ -955,6 +945,74 @@ class Board:
         ```python
         >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+        ```
+        """
+    def display(self) -> builtins.str:
+        r"""
+        Get the string representation of the board.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> print(board.display())
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        
+        ```
+        """
+    def __str__(self) -> builtins.str:
+        r"""
+        Get the string representation of the board.
+        
+        ```python
+        >>> print(rust_chess.Board())
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        
+        ```
+        """
+    def display_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
+        r"""
+        Get the unicode string representation of the board.
+        
+        The dark mode parameter is enabled by default.
+        This inverts the color of the piece, which looks correct on a dark background.
+        Unicode assumes black text on white background, where in most terminals, it is the opposite.
+        Disable if you are a psychopath and use light mode in your terminal/IDE.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> print(board.display_unicode())
+        ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+        ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        
+        >>> print(board.display_unicode(dark_mode=False))
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+        ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+        
         ```
         """
     def __hash__(self) -> builtins.int:
@@ -1144,10 +1202,10 @@ class Board:
         
         ```python
         >>> board = rust_chess.Board()
-        >>> print(board)
+        >>> board
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
         >>> new_board = board.make_null_move_new()
-        >>> print(new_board)
+        >>> new_board
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1
         
         >>> board = rust_chess.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
@@ -1168,7 +1226,15 @@ class Board:
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
         >>> print(board)
-        rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . P . . .
+        . . . . . . . .
+        P P P P . P P P
+        R N B Q K B N R
+        
         ```
         """
     def make_move_new(self, chess_move: Move, check_legality: builtins.bool = True) -> Board:
@@ -1183,9 +1249,25 @@ class Board:
         >>> old_board = rust_chess.Board()
         >>> new_board = old_board.make_move_new(rust_chess.Move("e2e4"))
         >>> print(new_board)
-        rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . P . . .
+        . . . . . . . .
+        P P P P . P P P
+        R N B Q K B N R
+        
         >>> print(old_board)
-        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        
         ```
         """
     def get_pinned_bitboard(self) -> Bitboard:
@@ -2009,15 +2091,21 @@ class Piece:
         p
         ```
         """
-    def get_unicode(self) -> builtins.str:
+    def get_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
         r"""
         Convert the piece to a unicode string.
-        White is hollow and black is full.
+        
+        The dark mode parameter is enabled by default.
+        This inverts the color of the piece, which looks correct on a dark background.
+        Unicode assumes black text on white background, where in most terminals, it is the opposite.
+        Disable if you are a psychopath and use light mode in your terminal/IDE.
         
         ```python
-        >>> rust_chess.WHITE_PAWN.get_unicode()
+        >>> rust_chess.PAWN.get_unicode()
+        '♟'
+        >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK)
         '♙'
-        >>> rust_chess.BLACK_PAWN.get_unicode()
+        >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK, dark_mode=False) # Would look correct as black text on light background
         '♟'
         ```
         """
@@ -2107,16 +2195,22 @@ class PieceType:
         P
         ```
         """
-    def get_unicode(self, color: Color = True) -> builtins.str:
+    def get_unicode(self, color: Color = True, dark_mode: builtins.bool = True) -> builtins.str:
         r"""
         Convert the piece to a unicode string.
-        Returns the hollow unicode piece by default.
-        If using the optional color parameter, white is hollow and black is full.
+        Returns the white unicode piece by default.
+        
+        The dark mode parameter is enabled by default.
+        This inverts the color of the piece, which looks correct on a dark background.
+        Unicode assumes black text on white background, where in most terminals, it is the opposite.
+        Disable if you are a psychopath and use light mode in your terminal/IDE.
         
         ```python
         >>> rust_chess.PAWN.get_unicode()
-        '♙'
+        '♟'
         >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK)
+        '♙'
+        >>> rust_chess.PAWN.get_unicode(rust_chess.BLACK, dark_mode=False) # Would look correct as black text on light background
         '♟'
         ```
         """
@@ -2178,8 +2272,9 @@ class Square:
         Get the index of the square as an integer for indexing.
         
         ```python
-        >>> int(rust_chess.Square("e4"))
-        28
+        >>> arr = [1, 2, 3, 4, 5, 6]
+        >>> arr[rust_chess.Square("a1")]
+        1
         ```
         """
     def __int__(self) -> builtins.int:
@@ -2187,9 +2282,8 @@ class Square:
         Get the index of the square as an integer.
         
         ```python
-        >>> arr = [1, 2, 3, 4, 5, 6]
-        >>> arr[rust_chess.Square("a1")]
-        1
+        >>> int(rust_chess.Square("e4"))
+        28
         ```
         """
     def __hash__(self) -> builtins.int:
@@ -2376,13 +2470,35 @@ class Square:
         """
     def right(self) -> typing.Optional[Square]:
         r"""
-        Returns the square to the right, otherwise None
+        Returns the square to the right, otherwise None.
         
         ```python
         >>> rust_chess.H5.right()
         
         >>> rust_chess.H5.right() == None
         True
+        ```
+        """
+    def forward(self, color: Color) -> typing.Optional[Square]:
+        r"""
+        Returns the square forward in the given color's perspective, otherwise None.
+        
+        ```python
+        >>> rust_chess.E4.forward(rust_chess.WHITE)
+        e5
+        >>> rust_chess.E4.forward(rust_chess.BLACK)
+        e3
+        ```
+        """
+    def backward(self, color: Color) -> typing.Optional[Square]:
+        r"""
+        Returns the square backward in the given color's perspective, otherwise None.
+        
+        ```python
+        >>> rust_chess.E4.backward(rust_chess.WHITE)
+        e3
+        >>> rust_chess.E4.backward(rust_chess.BLACK)
+        e5
         ```
         """
 

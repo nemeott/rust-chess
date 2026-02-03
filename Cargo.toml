@@ -15,15 +15,16 @@ pyo3-stub-gen = "0.18.0" # Enable auto generating pyo3 stub files
 
 [lints.clippy]
 pedantic = "warn"
+nursery = "warn"
 
-[profile.dev] # Not actually used currently
-lto = false # Faster build time
+[profile.dev] # Faster build time
+lto = false
 panic = "unwind"
 strip = "none"
 incremental = true # Store previous build (also sets codegen-units to 256)
 debug = 0
 
-[profile.release] # Release profile optimizations
+[profile.release] # Performance optimized
 lto = true
 codegen-units = 1
 opt-level = 3

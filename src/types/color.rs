@@ -39,11 +39,7 @@ impl PyColor {
     /// ```
     #[inline]
     fn get_string(&self) -> &str {
-        if *self == WHITE {
-            "WHITE"
-        } else {
-            "BLACK"
-        }
+        if *self == WHITE { "WHITE" } else { "BLACK" }
     }
 
     /// Get the color as a string.
@@ -71,7 +67,7 @@ impl PyColor {
     fn __bool__(&self) -> bool {
         *self == WHITE
     }
-    
+
     #[inline]
     fn __hash__(&self) -> u64 {
         self.__bool__() as u64
@@ -87,11 +83,7 @@ impl PyColor {
     /// ```
     #[inline]
     fn __repr__(&self) -> &str {
-        if self.__bool__() {
-            "True"
-        } else {
-            "False"
-        }
+        if self.__bool__() { "True" } else { "False" }
     }
 
     /// Rich comparison operations for Color.

@@ -197,6 +197,10 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Remove a generator mask (bitboard of squares the generator will avoid)
   - [ ] Remove a move from the generator
   - [x] Reset the generator
+- [x] `CastleRights`
+  - [x] Get castle rights (No rights, kingside, queenside, both)
+  - [ ] Set castle rights? (use cases?)
+  - [x] Rich comparison operators
 - [ ] `BoardStatus`
   - [ ] Game-ending conditions
     - [x] Checkmate
@@ -206,7 +210,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [ ] Potential draw conditions
     - [ ] Threefold repetition
     - [x] Fifty moves
-  - [ ] Comparison operators (PartialOrd, etc.)
+  - [x] Rich comparison operators
 - [ ] `Board`
   - [x] FEN parsing and printing
   - [ ] Human readable printing

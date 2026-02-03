@@ -61,6 +61,7 @@ __all__ = [
     "C7",
     "C8",
     "COLORS",
+    "CastleRights",
     "Color",
     "D1",
     "D2",
@@ -840,6 +841,8 @@ class Board:
     r"""
     Board class.
     Represents the state of a chess board.
+    
+    TODO: docs
     """
     @property
     def halfmove_clock(self) -> builtins.int:
@@ -1061,40 +1064,137 @@ class Board:
         True
         ```
         """
-    def is_en_passant(self, chess_move: Move) -> builtins.bool:
+    def get_king_square(self, color: Color) -> Square:
         r"""
-        Check if a move is en passant.
-        
-        Assumes the move is legal.
+        Get the king square of a color
         
         ```python
-        >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
-        False
-        
-        >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
-        >>> board.is_en_passant(rust_chess.Move("e5f6"))
-        True
+        >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
+        e1
+        >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
+        e8
         ```
         """
-    def is_capture(self, chess_move: Move) -> builtins.bool:
+    def get_castle_rights(self, color: Color) -> CastleRights:
         r"""
-        Check if a move is a capture.
-        
-        Assumes the move is legal.
+        Get the castle rights of a color.
+        Returns a `CastlingRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
         
         ```python
         >>> board = rust_chess.Board()
-        >>> board.is_capture(rust_chess.Move("e2e4"))
+        >>> board.get_castle_rights(board.turn)
+        CastleRights.BOTH
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.get_castle_rights(rust_chess.WHITE)
+        CastleRights.QUEEN_SIDE
+        >>> board.get_castle_rights(rust_chess.BLACK)
+        CastleRights.NO_RIGHTS
+        ```
+        """
+    def get_my_castle_rights(self) -> CastleRights:
+        r"""
+        Get the castle rights of the current player to move.
+        
+        ```python
+        >>> rust_chess.Board().get_my_castle_rights()
+        CastleRights.BOTH
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.get_my_castle_rights()  # White to move
+        CastleRights.QUEEN_SIDE
+        ```
+        """
+    def get_their_castle_rights(self) -> CastleRights:
+        r"""
+        Get the castle rights of the opponent.
+        
+        ```python
+        >>> rust_chess.Board().get_their_castle_rights()
+        CastleRights.BOTH
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.get_their_castle_rights()  # White to move (so black is opponent)
+        CastleRights.NO_RIGHTS
+        ```
+        """
+    def can_castle(self, color: Color) -> builtins.bool:
+        r"""
+        Check if a color can castle (either side).
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.can_castle(board.turn)
+        True
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.can_castle(rust_chess.WHITE)
+        True
+        >>> board.can_castle(rust_chess.BLACK)
         False
-        >>> board.make_move(rust_chess.Move("e2e4"))
+        ```
+        """
+    def can_castle_kingside(self, color: Color) -> builtins.bool:
+        r"""
+        Check if a color can castle kingside.
         
-        >>> board.make_move(rust_chess.Move("d7d5"))
-        >>> board.is_capture(rust_chess.Move("e4d5"))
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.can_castle_kingside(board.turn)
         True
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.can_castle_kingside(rust_chess.WHITE)
+        False
+        ```
+        """
+    def can_castle_queenside(self, color: Color) -> builtins.bool:
+        r"""
+        Check if a color can castle queenside.
         
-        >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
-        >>> ep_board.is_capture(rust_chess.Move("e5f6"))
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.can_castle_queenside(board.turn)
         True
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.can_castle_queenside(rust_chess.WHITE)
+        True
+        >>> board.can_castle_queenside(rust_chess.BLACK)
+        False
+        ```
+        """
+    def is_castling(self, chess_move: Move) -> builtins.bool:
+        r"""
+        Check if a move is castling.
+        Assumes the move is pseudo-legal.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_castling(rust_chess.Move("e1g1"))
+        True
+        >>> board.is_castling(rust_chess.Move("e1e2"))
+        False
+        ```
+        """
+    def is_castling_kingside(self, chess_move: Move) -> builtins.bool:
+        r"""
+        Check if a move is kingside castling.
+        Assumes the move is pseudo-legal.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
+        True
+        >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
+        False
+        ```
+        """
+    def is_castling_queenside(self, chess_move: Move) -> builtins.bool:
+        r"""
+        Check if a move is queenside castling.
+        Assumes the move is pseudo-legal.    
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_castling_queenside(rust_chess.Move("e1c1"))
+        True
+        >>> board.is_castling_queenside(rust_chess.Move("e1g1"))
+        False
         ```
         """
     def get_piece_type_on(self, square: Square) -> typing.Optional[PieceType]:
@@ -1136,15 +1236,40 @@ class Board:
         k
         ```
         """
-    def get_king_square(self, color: Color) -> Square:
+    def is_en_passant(self, chess_move: Move) -> builtins.bool:
         r"""
-        Get the king square of a color
+        Check if a move is en passant.
+        
+        Assumes the move is legal.
         
         ```python
-        >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
-        e1
-        >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
-        e8
+        >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
+        False
+        
+        >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+        >>> board.is_en_passant(rust_chess.Move("e5f6"))
+        True
+        ```
+        """
+    def is_capture(self, chess_move: Move) -> builtins.bool:
+        r"""
+        Check if a move is a capture.
+        
+        Assumes the move is legal.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_capture(rust_chess.Move("e2e4"))
+        False
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        
+        >>> board.make_move(rust_chess.Move("d7d5"))
+        >>> board.is_capture(rust_chess.Move("e4d5"))
+        True
+        
+        >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
+        >>> ep_board.is_capture(rust_chess.Move("e5f6"))
+        True
         ```
         """
     def is_zeroing(self, chess_move: Move) -> builtins.bool:
@@ -2510,6 +2635,7 @@ class BoardStatus(enum.Enum):
     The status can be one of the following:
         Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
     Supports comparison and equality.
+    TODO: docs
     """
     ONGOING = ...
     SEVENTY_FIVE_MOVES = ...
@@ -2517,4 +2643,17 @@ class BoardStatus(enum.Enum):
     INSUFFICIENT_MATERIAL = ...
     STALEMATE = ...
     CHECKMATE = ...
+
+@typing.final
+class CastleRights(enum.Enum):
+    r"""
+    Castle rights enum class..
+    The castle rights can be one of the following:
+        No rights, king-side, queen-side, both.
+    TODO: docs
+    """
+    NO_RIGHTS = ...
+    KING_SIDE = ...
+    QUEEN_SIDE = ...
+    BOTH = ...
 

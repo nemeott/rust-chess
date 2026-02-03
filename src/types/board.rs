@@ -13,7 +13,6 @@ use crate::types::{
 };
 
 // TODO: Comparision and partial ord (use Zobrist?)
-//
 // TODO: Get castle rights
 
 /// Board status enum class.
@@ -21,7 +20,7 @@ use crate::types::{
 /// The status can be one of the following:
 ///     Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
 /// Supports comparison and equality.
-///
+/// TODO: docs
 #[gen_stub_pyclass_enum]
 #[pyclass(name = "BoardStatus", frozen, eq, ord)]
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
@@ -40,11 +39,28 @@ pub(crate) enum PyBoardStatus {
     Checkmate,
 }
 
-// TODO: Comparison and partial ord
+/// Castle rights enum class..
+/// The castle rights can be one of the following:
+///     No rights, king-side, queen-side, both.
+/// TODO: docs
+#[gen_stub_pyclass_enum]
+#[pyclass(name = "CastleRights", frozen, eq, ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
+pub(crate) enum PyCastleRights {
+    #[pyo3(name = "NO_RIGHTS")]
+    NoRights,
+    #[pyo3(name = "KING_SIDE")]
+    KingSide,
+    #[pyo3(name = "QUEEN_SIDE")]
+    QueenSide,
+    #[pyo3(name = "BOTH")]
+    Both,
+}
 
 /// Board class.
 /// Represents the state of a chess board.
 ///
+/// TODO: docs
 #[gen_stub_pyclass]
 #[pyclass(name = "Board")]
 pub(crate) struct PyBoard {
@@ -237,9 +253,9 @@ impl PyBoard {
     fn __str__(&self) -> String {
         self.display()
     }
-    
+
     /// Get the unicode string representation of the board.
-    /// 
+    ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
     /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
@@ -375,6 +391,250 @@ impl PyBoard {
         PyColor(self.board.side_to_move())
     }
 
+    /// Get the king square of a color
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
+    /// e1
+    /// >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
+    /// e8
+    /// ```
+    #[inline]
+    fn get_king_square(&self, color: PyColor) -> PySquare {
+        PySquare(self.board.king_square(color.0))
+    }
+
+    /// Get the castle rights of a color.
+    /// Returns a `CastlingRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.get_castle_rights(board.turn)
+    /// CastleRights.BOTH
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.get_castle_rights(rust_chess.WHITE)
+    /// CastleRights.QUEEN_SIDE
+    /// >>> board.get_castle_rights(rust_chess.BLACK)
+    /// CastleRights.NO_RIGHTS
+    /// ```
+    #[inline]
+    fn get_castle_rights(&self, color: PyColor) -> PyCastleRights {
+        match self.board.castle_rights(color.0) {
+            chess::CastleRights::NoRights => PyCastleRights::NoRights,
+            chess::CastleRights::KingSide => PyCastleRights::KingSide,
+            chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
+            chess::CastleRights::Both => PyCastleRights::Both,
+        }
+    }
+
+    /// Get the castle rights of the current player to move.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_my_castle_rights()
+    /// CastleRights.BOTH
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.get_my_castle_rights()  # White to move
+    /// CastleRights.QUEEN_SIDE
+    /// ```
+    #[inline]
+    fn get_my_castle_rights(&self) -> PyCastleRights {
+        self.get_castle_rights(self.get_turn())
+    }
+
+    /// Get the castle rights of the opponent.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_their_castle_rights()
+    /// CastleRights.BOTH
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.get_their_castle_rights()  # White to move (so black is opponent)
+    /// CastleRights.NO_RIGHTS
+    /// ```
+    #[inline]
+    fn get_their_castle_rights(&self) -> PyCastleRights {
+        self.get_castle_rights(PyColor(!self.board.side_to_move()))
+    }
+
+    /// Check if a color can castle (either side).
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.can_castle(board.turn)
+    /// True
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.can_castle(rust_chess.WHITE)
+    /// True
+    /// >>> board.can_castle(rust_chess.BLACK)
+    /// False
+    /// ```
+    #[inline]
+    fn can_castle(&self, color: PyColor) -> bool {
+        self.board.castle_rights(color.0) != chess::CastleRights::NoRights
+    }
+
+    /// Check if a color can castle kingside.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.can_castle_kingside(board.turn)
+    /// True
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.can_castle_kingside(rust_chess.WHITE)
+    /// False
+    /// ```
+    #[inline]
+    fn can_castle_kingside(&self, color: PyColor) -> bool {
+        self.board.castle_rights(color.0).has_kingside()
+    }
+
+    /// Check if a color can castle queenside.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.can_castle_queenside(board.turn)
+    /// True
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.can_castle_queenside(rust_chess.WHITE)
+    /// True
+    /// >>> board.can_castle_queenside(rust_chess.BLACK)
+    /// False
+    /// ```
+    #[inline]
+    fn can_castle_queenside(&self, color: PyColor) -> bool {
+        self.board.castle_rights(color.0).has_queenside()
+    }
+
+    /// Check if a move is castling.
+    /// Assumes the move is pseudo-legal.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.is_castling(rust_chess.Move("e1g1"))
+    /// True
+    /// >>> board.is_castling(rust_chess.Move("e1e2"))
+    /// False
+    /// ```
+    #[inline]
+    fn is_castling(&self, chess_move: PyMove) -> bool {
+        let source = chess_move.0.get_source();
+
+        // Check if the moving piece is a king
+        if self
+            .board
+            .piece_on(source)
+            .is_some_and(|p| p == chess::Piece::King)
+        {
+            // Check if the move is two squares horizontally
+            let dest = chess_move.0.get_dest();
+            return (dest.to_index() as i8 - source.to_index() as i8).abs() == 2;
+        }
+        return false;
+    }
+
+    /// Check if a move is kingside castling.
+    /// Assumes the move is pseudo-legal.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
+    /// True
+    /// >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
+    /// False
+    /// ```
+    #[inline]
+    fn is_castling_kingside(&self, chess_move: PyMove) -> bool {
+        let source = chess_move.0.get_source();
+
+        // Check if the moving piece is a king
+        if self
+            .board
+            .piece_on(source)
+            .is_some_and(|p| p == chess::Piece::King)
+        {
+            // Check if the move is two squares to the right
+            let dest = chess_move.0.get_dest();
+            return dest.to_index() as i8 - source.to_index() as i8 == 2;
+        }
+        return false;
+    }
+
+    /// Check if a move is queenside castling.
+    /// Assumes the move is pseudo-legal.    
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.is_castling_queenside(rust_chess.Move("e1c1"))
+    /// True
+    /// >>> board.is_castling_queenside(rust_chess.Move("e1g1"))
+    /// False
+    /// ```
+    #[inline]
+    fn is_castling_queenside(&self, chess_move: PyMove) -> bool {
+        let source = chess_move.0.get_source();
+
+        // Check if the moving piece is a king
+        if self
+            .board
+            .piece_on(source)
+            .is_some_and(|p| p == chess::Piece::King)
+        {
+            // Check if the move is two squares to the left
+            let dest = chess_move.0.get_dest();
+            return dest.to_index() as i8 - source.to_index() as i8 == -2;
+        }
+        return false;
+    }
+
+    /// Get the piece type on a square, otherwise None.
+    /// Different than `get_piece_on` because it returns the piece type, which does not include color.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
+    /// R
+    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
+    /// K
+    /// ```
+    #[inline]
+    fn get_piece_type_on(&self, square: PySquare) -> Option<PyPieceType> {
+        // Get the piece on the square using the chess crate
+        self.board.piece_on(square.0).map(PyPieceType)
+    }
+
+    /// Get the color of the piece on a square, otherwise None.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_color_on(rust_chess.A1)
+    /// True
+    /// >>> print(rust_chess.Board().get_color_on(rust_chess.A1))
+    /// WHITE
+    /// >>> rust_chess.Board().get_color_on(rust_chess.E8)
+    /// False
+    /// >>> print(rust_chess.Board().get_color_on(rust_chess.E8))
+    /// BLACK
+    /// ```
+    #[inline]
+    fn get_color_on(&self, square: PySquare) -> Option<PyColor> {
+        // Get the color of the piece on the square using the chess crate
+        self.board.color_on(square.0).map(PyColor)
+    }
+
+    /// Get the piece on a square (color-inclusive), otherwise None.
+    /// Different than `get_piece_on` because it returns the piece, which includes color.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_piece_on(rust_chess.A1)
+    /// R
+    /// >>> rust_chess.Board().get_piece_on(rust_chess.E8)
+    /// k
+    /// ```
+    #[inline]
+    fn get_piece_on(&self, square: PySquare) -> Option<PyPiece> {
+        self.get_color_on(square).and_then(|color| {
+            self.get_piece_type_on(square)
+                .map(|piece_type| PyPiece { piece_type, color })
+        })
+    }
+
     /// Get the en passant square, otherwise None.
     ///
     /// ```python
@@ -462,69 +722,6 @@ impl PyBoard {
     fn is_capture(&self, chess_move: PyMove) -> bool {
         self.board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
             || self.is_en_passant(chess_move) // Or the move is en passant (also a capture)
-    }
-
-    /// Get the piece type on a square, otherwise None.
-    /// Different than `get_piece_on` because it returns the piece type, which does not include color.
-    ///
-    /// ```python
-    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
-    /// R
-    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
-    /// K
-    /// ```
-    #[inline]
-    fn get_piece_type_on(&self, square: PySquare) -> Option<PyPieceType> {
-        // Get the piece on the square using the chess crate
-        self.board.piece_on(square.0).map(PyPieceType)
-    }
-
-    /// Get the color of the piece on a square, otherwise None.
-    ///
-    /// ```python
-    /// >>> rust_chess.Board().get_color_on(rust_chess.A1)
-    /// True
-    /// >>> print(rust_chess.Board().get_color_on(rust_chess.A1))
-    /// WHITE
-    /// >>> rust_chess.Board().get_color_on(rust_chess.E8)
-    /// False
-    /// >>> print(rust_chess.Board().get_color_on(rust_chess.E8))
-    /// BLACK
-    /// ```
-    #[inline]
-    fn get_color_on(&self, square: PySquare) -> Option<PyColor> {
-        // Get the color of the piece on the square using the chess crate
-        self.board.color_on(square.0).map(PyColor)
-    }
-
-    /// Get the piece on a square (color-inclusive), otherwise None.
-    /// Different than `get_piece_on` because it returns the piece, which includes color.
-    ///
-    /// ```python
-    /// >>> rust_chess.Board().get_piece_on(rust_chess.A1)
-    /// R
-    /// >>> rust_chess.Board().get_piece_on(rust_chess.E8)
-    /// k
-    /// ```
-    #[inline]
-    fn get_piece_on(&self, square: PySquare) -> Option<PyPiece> {
-        self.get_color_on(square).and_then(|color| {
-            self.get_piece_type_on(square)
-                .map(|piece_type| PyPiece { piece_type, color })
-        })
-    }
-
-    /// Get the king square of a color
-    ///
-    /// ```python
-    /// >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
-    /// e1
-    /// >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
-    /// e8
-    /// ```
-    #[inline]
-    fn get_king_square(&self, color: PyColor) -> PySquare {
-        PySquare(self.board.king_square(color.0))
     }
 
     /// Check if a move is a capture or a pawn move.

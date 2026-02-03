@@ -10,16 +10,16 @@ mod types;
 
 use crate::types::{
     bitboard::{
-        PyBitboard, BB_EMPTY, BB_FILES, BB_FILE_A, BB_FILE_B, BB_FILE_C, BB_FILE_D, BB_FILE_E,
-        BB_FILE_F, BB_FILE_G, BB_FILE_H, BB_FULL, BB_RANKS, BB_RANK_1, BB_RANK_2, BB_RANK_3,
-        BB_RANK_4, BB_RANK_5, BB_RANK_6, BB_RANK_7, BB_RANK_8,
+        BB_EMPTY, BB_FILE_A, BB_FILE_B, BB_FILE_C, BB_FILE_D, BB_FILE_E, BB_FILE_F, BB_FILE_G,
+        BB_FILE_H, BB_FILES, BB_FULL, BB_RANK_1, BB_RANK_2, BB_RANK_3, BB_RANK_4, BB_RANK_5,
+        BB_RANK_6, BB_RANK_7, BB_RANK_8, BB_RANKS, PyBitboard,
     },
-    board::{PyBoard, PyBoardStatus},
-    color::{PyColor, BLACK, COLORS, WHITE},
-    piece::{
-        pieces::*, PyPiece, PyPieceType, BISHOP, KING, KNIGHT, PAWN, PIECE_TYPES, QUEEN, ROOK,
-    },
+    board::{PyBoard, PyBoardStatus, PyCastleRights},
+    color::{BLACK, COLORS, PyColor, WHITE},
     r#move::{PyMove, PyMoveGenerator},
+    piece::{
+        BISHOP, KING, KNIGHT, PAWN, PIECE_TYPES, PyPiece, PyPieceType, QUEEN, ROOK, pieces::*,
+    },
     square::PySquare,
 };
 
@@ -37,6 +37,7 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyMove>()?;
     module.add_class::<PyMoveGenerator>()?;
     module.add_class::<PyBoardStatus>()?;
+    module.add_class::<PyCastleRights>()?;
     module.add_class::<PyBoard>()?;
 
     // Define a macro to add constants and their stubs

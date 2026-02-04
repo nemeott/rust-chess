@@ -1,5 +1,5 @@
-use std::fmt::Write;
 use std::str::FromStr;
+use std::{collections::VecDeque, fmt::Write};
 
 use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
@@ -57,6 +57,19 @@ pub(crate) enum PyCastleRights {
     Both,
 }
 
+// TODO: Check when making move?
+#[gen_stub_pyclass_enum]
+#[pyclass(name = "RepetitionDetectionMode", frozen, eq, ord)]
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
+pub(crate) enum PyRepetitionDetectionMode {
+    #[pyo3(name = "NONE")]
+    None,
+    #[pyo3(name = "PARTIAL")]
+    Partial,
+    #[pyo3(name = "FULL")]
+    Full,
+}
+
 /// Board class.
 /// Represents the state of a chess board.
 ///
@@ -85,6 +98,13 @@ pub(crate) struct PyBoard {
     /// ```
     #[pyo3(get)]
     fullmove_number: u8, // Fullmove number (increments after black moves)
+
+    /// The repetition dectection mode the board will use.
+    #[pyo3(get)]
+    repetition_detection_mode: PyRepetitionDetectionMode,
+
+    /// Store board Zobrist hashes for move history
+    move_history: Option<Vec<u64>>,
 }
 // TODO: Incremental Zobrist hash
 
@@ -100,8 +120,8 @@ impl PyBoard {
     /// rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
     /// ```
     #[new]
-    #[pyo3(signature = (fen = None))] // Default to None
-    fn new(fen: Option<&str>) -> PyResult<Self> {
+    #[pyo3(signature = (fen = None, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
+    fn new(fen: Option<&str>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
         match fen {
             // If no FEN string is provided, use the default starting position
             None => {
@@ -118,11 +138,68 @@ impl PyBoard {
                     move_gen,
                     halfmove_clock: 0,
                     fullmove_number: 1,
+                    repetition_detection_mode: mode,
+                    // Add vector for move history if we want to detect repetition
+                    move_history: match mode {
+                        PyRepetitionDetectionMode::None => None,
+                        PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
+                        PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+                    },
                 })
             }
             // Otherwise, parse the FEN string using the chess crate
-            Some(fen_str) => PyBoard::from_fen(fen_str),
+            Some(fen_str) => PyBoard::from_fen(fen_str, mode),
         }
+    }
+
+    /// Create a new board from a FEN string.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
+    /// rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+    /// ```
+    #[staticmethod]
+    #[pyo3(signature = (fen, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
+    fn from_fen(fen: &str, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
+        // Extract the halfmove clock and fullmove number from the FEN string
+        let parts: Vec<&str> = fen.split_whitespace().collect();
+        if parts.len() != 6 {
+            return Err(PyValueError::new_err(
+                "FEN string must have exactly 6 parts",
+            ));
+        }
+
+        // Parse the halfmove clock and fullmove number
+        let halfmove_clock = parts[4]
+            .parse::<u8>()
+            .map_err(|_| PyValueError::new_err("Invalid halfmove clock"))?;
+        let fullmove_number = parts[5]
+            .parse::<u8>()
+            .map_err(|_| PyValueError::new_err("Invalid fullmove number"))?;
+
+        // Parse the board using the chess crate
+        let board = chess::Board::from_str(fen)
+            .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
+
+        // We can assume the GIL is acquired, since this function is only called from Python
+        let py = unsafe { Python::assume_attached() };
+
+        // Create a new move generator using the chess crate
+        let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
+
+        Ok(PyBoard {
+            board,
+            move_gen,
+            halfmove_clock,
+            fullmove_number,
+            repetition_detection_mode: mode,
+            // Add vector for move history if we want to detect repetition
+            move_history: match mode {
+                PyRepetitionDetectionMode::None => None,
+                PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
+                PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+            },
+        })
     }
 
     /// Get the FEN string representation of the board.
@@ -159,48 +236,6 @@ impl PyBoard {
     #[inline]
     fn __repr__(&self) -> String {
         self.get_fen()
-    }
-
-    /// Create a new board from a FEN string.
-    ///
-    /// ```python
-    /// >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
-    /// rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
-    /// ```
-    #[staticmethod]
-    fn from_fen(fen: &str) -> PyResult<Self> {
-        // Extract the halfmove clock and fullmove number from the FEN string
-        let parts: Vec<&str> = fen.split_whitespace().collect();
-        if parts.len() != 6 {
-            return Err(PyValueError::new_err(
-                "FEN string must have exactly 6 parts",
-            ));
-        }
-
-        // Parse the halfmove clock and fullmove number
-        let halfmove_clock = parts[4]
-            .parse::<u8>()
-            .map_err(|_| PyValueError::new_err("Invalid halfmove clock"))?;
-        let fullmove_number = parts[5]
-            .parse::<u8>()
-            .map_err(|_| PyValueError::new_err("Invalid fullmove number"))?;
-
-        // Parse the board using the chess crate
-        let board = chess::Board::from_str(fen)
-            .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
-
-        // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_attached() };
-
-        // Create a new move generator using the chess crate
-        let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
-
-        Ok(PyBoard {
-            board,
-            move_gen,
-            halfmove_clock,
-            fullmove_number,
-        })
     }
 
     /// Get the string representation of the board.
@@ -780,8 +815,6 @@ impl PyBoard {
         chess::MoveGen::legal_quick(&self.board, chess_move.0)
     }
 
-    // FIXME
-
     // TODO: make_null_move (would require move history to undo (probably?))
 
     /// Make a null move onto a new board.
@@ -807,27 +840,20 @@ impl PyBoard {
             return Ok(None);
         };
 
-        // Increment the halfmove clock
-        let halfmove_clock: u8 = self.halfmove_clock + 1;
-
-        // Increment fullmove number if black moves
-        let fullmove_number: u8 = if self.board.side_to_move() == chess::Color::Black {
-            self.fullmove_number + 1
-        } else {
-            self.fullmove_number
-        };
-
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
-        // Create a new move generator using the chess crate
-        let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?;
-
         Ok(Some(PyBoard {
             board: new_board,
-            move_gen,
-            halfmove_clock,
-            fullmove_number,
+            // Create a new move generator using the chess crate
+            move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
+            // // Increment the halfmove clock
+            halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
+            // // Increment fullmove number if black moves
+            fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
+            repetition_detection_mode: self.repetition_detection_mode,
+            // Don't update move history when making a null move
+            move_history: self.move_history.clone(),
         }))
     }
 
@@ -866,13 +892,11 @@ impl PyBoard {
         self.halfmove_clock = if self.is_zeroing(chess_move) {
             0
         } else {
-            self.halfmove_clock + 1
+            self.halfmove_clock + 1 // Add one if not zeroing
         };
 
         // Increment fullmove number if black moves
-        if self.board.side_to_move() == chess::Color::Black {
-            self.fullmove_number += 1;
-        }
+        self.fullmove_number += self.board.side_to_move().to_index() as u8; // White is 0, black is 1
 
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
@@ -882,6 +906,11 @@ impl PyBoard {
 
         // Update the current board
         self.board = temp_board;
+
+        // Add the new board's Zobrist hash to history
+        if let Some(history) = &mut self.move_history {
+            history.push(temp_board.get_hash())
+        }
 
         Ok(())
     }
@@ -927,31 +956,27 @@ impl PyBoard {
         // Make the move onto a new board using the chess crate
         let new_board: chess::Board = self.board.make_move_new(chess_move.0);
 
-        // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-        let halfmove_clock: u8 = if self.is_zeroing(chess_move) {
-            0
-        } else {
-            self.halfmove_clock + 1
-        };
-
-        // Increment fullmove number if black moves
-        let fullmove_number: u8 = if self.board.side_to_move() == chess::Color::Black {
-            self.fullmove_number + 1
-        } else {
-            self.fullmove_number
-        };
-
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
-        // Create a new move generator using the chess crate
-        let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?;
-
         Ok(PyBoard {
             board: new_board,
-            move_gen,
-            halfmove_clock,
-            fullmove_number,
+            move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
+            // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
+            halfmove_clock: if self.is_zeroing(chess_move) {
+                0
+            } else {
+                self.halfmove_clock + 1
+            },
+            // // Increment fullmove number if black moves
+            fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
+            repetition_detection_mode: self.repetition_detection_mode,
+            // Add the new board's Zobrist hash to history
+            move_history: self.move_history.as_ref().map(|history| {
+                let mut new_history = history.clone();
+                new_history.push(new_board.get_hash());
+                new_history
+            }),
         })
     }
 
@@ -1513,6 +1538,14 @@ impl PyBoard {
     /// TODO: Currently not implementable due to no storage of past moves
     #[inline]
     fn is_threefold_repetition(&self) -> bool {
+        // TODO: Quick check (only check last few moves since that is common error for engines)
+        // Add option to use full, partial, or no repetition checks
+        // Clear moves when irreversible move (zeroing or other)
+
+        if self.repetition_detection_mode == PyRepetitionDetectionMode::None {
+            return false;
+        }
+
         false
     }
 

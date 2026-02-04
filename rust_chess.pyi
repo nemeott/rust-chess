@@ -114,6 +114,7 @@ __all__ = [
     "PieceType",
     "QUEEN",
     "ROOK",
+    "RepetitionDetectionMode",
     "SQUARES",
     "Square",
     "WHITE",
@@ -865,6 +866,11 @@ class Board:
         ```
         """
     @property
+    def repetition_detection_mode(self) -> RepetitionDetectionMode:
+        r"""
+        The repetition dectection mode the board will use.
+        """
+    @property
     def zobrist_hash(self) -> builtins.int:
         r"""
         ```python
@@ -911,7 +917,7 @@ class Board:
         f6
         ```
         """
-    def __new__(cls, fen: typing.Optional[builtins.str] = None) -> Board:
+    def __new__(cls, fen: typing.Optional[builtins.str] = None, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> Board:
         r"""
         Create a new board from a FEN string, otherwise default to the starting position.
         
@@ -919,6 +925,16 @@ class Board:
         >>> rust_chess.Board()
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
         >>> rust_chess.Board("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
+        rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+        ```
+        """
+    @staticmethod
+    def from_fen(fen: builtins.str, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> Board:
+        r"""
+        Create a new board from a FEN string.
+        
+        ```python
+        >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
         ```
         """
@@ -938,16 +954,6 @@ class Board:
         ```python
         >>> rust_chess.Board()
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-        ```
-        """
-    @staticmethod
-    def from_fen(fen: builtins.str) -> Board:
-        r"""
-        Create a new board from a FEN string.
-        
-        ```python
-        >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
-        rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
         ```
         """
     def display(self) -> builtins.str:
@@ -2656,4 +2662,10 @@ class CastleRights(enum.Enum):
     KING_SIDE = ...
     QUEEN_SIDE = ...
     BOTH = ...
+
+@typing.final
+class RepetitionDetectionMode(enum.Enum):
+    NONE = ...
+    PARTIAL = ...
+    FULL = ...
 

@@ -14,7 +14,7 @@ use crate::types::{
         BB_FILE_H, BB_FILES, BB_FULL, BB_RANK_1, BB_RANK_2, BB_RANK_3, BB_RANK_4, BB_RANK_5,
         BB_RANK_6, BB_RANK_7, BB_RANK_8, BB_RANKS, PyBitboard,
     },
-    board::{PyBoard, PyBoardStatus, PyCastleRights},
+    board::{PyBoard, PyBoardStatus, PyCastleRights, PyRepetitionDetectionMode},
     color::{BLACK, COLORS, PyColor, WHITE},
     r#move::{PyMove, PyMoveGenerator},
     piece::{
@@ -38,6 +38,7 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyMoveGenerator>()?;
     module.add_class::<PyBoardStatus>()?;
     module.add_class::<PyCastleRights>()?;
+    module.add_class::<PyRepetitionDetectionMode>()?;
     module.add_class::<PyBoard>()?;
 
     // Define a macro to add constants and their stubs

@@ -1554,10 +1554,32 @@ impl PyBoard {
     }
 
     /// Checks if the current position is a n-fold repetition.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> for _ in range(3):
+    /// ...     board.make_move(rust_chess.Move("g1f3"))
+    /// ...     board.make_move(rust_chess.Move("b8c6"))
+    /// ...     board.make_move(rust_chess.Move("f3g1"))
+    /// ...     board.make_move(rust_chess.Move("c6b8"))
+    /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
+    /// False
+    /// >>> board.is_n_repetition(3)  # Check for threefold repetition
+    /// True
+    /// >>> board.make_move(rust_chess.Move("g1f3"))  # 4th time with this position
+    /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
+    /// True
+    /// >>> board.move_history.count(board.zobrist_hash)  # Position appears 4 times
+    /// 4
+    /// ```
+    ///
+    /// TODO: Quick check (only check last few moves since that is common error for engines)
+    /// TODO: Add option to use full, partial, or no repetition checks
     #[inline]
     fn is_n_repetition(&self, n: u8) -> bool {
         if let Some(history) = &self.move_history {
-            let length: usize = self.halfmove_clock as usize; // Move history is the same length since it is reset when the halfmove clock is
+            // Move history length is one greater than the halfmove clock since when halfmove clock is 0, there is 1 position in history
+            let length: usize = (self.halfmove_clock + 1) as usize;
             // If checking threefold (n = 3), then it would be (4 * (3-1)) + 1 = 9
             // Fivefold requires 17 halfmoves minimum
             //   Takes 4 halfmoves to return to a position
@@ -1597,19 +1619,46 @@ impl PyBoard {
     }
 
     /// Checks if the current position is a threefold repetition.
-    ///
     /// This is a claimable draw according to FIDE rules.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> for _ in range(2):
+    /// ...     board.make_move(rust_chess.Move("g1f3"))
+    /// ...     board.make_move(rust_chess.Move("b8c6"))
+    /// ...     board.make_move(rust_chess.Move("f3g1"))
+    /// ...     board.make_move(rust_chess.Move("c6b8"))
+    /// >>> board.is_threefold_repetition()
+    /// False
+    /// >>> board.make_move(rust_chess.Move("g1f3"))  # 3rd time with this position
+    /// >>> board.is_threefold_repetition()
+    /// True
+    /// >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 3 times
+    /// 3
+    /// ```
     #[inline]
     fn is_threefold_repetition(&self) -> bool {
-        // TODO: Quick check (only check last few moves since that is common error for engines)
-        // Add option to use full, partial, or no repetition checks
-
         self.is_n_repetition(3)
     }
 
     /// Checks if the current position is a fivefold repetition.
-    ///
     /// This is an automatic draw according to FIDE rules.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> for _ in range(4):
+    /// ...     board.make_move(rust_chess.Move("g1f3"))
+    /// ...     board.make_move(rust_chess.Move("b8c6"))
+    /// ...     board.make_move(rust_chess.Move("f3g1"))
+    /// ...     board.make_move(rust_chess.Move("c6b8"))
+    /// >>> board.is_fivefold_repetition()
+    /// False
+    /// >>> board.make_move(rust_chess.Move("g1f3"))  # 5th time with this position
+    /// >>> board.is_fivefold_repetition()
+    /// True
+    /// >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 5 times
+    /// 5
+    /// ```
     #[inline]
     fn is_fivefold_repetition(&self) -> bool {
         self.is_n_repetition(5)

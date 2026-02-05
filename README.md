@@ -201,14 +201,14 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Get castle rights (No rights, kingside, queenside, both)
   - [ ] Set castle rights? (use cases?)
   - [x] Rich comparison operators
-- [ ] `BoardStatus`
-  - [ ] Game-ending conditions
+- [x] `BoardStatus`
+  - [x] Game-ending conditions
     - [x] Checkmate
     - [x] Stalemate
     - [x] Insufficient material
-    - [ ] Fivefold repetition
-  - [ ] Potential draw conditions
-    - [ ] Threefold repetition
+    - [x] Fivefold repetition
+  - [x] Potential draw conditions
+    - [x] Threefold repetition
     - [x] Fifty moves
   - [x] Rich comparison operators
 - [ ] `Board`
@@ -237,8 +237,8 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
     - [x] All pieces
   - [x] Zobrist hashing
   - [x] Comparison operators (using Zobrist hash)
-  - [ ] Move history
-    - [ ] Repetition detection
+  - [x] Move history
+    - [x] Repetition detection
   - [ ] Piece-Square Table support?
 - [ ] Miscellaneous
   - [ ] PGN support (parsing and writing)

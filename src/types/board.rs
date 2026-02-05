@@ -1557,16 +1557,13 @@ impl PyBoard {
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
+    /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
+    /// False
     /// >>> for _ in range(3):
     /// ...     board.make_move(rust_chess.Move("g1f3"))
     /// ...     board.make_move(rust_chess.Move("b8c6"))
     /// ...     board.make_move(rust_chess.Move("f3g1"))
     /// ...     board.make_move(rust_chess.Move("c6b8"))
-    /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
-    /// False
-    /// >>> board.is_n_repetition(3)  # Check for threefold repetition
-    /// True
-    /// >>> board.make_move(rust_chess.Move("g1f3"))  # 4th time with this position
     /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
     /// True
     /// >>> board.move_history.count(board.zobrist_hash)  # Position appears 4 times
@@ -1581,25 +1578,26 @@ impl PyBoard {
             // Move history length is one greater than the halfmove clock since when halfmove clock is 0, there is 1 position in history
             let length: usize = (self.halfmove_clock + 1) as usize;
             // If checking threefold (n = 3), then it would be (4 * (3-1)) + 1 = 9
-            // Fivefold requires 17 halfmoves minimum
+            // Fivefold requires 17 positions minimum
             //   Takes 4 halfmoves to return to a position
-            let min_halfmoves_required: u8 = (4 * (n - 1)) + 1;
+            let calc_min_pos_req_for_nfold = |n: u8| -> usize { ((4 * (n - 1)) + 1) as usize };
 
             // n-fold repetition is not possible when length is less than (n * 4) - 1
             // For example, threefold repetition (n=3) can occur with a move history length minimum of 9
             // A color cannot repeat a position back to back--some move has to be made, and then another to return to the position
             // Example: index 0, 4, 8 are the minimum required for a threefold repetition
             //   (2 and 6 are in-between positions that allow returning to repeated position (0, 4, 8))
-            if length < min_halfmoves_required as usize {
+            if length < calc_min_pos_req_for_nfold(n) {
                 return false;
             }
-
+            
             let current_hash: u64 = history[length - 1];
             let mut num_repetitions: u8 = 1;
 
             // (length - 5) since we compare to current, which is at length - 1, and positions can't repeat back-to-back for a color
             let mut i: usize = length - 5;
-            while i > 0 {
+            // n-fold still possible if enough positions still left in history
+            while i >= calc_min_pos_req_for_nfold(n - num_repetitions) - 1 {
                 if history[i] == current_hash {
                     num_repetitions += 1;
                     if num_repetitions >= n {
@@ -1623,14 +1621,13 @@ impl PyBoard {
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
+    /// >>> board.is_threefold_repetition()
+    /// False
     /// >>> for _ in range(2):
     /// ...     board.make_move(rust_chess.Move("g1f3"))
     /// ...     board.make_move(rust_chess.Move("b8c6"))
     /// ...     board.make_move(rust_chess.Move("f3g1"))
     /// ...     board.make_move(rust_chess.Move("c6b8"))
-    /// >>> board.is_threefold_repetition()
-    /// False
-    /// >>> board.make_move(rust_chess.Move("g1f3"))  # 3rd time with this position
     /// >>> board.is_threefold_repetition()
     /// True
     /// >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 3 times
@@ -1646,14 +1643,13 @@ impl PyBoard {
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
+    /// >>> board.is_fivefold_repetition()
+    /// False
     /// >>> for _ in range(4):
     /// ...     board.make_move(rust_chess.Move("g1f3"))
     /// ...     board.make_move(rust_chess.Move("b8c6"))
     /// ...     board.make_move(rust_chess.Move("f3g1"))
     /// ...     board.make_move(rust_chess.Move("c6b8"))
-    /// >>> board.is_fivefold_repetition()
-    /// False
-    /// >>> board.make_move(rust_chess.Move("g1f3"))  # 5th time with this position
     /// >>> board.is_fivefold_repetition()
     /// True
     /// >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 5 times

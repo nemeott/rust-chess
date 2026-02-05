@@ -1819,16 +1819,13 @@ class Board:
         
         ```python
         >>> board = rust_chess.Board()
+        >>> board.is_n_repetition(4)  # Check for fourfold repetition
+        False
         >>> for _ in range(3):
         ...     board.make_move(rust_chess.Move("g1f3"))
         ...     board.make_move(rust_chess.Move("b8c6"))
         ...     board.make_move(rust_chess.Move("f3g1"))
         ...     board.make_move(rust_chess.Move("c6b8"))
-        >>> board.is_n_repetition(4)  # Check for fourfold repetition
-        False
-        >>> board.is_n_repetition(3)  # Check for threefold repetition
-        True
-        >>> board.make_move(rust_chess.Move("g1f3"))  # 4th time with this position
         >>> board.is_n_repetition(4)  # Check for fourfold repetition
         True
         >>> board.move_history.count(board.zobrist_hash)  # Position appears 4 times
@@ -1845,14 +1842,13 @@ class Board:
         
         ```python
         >>> board = rust_chess.Board()
+        >>> board.is_threefold_repetition()
+        False
         >>> for _ in range(2):
         ...     board.make_move(rust_chess.Move("g1f3"))
         ...     board.make_move(rust_chess.Move("b8c6"))
         ...     board.make_move(rust_chess.Move("f3g1"))
         ...     board.make_move(rust_chess.Move("c6b8"))
-        >>> board.is_threefold_repetition()
-        False
-        >>> board.make_move(rust_chess.Move("g1f3"))  # 3rd time with this position
         >>> board.is_threefold_repetition()
         True
         >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 3 times
@@ -1866,14 +1862,13 @@ class Board:
         
         ```python
         >>> board = rust_chess.Board()
+        >>> board.is_fivefold_repetition()
+        False
         >>> for _ in range(4):
         ...     board.make_move(rust_chess.Move("g1f3"))
         ...     board.make_move(rust_chess.Move("b8c6"))
         ...     board.make_move(rust_chess.Move("f3g1"))
         ...     board.make_move(rust_chess.Move("c6b8"))
-        >>> board.is_fivefold_repetition()
-        False
-        >>> board.make_move(rust_chess.Move("g1f3"))  # 5th time with this position
         >>> board.is_fivefold_repetition()
         True
         >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 5 times

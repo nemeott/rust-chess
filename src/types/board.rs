@@ -1558,9 +1558,14 @@ impl PyBoard {
     fn is_n_repetition(&self, n: u8) -> bool {
         if let Some(history) = &self.move_history {
             let length: usize = self.halfmove_clock as usize;
-            let max_halfmoves: u8 = n * 2 - 1; // If checking threefold (n=3), then it would be (3 * 2) - 1 = 5
+            // If checking threefold (n = 3), then it would be (3 * 4) - 1 = 9
+            let max_halfmoves: u8 = (n * 4) - 1;
 
-            // Threefold is not possible when length is less than n (e.g. index 0, 2, 4 is the bare minimum for threefold (max_halfmoves = 5))
+            // n-fold repetition is not possible when length is less than (n * 4) - 1
+            // For example, threefold repetition (n=3) can occur with a move history length minimum of 9
+            // A color cannot repeat a position back to back--some move has to be made, and then another to return to the position
+            // Example: index 0, 4, 8 are the minimum required for a threefold repetition
+            //   (2 and 6 are in-between positions that allow returning to repeated position (0, 4, 8))
             if length < max_halfmoves as usize {
                 return false;
             }
@@ -1568,12 +1573,12 @@ impl PyBoard {
             let current_hash: u64 = history[length - 1];
             let mut num_repetitions: u8 = 1;
 
-            // (length - 3) since we compare to current, which is at length - 1
-            let mut i: usize = length - 3;
+            // (length - 5) since we compare to current, which is at length - 1, and positions can't repeat back-to-back for a color
+            let mut i: usize = length - 5;
             while i > 0 {
                 if history[i] == current_hash {
                     num_repetitions += 1;
-                    if num_repetitions >= max_halfmoves {
+                    if num_repetitions >= n {
                         return true;
                     }
 

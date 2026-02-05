@@ -1553,6 +1553,7 @@ impl PyBoard {
         false
     }
 
+    /// Checks if the current position is a n-fold repetition.
     #[inline]
     fn is_n_repetition(&self, n: u8) -> bool {
         if let Some(history) = &self.move_history {
@@ -1588,8 +1589,6 @@ impl PyBoard {
         false
     }
 
-    // TODO: Check threefold and fivefold repetition
-
     /// Checks if the current position is a threefold repetition.
     ///
     /// This is a claimable draw according to FIDE rules.
@@ -1601,10 +1600,9 @@ impl PyBoard {
         self.is_n_repetition(3)
     }
 
-    /// Checks if the game is in a fivefold repetition.
+    /// Checks if the current position is a fivefold repetition.
     ///
     /// This is an automatic draw according to FIDE rules.
-    /// TODO: Currently not implementable due to no storage of past moves
     #[inline]
     fn is_fivefold_repetition(&self) -> bool {
         self.is_n_repetition(5)

@@ -871,6 +871,11 @@ class Board:
         The repetition dectection mode the board will use.
         """
     @property
+    def move_history(self) -> typing.Optional[builtins.list[builtins.int]]:
+        r"""
+        Store board Zobrist hashes for move history
+        """
+    @property
     def zobrist_hash(self) -> builtins.int:
         r"""
         ```python
@@ -1808,12 +1813,12 @@ class Board:
         True
         ```
         """
+    def is_n_repetition(self, n: builtins.int) -> builtins.bool: ...
     def is_threefold_repetition(self) -> builtins.bool:
         r"""
-        Checks if the game is in a threefold repetition.
+        Checks if the current position is a threefold repetition.
         
         This is a claimable draw according to FIDE rules.
-        TODO: Currently not implementable due to no storage of past moves
         """
     def is_fivefold_repetition(self) -> builtins.bool:
         r"""

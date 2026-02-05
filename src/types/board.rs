@@ -1,5 +1,5 @@
+use std::fmt::Write;
 use std::str::FromStr;
-use std::{collections::VecDeque, fmt::Write};
 
 use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
@@ -98,12 +98,13 @@ pub(crate) struct PyBoard {
     /// ```
     #[pyo3(get)]
     fullmove_number: u8, // Fullmove number (increments after black moves)
-
+    // (theoretical maximum is 218 moves (fits within 2^8=256))
     /// The repetition dectection mode the board will use.
     #[pyo3(get)]
     repetition_detection_mode: PyRepetitionDetectionMode,
 
     /// Store board Zobrist hashes for move history
+    #[pyo3(get)]
     move_history: Option<Vec<u64>>,
 }
 // TODO: Incremental Zobrist hash
@@ -133,18 +134,23 @@ impl PyBoard {
                 // Create a new move generator using the chess crate
                 let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
 
+                // Create move history vector and add the initial board hash
+                let mut move_history = match mode {
+                    PyRepetitionDetectionMode::None => None,
+                    PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
+                    PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+                };
+                if let Some(history) = &mut move_history {
+                    history.push(board.get_hash());
+                }
+
                 Ok(PyBoard {
                     board,
                     move_gen,
                     halfmove_clock: 0,
                     fullmove_number: 1,
                     repetition_detection_mode: mode,
-                    // Add vector for move history if we want to detect repetition
-                    move_history: match mode {
-                        PyRepetitionDetectionMode::None => None,
-                        PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
-                        PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
-                    },
+                    move_history: move_history,
                 })
             }
             // Otherwise, parse the FEN string using the chess crate
@@ -187,18 +193,23 @@ impl PyBoard {
         // Create a new move generator using the chess crate
         let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
 
+        // Create move history vector and add the initial board hash
+        let mut move_history = match mode {
+            PyRepetitionDetectionMode::None => None,
+            PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
+            PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+        };
+        if let Some(history) = &mut move_history {
+            history.push(board.get_hash());
+        }
+
         Ok(PyBoard {
             board,
             move_gen,
             halfmove_clock,
             fullmove_number,
             repetition_detection_mode: mode,
-            // Add vector for move history if we want to detect repetition
-            move_history: match mode {
-                PyRepetitionDetectionMode::None => None,
-                PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
-                PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
-            },
+            move_history: move_history,
         })
     }
 
@@ -889,10 +900,15 @@ impl PyBoard {
         let temp_board: chess::Board = self.board.make_move_new(chess_move.0);
 
         // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-        self.halfmove_clock = if self.is_zeroing(chess_move) {
-            0
+        if self.is_zeroing(chess_move) {
+            self.halfmove_clock = 0;
+
+            // Don't need previous history anymore since it is a zeroing move (irreversible)
+            if let Some(history) = &mut self.move_history {
+                history.clear();
+            }
         } else {
-            self.halfmove_clock + 1 // Add one if not zeroing
+            self.halfmove_clock += 1 // Add one if not zeroing
         };
 
         // Increment fullmove number if black moves
@@ -959,21 +975,28 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
+        let is_zeroing: bool = self.is_zeroing(chess_move);
+
         Ok(PyBoard {
             board: new_board,
             move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-            halfmove_clock: if self.is_zeroing(chess_move) {
+            halfmove_clock: if is_zeroing {
                 0
             } else {
                 self.halfmove_clock + 1
             },
-            // // Increment fullmove number if black moves
+            // Increment fullmove number if black moves
             fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
             repetition_detection_mode: self.repetition_detection_mode,
             // Add the new board's Zobrist hash to history
             move_history: self.move_history.as_ref().map(|history| {
-                let mut new_history = history.clone();
+                let mut new_history = if is_zeroing {
+                    Vec::with_capacity(history.capacity()) // Don't need previous history anymore since it is a zeroing move (irreversible)
+                } else {
+                    history.clone()
+                };
+
                 new_history.push(new_board.get_hash());
                 new_history
             }),
@@ -1530,23 +1553,52 @@ impl PyBoard {
         false
     }
 
+    #[inline]
+    fn is_n_repetition(&self, n: u8) -> bool {
+        if let Some(history) = &self.move_history {
+            let length: usize = self.halfmove_clock as usize;
+            let max_halfmoves: u8 = n * 2 - 1; // If checking threefold (n=3), then it would be (3 * 2) - 1 = 5
+
+            // Threefold is not possible when length is less than n (e.g. index 0, 2, 4 is the bare minimum for threefold (max_halfmoves = 5))
+            if length < max_halfmoves as usize {
+                return false;
+            }
+
+            let current_hash: u64 = history[length - 1];
+            let mut num_repetitions: u8 = 1;
+
+            // (length - 3) since we compare to current, which is at length - 1
+            let mut i: usize = length - 3;
+            while i > 0 {
+                if history[i] == current_hash {
+                    num_repetitions += 1;
+                    if num_repetitions >= max_halfmoves {
+                        return true;
+                    }
+
+                    // Can subtract another 2 here since if we found a repetition, our position before can't be the same
+                    i -= 2;
+                }
+
+                // Step by 2 since only need to check our moves
+                i -= 2;
+            }
+        }
+
+        false
+    }
+
     // TODO: Check threefold and fivefold repetition
 
-    /// Checks if the game is in a threefold repetition.
+    /// Checks if the current position is a threefold repetition.
     ///
     /// This is a claimable draw according to FIDE rules.
-    /// TODO: Currently not implementable due to no storage of past moves
     #[inline]
     fn is_threefold_repetition(&self) -> bool {
         // TODO: Quick check (only check last few moves since that is common error for engines)
         // Add option to use full, partial, or no repetition checks
-        // Clear moves when irreversible move (zeroing or other)
 
-        if self.repetition_detection_mode == PyRepetitionDetectionMode::None {
-            return false;
-        }
-
-        false
+        self.is_n_repetition(3)
     }
 
     /// Checks if the game is in a fivefold repetition.
@@ -1555,8 +1607,12 @@ impl PyBoard {
     /// TODO: Currently not implementable due to no storage of past moves
     #[inline]
     fn is_fivefold_repetition(&self) -> bool {
-        false
+        self.is_n_repetition(5)
     }
+
+    // 3 -> 5 = +2
+    // 4 -> 7 = +3
+    // 5 -> 9 = +4
 
     /// Checks if the side to move is in check.
     ///

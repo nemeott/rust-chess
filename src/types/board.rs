@@ -891,6 +891,13 @@ impl PyBoard {
     #[pyo3(signature = (chess_move, check_legality = true))]
     #[inline]
     fn make_move(&mut self, chess_move: PyMove, check_legality: bool) -> PyResult<()> {
+        // Check if draw by fivefold
+        if self.is_fivefold_repetition() {
+            return Err(PyValueError::new_err(
+                "Game over due to fivefold repetition",
+            ));
+        }
+
         // If we are checking legality, check if the move is legal
         if check_legality && !self.is_legal_move(chess_move) {
             return Err(PyValueError::new_err("Illegal move"));
@@ -964,6 +971,13 @@ impl PyBoard {
     #[pyo3(signature = (chess_move, check_legality = true))]
     #[inline]
     fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {
+        // Check if draw by fivefold
+        if self.is_fivefold_repetition() {
+            return Err(PyValueError::new_err(
+                "Game over due to fivefold repetition",
+            ));
+        }
+
         // If we are checking legality, check if the move is legal
         if check_legality && !self.is_legal_move(chess_move) {
             return Err(PyValueError::new_err("Illegal move"));
@@ -1590,7 +1604,7 @@ impl PyBoard {
             if length < calc_min_pos_req_for_nfold(n) {
                 return false;
             }
-            
+
             let current_hash: u64 = history[length - 1];
             let mut num_repetitions: u8 = 1;
 

@@ -10,7 +10,7 @@ This repository provides:
 
 ## WARNING
 
-This project is in alpha/beta phase (pun intended). Expect many breaking changes, refactoring, and new features.
+This project is almost out of alpha/beta phase (pun intended). Expect some breaking changes, refactoring, and new features.
 
 ## Overview
 
@@ -62,8 +62,10 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 - `Square`: `A1` .. `H8`, `SQUARES`
 - `Bitboard`: `BB_EMPTY`, `BB_FULL`, `BB_FILE_A` ... `BB_FILE_H`, `BB_RANK_1` ... `BB_RANK_8`, `BB_FILES`, `BB_RANKS`
 - `Move`: TODO: Add castling and null moves?
-- `BoardStatus` enum: `.ONGOING`, `.FIVE_FOLD_REPETITION`\*, `.SEVENTY_FIVE_MOVES`, `.INSUFFICIENT_MATERIAL`, `.STALEMATE`, `.CHECKMATE`
-  - \*Repetition detection is not currently implementable since no history is stored yet.
+- `PyRepetitionDetectionMode` enum: `.NONE`, `.PARTIAL`, `.FULL`
+  - Currently no difference between partial and full for now, but the plan is to have partial have a smaller history list
+- `CastleRights` enum: `.NO_RIGHTS`, `.QUEENSIDE`, `.KINGSIDE`, `.BOTH`
+- `BoardStatus` enum: `.ONGOING`, `.FIVE_FOLD_REPETITION`, `.SEVENTY_FIVE_MOVES`, `.INSUFFICIENT_MATERIAL`, `.STALEMATE`, `.CHECKMATE`
 - `Board`: No constants.
 
 ### Basic Features Overview
@@ -72,7 +74,7 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 - Get the FEN of a board by calling `get_fen()` on a board object.
 - Iterate over every square using the `rc.SQUARES` constant or get an individual square by using the corresponding constant (ex. `rc.E2`).
 - Create a `Bitboard` from an integer or square.
-  - Supports bitwise operators, shift operators, popcnt, iteration, and conversion to and from a `Square` (TODO: test operations).
+  - Supports bitwise operators, shift operators, popcnt, iteration, and conversion to and from a `Square`.
 - Get many different bitboards for the current board including `board.get_color_bitboard(rc.WHITE)`, `board.get_piece_type_bitboard(rc.PAWN)`, `board.get_checkers_bitboard()`, and more.
 - Create a move from a source and destination square, with an optional promotion piece type using `move = rc.Move(rc.E2, rc.E4)`.
   - Can also create a move from a UCI string using `move = rc.Move("e2e4")` or `move = rc.Move.from_uci("e2e4")`.
@@ -80,7 +82,7 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 - Generate all legal moves or captures for a board by iterating over `board.generate_legal_moves()` and `board.generate_legal_captures()`.
   - **The generator remembers state; make sure to reset it with `board.reset_move_generator()` if you want to iterate over the moves again.**
 - Generate the next move for the generator with `board.generate_next_move()`.
-- TODO: Generate moves for a specific bitboard mask.
+- Generate moves for a specific bitboard mask by setting it with `board.set_move_generator_mask(mask_bitboard)` and then calling `board.generate_moves()`.
 - Apply a move to a board with `board.make_move(move, check_legality=[True]|False)`.
   - `check_legality` defaults to `True` (can disable if you already know the move is legal for an extra performance boost).
 - Apply a move to a new board with `new_board = board.make_move_new(move)`.
@@ -273,11 +275,8 @@ More detailed analysis is documented inside the file, including time deltas per 
 ## Notable Limitations
 
 - **Bridge overhead**: Small functions and data types are slower due to the bridge overhead, however heavy computations are much faster.
-- **No move history yet**: Undo/pop and repetition detection which require past positions, are not available currently.
-- **Board printing**: Currently the library prints and exposes FEN strings. A human-readable grid-style ASCII board printer is not implemented yet.
-- **Printing and parsing**: Some convenience/parsing features like SAN parsing (`from_san`) are still TODO.
-- **Reliability**: The library has not been widely tested yet.
-- **Extra features**: Several advanced engine-oriented features (Zobrist hashing, transposition keys, PSQT tables) are planned but not implemented at this time.
+- **No board history yet**: Undo/pop are not available currently. Make moves onto a new board and pass it into a function instead for now.
+- **Reliability**: The library has not been widely tested yet. It has somewhat detailed docstring tests but not every edge case is guaranteed to be covered.
 
 ## License
 

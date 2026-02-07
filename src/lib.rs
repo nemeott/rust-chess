@@ -36,9 +36,9 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyBitboard>()?;
     module.add_class::<PyMove>()?;
     module.add_class::<PyMoveGenerator>()?;
-    module.add_class::<PyBoardStatus>()?;
-    module.add_class::<PyCastleRights>()?;
     module.add_class::<PyRepetitionDetectionMode>()?;
+    module.add_class::<PyCastleRights>()?;
+    module.add_class::<PyBoardStatus>()?;
     module.add_class::<PyBoard>()?;
 
     // Define a macro to add constants and their stubs

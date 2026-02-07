@@ -49,15 +49,14 @@ pub(crate) enum PyBoardStatus {
 pub(crate) enum PyCastleRights {
     #[pyo3(name = "NO_RIGHTS")]
     NoRights,
-    #[pyo3(name = "KING_SIDE")]
-    KingSide,
     #[pyo3(name = "QUEEN_SIDE")]
     QueenSide,
+    #[pyo3(name = "KING_SIDE")]
+    KingSide,
     #[pyo3(name = "BOTH")]
     Both,
 }
 
-// TODO: Check when making move?
 #[gen_stub_pyclass_enum]
 #[pyclass(name = "RepetitionDetectionMode", frozen, eq, ord)]
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
@@ -348,6 +347,23 @@ impl PyBoard {
         s
     }
 
+    /// Create a new move from a SAN string (e.g. "e4").
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.get_move_from_san("e4")
+    /// Move(e2, e4, None)
+    /// ```
+    #[inline]
+    fn get_move_from_san(&self, san: &str) -> PyResult<PyMove> {
+        // let san = san.to_lowercase(); # TODO: Do we need this?
+        chess::ChessMove::from_san(&self.board, &san)
+            .map(PyMove)
+            .map_err(|_| PyValueError::new_err("Invalid SAN move"))
+    }
+
+    // TODO: get_san_from_move
+
     // Get the Zobrist hash of the board
     //
     /// ```python
@@ -467,8 +483,8 @@ impl PyBoard {
     fn get_castle_rights(&self, color: PyColor) -> PyCastleRights {
         match self.board.castle_rights(color.0) {
             chess::CastleRights::NoRights => PyCastleRights::NoRights,
-            chess::CastleRights::KingSide => PyCastleRights::KingSide,
             chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
+            chess::CastleRights::KingSide => PyCastleRights::KingSide,
             chess::CastleRights::Both => PyCastleRights::Both,
         }
     }
@@ -518,21 +534,6 @@ impl PyBoard {
         self.board.castle_rights(color.0) != chess::CastleRights::NoRights
     }
 
-    /// Check if a color can castle kingside.
-    ///
-    /// ```python
-    /// >>> board = rust_chess.Board()
-    /// >>> board.can_castle_kingside(board.turn)
-    /// True
-    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    /// >>> board.can_castle_kingside(rust_chess.WHITE)
-    /// False
-    /// ```
-    #[inline]
-    fn can_castle_kingside(&self, color: PyColor) -> bool {
-        self.board.castle_rights(color.0).has_kingside()
-    }
-
     /// Check if a color can castle queenside.
     ///
     /// ```python
@@ -548,6 +549,21 @@ impl PyBoard {
     #[inline]
     fn can_castle_queenside(&self, color: PyColor) -> bool {
         self.board.castle_rights(color.0).has_queenside()
+    }
+
+    /// Check if a color can castle kingside.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.can_castle_kingside(board.turn)
+    /// True
+    /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+    /// >>> board.can_castle_kingside(rust_chess.WHITE)
+    /// False
+    /// ```
+    #[inline]
+    fn can_castle_kingside(&self, color: PyColor) -> bool {
+        self.board.castle_rights(color.0).has_kingside()
     }
 
     /// Check if a move is castling.
@@ -577,33 +593,6 @@ impl PyBoard {
         return false;
     }
 
-    /// Check if a move is kingside castling.
-    /// Assumes the move is pseudo-legal.
-    ///
-    /// ```python
-    /// >>> board = rust_chess.Board()
-    /// >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
-    /// True
-    /// >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
-    /// False
-    /// ```
-    #[inline]
-    fn is_castling_kingside(&self, chess_move: PyMove) -> bool {
-        let source = chess_move.0.get_source();
-
-        // Check if the moving piece is a king
-        if self
-            .board
-            .piece_on(source)
-            .is_some_and(|p| p == chess::Piece::King)
-        {
-            // Check if the move is two squares to the right
-            let dest = chess_move.0.get_dest();
-            return dest.to_index() as i8 - source.to_index() as i8 == 2;
-        }
-        return false;
-    }
-
     /// Check if a move is queenside castling.
     /// Assumes the move is pseudo-legal.    
     ///
@@ -627,6 +616,33 @@ impl PyBoard {
             // Check if the move is two squares to the left
             let dest = chess_move.0.get_dest();
             return dest.to_index() as i8 - source.to_index() as i8 == -2;
+        }
+        return false;
+    }
+
+    /// Check if a move is kingside castling.
+    /// Assumes the move is pseudo-legal.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
+    /// True
+    /// >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
+    /// False
+    /// ```
+    #[inline]
+    fn is_castling_kingside(&self, chess_move: PyMove) -> bool {
+        let source = chess_move.0.get_source();
+
+        // Check if the moving piece is a king
+        if self
+            .board
+            .piece_on(source)
+            .is_some_and(|p| p == chess::Piece::King)
+        {
+            // Check if the move is two squares to the right
+            let dest = chess_move.0.get_dest();
+            return dest.to_index() as i8 - source.to_index() as i8 == 2;
         }
         return false;
     }

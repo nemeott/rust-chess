@@ -75,8 +75,6 @@ impl PyMove {
         ))
     }
 
-    // TODO: from_san
-
     /// Create a new move from a UCI string (e.g. "e2e4").
     ///
     /// ```python

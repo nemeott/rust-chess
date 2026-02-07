@@ -198,7 +198,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [ ] Remove a move from the generator
   - [x] Reset the generator
 - [x] `CastleRights`
-  - [x] Get castle rights (No rights, kingside, queenside, both)
+  - [x] Get castle rights (No rights, queenside, kingside, both)
   - [ ] Set castle rights? (use cases?)
   - [x] Rich comparison operators
 - [x] `BoardStatus`
@@ -213,6 +213,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Rich comparison operators
 - [ ] `Board`
   - [x] FEN parsing and printing
+  - [x] SAN move parsing
   - [ ] Human readable printing
     - [x] Basic characters
     - [ ] ASCII with colors?
@@ -239,6 +240,7 @@ uv pip install target/wheels/rust_chess-0.3.0-cp313-cp313-linux_x86_64.whl
   - [x] Comparison operators (using Zobrist hash)
   - [x] Move history
     - [x] Repetition detection
+  - [ ] Cache default board for faster creation?
   - [ ] Piece-Square Table support?
 - [ ] Miscellaneous
   - [ ] PGN support (parsing and writing)

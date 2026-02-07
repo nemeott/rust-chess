@@ -1029,6 +1029,16 @@ class Board:
         
         ```
         """
+    def get_move_from_san(self, san: builtins.str) -> Move:
+        r"""
+        Create a new move from a SAN string (e.g. "e4").
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.get_move_from_san("e4")
+        Move(e2, e4, None)
+        ```
+        """
     def __hash__(self) -> builtins.int:
         r"""
         Get the hash of the board based on its Zobrist hash.
@@ -1141,19 +1151,6 @@ class Board:
         False
         ```
         """
-    def can_castle_kingside(self, color: Color) -> builtins.bool:
-        r"""
-        Check if a color can castle kingside.
-        
-        ```python
-        >>> board = rust_chess.Board()
-        >>> board.can_castle_kingside(board.turn)
-        True
-        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-        >>> board.can_castle_kingside(rust_chess.WHITE)
-        False
-        ```
-        """
     def can_castle_queenside(self, color: Color) -> builtins.bool:
         r"""
         Check if a color can castle queenside.
@@ -1166,6 +1163,19 @@ class Board:
         >>> board.can_castle_queenside(rust_chess.WHITE)
         True
         >>> board.can_castle_queenside(rust_chess.BLACK)
+        False
+        ```
+        """
+    def can_castle_kingside(self, color: Color) -> builtins.bool:
+        r"""
+        Check if a color can castle kingside.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.can_castle_kingside(board.turn)
+        True
+        >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
+        >>> board.can_castle_kingside(rust_chess.WHITE)
         False
         ```
         """
@@ -1182,19 +1192,6 @@ class Board:
         False
         ```
         """
-    def is_castling_kingside(self, chess_move: Move) -> builtins.bool:
-        r"""
-        Check if a move is kingside castling.
-        Assumes the move is pseudo-legal.
-        
-        ```python
-        >>> board = rust_chess.Board()
-        >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
-        True
-        >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
-        False
-        ```
-        """
     def is_castling_queenside(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is queenside castling.
@@ -1205,6 +1202,19 @@ class Board:
         >>> board.is_castling_queenside(rust_chess.Move("e1c1"))
         True
         >>> board.is_castling_queenside(rust_chess.Move("e1g1"))
+        False
+        ```
+        """
+    def is_castling_kingside(self, chess_move: Move) -> builtins.bool:
+        r"""
+        Check if a move is kingside castling.
+        Assumes the move is pseudo-legal.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
+        True
+        >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
         False
         ```
         """
@@ -2712,8 +2722,8 @@ class CastleRights(enum.Enum):
     TODO: docs
     """
     NO_RIGHTS = ...
-    KING_SIDE = ...
     QUEEN_SIDE = ...
+    KING_SIDE = ...
     BOTH = ...
 
 @typing.final

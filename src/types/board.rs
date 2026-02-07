@@ -1606,11 +1606,11 @@ impl PyBoard {
     fn is_n_repetition(&self, n: u8) -> bool {
         if let Some(history) = &self.move_history {
             // Move history length is one greater than the halfmove clock since when halfmove clock is 0, there is 1 position in history
-            let length: usize = (self.halfmove_clock + 1) as usize;
+            let length: i16 = (self.halfmove_clock + 1) as i16;
             // If checking threefold (n = 3), then it would be (4 * (3-1)) + 1 = 9
             // Fivefold requires 17 positions minimum
             //   Takes 4 halfmoves to return to a position
-            let calc_min_pos_req_for_nfold = |n: u8| -> usize { ((4 * (n - 1)) + 1) as usize };
+            let calc_min_pos_req_for_nfold = |n: u8| -> i16 { ((4 * (n - 1)) + 1) as i16 };
 
             // n-fold repetition is not possible when length is less than (n * 4) - 1
             // For example, threefold repetition (n=3) can occur with a move history length minimum of 9
@@ -1621,14 +1621,14 @@ impl PyBoard {
                 return false;
             }
 
-            let current_hash: u64 = history[length - 1];
+            let current_hash: u64 = history[length as usize - 1];
             let mut num_repetitions: u8 = 1;
 
             // (length - 5) since we compare to current, which is at length - 1, and positions can't repeat back-to-back for a color
-            let mut i: usize = length - 5;
+            let mut i: i16 = length - 5;
             // n-fold still possible if enough positions still left in history
             while i >= calc_min_pos_req_for_nfold(n - num_repetitions) - 1 {
-                if history[i] == current_hash {
+                if history[i as usize] == current_hash {
                     num_repetitions += 1;
                     if num_repetitions >= n {
                         return true;

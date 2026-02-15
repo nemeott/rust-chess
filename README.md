@@ -10,7 +10,7 @@ This repository provides:
 
 ## WARNING
 
-This project is almost out of alpha/beta phase (pun intended). Expect some breaking changes, refactoring, and new features.
+This project is almost out of alpha/beta phase (pun intended). Maybe expect some breaking changes, refactoring, and new features.
 
 ## Overview
 
@@ -251,6 +251,7 @@ uv pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
   - [ ] Improved Python ergonomics (e.g., more Pythonic wrappers where appropriate)
   - [ ] Comprehensive test suite
     - [x] Docstring tests
+    - [ ] Benchmark comparision to `python-chess`
     - [ ] Other tests
   - [ ] Working GitHub action (😢)
 
@@ -271,6 +272,40 @@ uv pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
   - Checking move legality and check.
 
 More detailed analysis is documented inside the file, including time deltas per function.
+
+`benchmark.py` was used for a benchmark comparision between similar functions in `rust-chess` and `python-chess`. The results from `rust-chess` v0.3.2 are as follows:
+
+Benchmark Results (n=100,000)
+
+| Category          | Rust Time | Python Time |    Speedup |
+| ----------------- | --------: | ----------: | ---------: |
+| Colors            |  0.016065 |    0.012318 |   0.766806 |
+| Pieces            |  0.049637 |    0.024064 |   0.484804 |
+| Squares           |  0.219638 |    0.129289 |   0.588642 |
+| Moves             |  0.199704 |    0.529470 |   2.651279 |
+| Board Init        |  0.335161 |   13.430625 |  40.072099 |
+| Board Props       |  1.298156 |   29.795857 |  22.952452 |
+| Board Ops         |  0.288097 |    1.520427 |   5.277486 |
+| Board Ops 2       |  0.302560 |   14.180215 |  46.867483 |
+| Make Move         |  0.267429 |    1.426689 |   5.334830 |
+| Make Move (New)   |  0.288349 |    1.564129 |   5.424435 |
+| Undo Move         |  0.293443 |    1.244496 |   4.241022 |
+| Next Move         |  0.190191 |    1.191897 |   6.266846 |
+| Generate Moves    |  0.464642 |   27.850348 |  59.939411 |
+| SAN Parse         |  0.197984 |    1.679059 |   8.480800 |
+| King Square       |  0.157012 |    0.347282 |   2.211823 |
+| Zobrist Hash      |  0.157230 |    0.477519 |   3.037071 |
+| Checkmate         |  0.167358 |    0.540827 |   3.231553 |
+| Insufficient Mat. |  0.146011 |    0.451302 |   3.090864 |
+| Bitboard Ops      |  0.090062 |    0.163109 |   1.811083 |
+| Board Bitboards   |  0.211134 |    0.360695 |   1.708374 |
+| Castle Rights     |  0.212845 |    0.857012 |   4.026456 |
+| Repetitions       |  0.181474 |   34.823705 | 191.893642 |
+| Board Status      |  0.188590 |    1.596025 |   8.462921 |
+| Move Gen Ops      |  0.202239 |    6.456320 |  31.924206 |
+| Square/Piece Adv. |  0.074712 |    0.114715 |   1.535423 |
+| Null Move         |  0.191068 |    0.787012 |   4.119012 |
+| Total             |  6.390789 |  141.554406 |  22.149753 |
 
 ## Notable Limitations
 

@@ -871,9 +871,9 @@ class Board:
         The repetition dectection mode the board will use.
         """
     @property
-    def move_history(self) -> typing.Optional[builtins.list[builtins.int]]:
+    def board_history(self) -> typing.Optional[builtins.list[builtins.int]]:
         r"""
-        Store board Zobrist hashes for move history
+        Store board Zobrist hashes for board history
         """
     @property
     def zobrist_hash(self) -> builtins.int:

@@ -2,7 +2,6 @@
 
 Notable differences between rust-chess and python-chess:
     - rust-chess does not currently support popping since there is no board history.
-    - rust-chess doesn't print a human readable board (grid format) yet, only FEN.
 
 Tests the same features from both for fair comparison.
 The tests were run with n = 100,000 and profiled using py-spy (used the VSCode extension to get times in the gutter).
@@ -190,6 +189,6 @@ if __name__ == "__main__":
     # # real	2m22.639s
     # # user	2m10.662s
     # # sys	0m10.804s
-    # for _ in range(n):
-    #     # Biggest slow down is creating with fen, displaying fen, legality, pushing moves, generating moves
-    #     test_chess()
+    for _ in range(n):
+        # Biggest slow down is creating with fen, displaying fen, legality, pushing moves, generating moves
+        test_chess()

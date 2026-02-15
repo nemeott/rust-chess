@@ -1,3 +1,5 @@
+// Has WIP no clear move history implementation to potentially enable undoing moves.
+
 use std::fmt::Write;
 use std::str::FromStr;
 
@@ -99,10 +101,13 @@ pub(crate) struct PyBoard {
     #[pyo3(get)]
     repetition_detection_mode: PyRepetitionDetectionMode,
 
-    /// Store board Zobrist hashes for board history
+    /// Store board Zobrist hashes for move history
     #[pyo3(get)]
-    board_history: Option<Vec<u64>>,
+    move_history: Option<Vec<u64>>,
+
+    irreversible_moves: Option<Vec<usize>>,
 }
+// TODO: Incremental Zobrist hash
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -130,13 +135,23 @@ impl PyBoard {
                 let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
 
                 // Create move history vector and add the initial board hash
-                let mut move_history = match mode {
-                    PyRepetitionDetectionMode::None => None,
-                    PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to VecDeque
-                    PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+                // Also create irreversible moves vector to store the history index of the last irreversible move
+                let (mut move_history, mut irreversible_moves) = match mode {
+                    PyRepetitionDetectionMode::None => (None, None),
+                    PyRepetitionDetectionMode::Partial => (
+                        Some(Vec::with_capacity(16)),     // TODO: Change to deque
+                        Some(Vec::with_capacity(16 / 4)), // TODO: Change to deque
+                    ),
+                    PyRepetitionDetectionMode::Full => (
+                        Some(Vec::with_capacity(256)),
+                        Some(Vec::with_capacity(256 / 4)),
+                    ),
                 };
                 if let Some(history) = &mut move_history {
                     history.push(board.get_hash());
+                }
+                if let Some(moves) = &mut irreversible_moves {
+                    moves.push(0);
                 }
 
                 Ok(PyBoard {
@@ -145,7 +160,8 @@ impl PyBoard {
                     halfmove_clock: 0,
                     fullmove_number: 1,
                     repetition_detection_mode: mode,
-                    board_history: move_history,
+                    move_history: move_history,
+                    irreversible_moves: irreversible_moves,
                 })
             }
             // Otherwise, parse the FEN string using the chess crate
@@ -189,13 +205,23 @@ impl PyBoard {
         let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
 
         // Create move history vector and add the initial board hash
-        let mut move_history = match mode {
-            PyRepetitionDetectionMode::None => None,
-            PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
-            PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+        // Also create irreversible moves vector to store the history index of the last irreversible move
+        let (mut move_history, mut irreversible_moves) = match mode {
+            PyRepetitionDetectionMode::None => (None, None),
+            PyRepetitionDetectionMode::Partial => (
+                Some(Vec::with_capacity(16)),     // TODO: Change to deque
+                Some(Vec::with_capacity(16 / 4)), // TODO: Change to deque
+            ),
+            PyRepetitionDetectionMode::Full => (
+                Some(Vec::with_capacity(256)),
+                Some(Vec::with_capacity(256 / 4)),
+            ),
         };
         if let Some(history) = &mut move_history {
             history.push(board.get_hash());
+        }
+        if let Some(moves) = &mut irreversible_moves {
+            moves.push(0);
         }
 
         Ok(PyBoard {
@@ -204,7 +230,8 @@ impl PyBoard {
             halfmove_clock,
             fullmove_number,
             repetition_detection_mode: mode,
-            board_history: move_history,
+            move_history: move_history,
+            irreversible_moves: irreversible_moves,
         })
     }
 
@@ -352,6 +379,7 @@ impl PyBoard {
     /// ```
     #[inline]
     fn get_move_from_san(&self, san: &str) -> PyResult<PyMove> {
+        // let san = san.to_lowercase(); # TODO: Do we need this?
         chess::ChessMove::from_san(&self.board, &san)
             .map(PyMove)
             .map_err(|_| PyValueError::new_err("Invalid SAN move"))
@@ -875,7 +903,8 @@ impl PyBoard {
             fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
             repetition_detection_mode: self.repetition_detection_mode,
             // Don't update move history when making a null move
-            board_history: self.board_history.clone(),
+            move_history: self.move_history.clone(),
+            irreversible_moves: self.irreversible_moves.clone(),
         }))
     }
 
@@ -921,9 +950,10 @@ impl PyBoard {
         if self.is_zeroing(chess_move) {
             self.halfmove_clock = 0;
 
-            // Don't need previous history anymore since it is a zeroing move (irreversible)
-            if let Some(history) = &mut self.board_history {
-                history.clear();
+            // Don't need to check previous history anymore since it is a zeroing move (irreversible)
+            // Update irreversible indicies to current index (no -1 since we add the hash later)
+            if let Some(moves) = &mut self.irreversible_moves {
+                moves.push(self.move_history.as_ref().unwrap().len());
             }
         } else {
             self.halfmove_clock += 1 // Add one if not zeroing
@@ -942,7 +972,7 @@ impl PyBoard {
         self.board = temp_board;
 
         // Add the new board's Zobrist hash to history
-        if let Some(history) = &mut self.board_history {
+        if let Some(history) = &mut self.move_history {
             history.push(temp_board.get_hash())
         }
 
@@ -1000,7 +1030,25 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
-        let is_zeroing: bool = self.is_zeroing(chess_move);
+        let is_zeroing = self.is_zeroing(chess_move);
+        let move_history_ref = self.move_history.as_ref();
+
+        let new_irreversible_moves = self.irreversible_moves.as_ref().map(|moves| {
+            let mut m = moves.clone();
+
+            // Don't need to check previous history anymore since it is a zeroing move (irreversible)
+            // Update irreversible indicies to current index (no -1 since we add the hash later)
+            if is_zeroing {
+                m.push(move_history_ref.unwrap().len());
+            }
+            m
+        });
+
+        let new_history = move_history_ref.map(|history| {
+            let mut h = history.clone();
+            h.push(new_board.get_hash());
+            h
+        });
 
         Ok(PyBoard {
             board: new_board,
@@ -1014,17 +1062,8 @@ impl PyBoard {
             // Increment fullmove number if black moves
             fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
             repetition_detection_mode: self.repetition_detection_mode,
-            // Add the new board's Zobrist hash to history
-            board_history: self.board_history.as_ref().map(|history| {
-                let mut new_history = if is_zeroing {
-                    Vec::with_capacity(history.capacity()) // Don't need previous history anymore since it is a zeroing move (irreversible)
-                } else {
-                    history.clone()
-                };
-
-                new_history.push(new_board.get_hash());
-                new_history
-            }),
+            move_history: new_history,
+            irreversible_moves: new_irreversible_moves,
         })
     }
 
@@ -1599,7 +1638,7 @@ impl PyBoard {
     /// TODO: Add option to use full, partial, or no repetition checks
     #[inline]
     fn is_n_repetition(&self, n: u8) -> bool {
-        if let Some(history) = &self.board_history {
+        if let Some(history) = &self.move_history {
             // Move history length is one greater than the halfmove clock since when halfmove clock is 0, there is 1 position in history
             let length: i16 = (self.halfmove_clock + 1) as i16;
             // If checking threefold (n = 3), then it would be (4 * (3-1)) + 1 = 9
@@ -1684,6 +1723,10 @@ impl PyBoard {
     fn is_fivefold_repetition(&self) -> bool {
         self.is_n_repetition(5)
     }
+
+    // 3 -> 5 = +2
+    // 4 -> 7 = +3
+    // 5 -> 9 = +4
 
     /// Checks if the side to move is in check.
     ///

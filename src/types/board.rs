@@ -19,7 +19,7 @@ use crate::types::{
 /// Supports comparison and equality.
 /// TODO: docs
 #[gen_stub_pyclass_enum]
-#[pyclass(name = "BoardStatus", frozen, eq, ord)]
+#[pyclass(name = "BoardStatus", frozen, eq, ord, from_py_object)]
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub(crate) enum PyBoardStatus {
     #[pyo3(name = "ONGOING")]
@@ -41,7 +41,7 @@ pub(crate) enum PyBoardStatus {
 ///     No rights, king-side, queen-side, both.
 /// TODO: docs
 #[gen_stub_pyclass_enum]
-#[pyclass(name = "CastleRights", frozen, eq, ord)]
+#[pyclass(name = "CastleRights", frozen, eq, ord, from_py_object)]
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub(crate) enum PyCastleRights {
     #[pyo3(name = "NO_RIGHTS")]
@@ -55,7 +55,7 @@ pub(crate) enum PyCastleRights {
 }
 
 #[gen_stub_pyclass_enum]
-#[pyclass(name = "RepetitionDetectionMode", frozen, eq, ord)]
+#[pyclass(name = "RepetitionDetectionMode", frozen, eq, ord, from_py_object)]
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub(crate) enum PyRepetitionDetectionMode {
     #[pyo3(name = "NONE")]

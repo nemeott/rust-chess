@@ -5,9 +5,22 @@
 # Maturin builds
 target
 
-# Pytest
+# Rust
+.cargo
+target
+
+# Python
 __pycache__
+
+# Pytest
+.pytest_cache
 
 # Py-spy
 *.pyspy
 profile.svg
+
+# Logs
+*.log
+
+# Temp files
+testing.py

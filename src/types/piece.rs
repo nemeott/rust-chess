@@ -61,7 +61,7 @@ pub(crate) mod pieces{
 /// True
 /// ```
 #[gen_stub_pyclass]
-#[pyclass(name = "PieceType", frozen, eq, ord)]
+#[pyclass(name = "PieceType", frozen, eq, ord, from_py_object)]
 #[derive(PartialEq, Eq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub(crate) struct PyPieceType(pub(crate) chess::Piece);
 
@@ -190,7 +190,7 @@ impl PyPieceType {
 /// ```
 /// TODO
 #[gen_stub_pyclass]
-#[pyclass(name = "Piece", frozen, eq, ord)]
+#[pyclass(name = "Piece", frozen, eq, ord, from_py_object)]
 #[derive(PartialOrd, PartialEq, Eq, Copy, Clone, Hash)]
 pub(crate) struct PyPiece {
     /// Get the piece type of the piece

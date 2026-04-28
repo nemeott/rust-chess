@@ -43,7 +43,7 @@ pub(crate) const BB_RANKS: [PyBitboard; 8] = [
 /// Also supports comparison and equality.
 ///
 #[gen_stub_pyclass]
-#[pyclass(name = "Bitboard")]
+#[pyclass(name = "Bitboard", from_py_object)]
 #[derive(PartialEq, Eq, PartialOrd, Clone, Copy, Default, Hash)]
 pub(crate) struct PyBitboard(pub(crate) chess::BitBoard);
 
@@ -280,7 +280,6 @@ impl PyBitboard {
     /// ...
     /// StopIteration
     /// ```
-    /// TODO: Next on bb with multiple squares
     #[inline]
     fn __next__(&mut self) -> Option<PySquare> {
         self.0.next().map(PySquare)

@@ -29,7 +29,7 @@ use crate::types::{color::WHITE, piece::PyPieceType, square::PySquare};
 /// True
 /// ```
 #[gen_stub_pyclass]
-#[pyclass(name = "Move", frozen, eq)]
+#[pyclass(name = "Move", frozen, eq, from_py_object)]
 #[derive(Clone, Copy, Eq, PartialOrd, PartialEq, Default, Hash)]
 
 // TODO: Keeping this as a wrapper for the chess crate for now for more performance in other functions.

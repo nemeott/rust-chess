@@ -1,7 +1,7 @@
 chess==1.11.2
 iniconfig==2.3.0
-packaging==26.0
+packaging==26.2
 pluggy==1.6.0
-py-spy==0.4.1
-pygments==2.19.2
-pytest==9.0.2
+py-spy==0.4.2
+pygments==2.20.0
+pytest==9.0.3

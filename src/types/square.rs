@@ -39,7 +39,7 @@ const DARK_SQUARES_BB: u64 = 0xAA55AA55AA55AA55;
 /// TODO
 /// ```
 #[gen_stub_pyclass]
-#[pyclass(name = "Square", frozen)]
+#[pyclass(name = "Square", frozen, from_py_object)]
 #[derive(PartialEq, Ord, Eq, PartialOrd, Copy, Clone, Default, Hash)]
 pub(crate) struct PySquare(pub(crate) chess::Square);
 

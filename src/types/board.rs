@@ -109,7 +109,7 @@ impl PyBoard {
     fn ensure_move_gen(&self, py: Python<'_>) -> Py<PyMoveGenerator> {
         self.move_gen
             .get_or_init(|| {
-                Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&self.board))).unwrap()
+                Py::new(py, PyMoveGenerator::new(&self.board)).unwrap()
             })
             .clone_ref(py)
     }
@@ -1201,7 +1201,7 @@ impl PyBoard {
         self.move_gen.take();
         let _ = self.move_gen.set(Py::new(
             py,
-            PyMoveGenerator(chess::MoveGen::new_legal(&self.board)),
+            PyMoveGenerator::new(&self.board),
         )?);
 
         Ok(())
@@ -1237,14 +1237,14 @@ impl PyBoard {
         let py = unsafe { Python::assume_attached() };
         self.ensure_move_gen(py)
             .borrow_mut(py)
-            .0
             .remove_move(chess_move.0);
     }
 
-    /// Sets the generator mask for the move generator.
-    /// The mask is a bitboard that indicates what landing squares to generate moves for.
-    /// Only squares in the mask will be considered when generating moves.
-    /// See `remove_generator_mask` for the inverse (never generate bitboard moves).
+    /// Retains only moves whose destination squares are in the given mask.
+    ///
+    /// The mask is a bitboard of allowed landing squares.
+    /// Only moves landing on squares in the mask will be generated.
+    /// See `exclude_generator_mask` for the inverse.
     ///
     /// Moves that have already been iterated over will not be generated again, regardless of the mask value.
     ///
@@ -1252,34 +1252,34 @@ impl PyBoard {
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())
     /// 20
-    /// >>> board.set_generator_mask(rust_chess.E4.to_bitboard())
+    /// >>> board.retain_generator_mask(rust_chess.E4.to_bitboard())
     /// >>> len(board.generate_moves())
     /// 1
     /// >>> board.generate_next_move()
     /// Move(e2, e4, None)
     /// ```
     #[inline]
-    fn set_generator_mask(&mut self, mask: PyBitboard) {
+    fn retain_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
         self.ensure_move_gen(py)
             .borrow_mut(py)
-            .0
-            .set_iterator_mask(mask.0);
+            .retain_mask(mask.0);
     }
 
-    /// Removes the generator mask from the move generator.
-    /// The mask is a bitboard that indicates what landing squares *not* to generate moves for.
-    /// Only squares not in the mask will be considered when generating moves.
-    /// See `set_generator_mask` for the inverse (only generate bitboard moves).
+    /// Excludes moves whose destination squares are in the given mask.
     ///
-    /// You can remove moves, and then generate over all legal moves for example without regenerating the removed moves.
+    /// The mask is a bitboard of forbidden landing squares.
+    /// Only moves landing on squares not in the mask will be generated.
+    /// See `retain_generator_mask` for the inverse.
+    ///
+    /// Removed moves stay removed even if you later generate over all legal moves.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())
     /// 20
-    /// >>> board.remove_generator_mask(rust_chess.E4.to_bitboard())
+    /// >>> board.exclude_generator_mask(rust_chess.E4.to_bitboard())
     /// >>> len(board.generate_moves())
     /// 19
     /// >>> rust_chess.Move("e2e4") in board.generate_moves()
@@ -1288,19 +1288,18 @@ impl PyBoard {
     /// 0
     /// ```
     #[inline]
-    fn remove_generator_mask(&mut self, mask: PyBitboard) {
+    fn exclude_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
         self.ensure_move_gen(py)
             .borrow_mut(py)
-            .0
-            .remove_mask(mask.0);
+            .exclude_mask(mask.0);
     }
 
     /// Get the next remaining move in the generator.
     /// Updates the move generator to the next move.
     ///
-    /// Unless the mask has been set, this will return the next legal move by default.
+    /// Unless a mask has been set, this will return the next legal move by default.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -1326,7 +1325,7 @@ impl PyBoard {
     /// Get the next remaining legal move in the generator.
     /// Updates the move generator to the next legal move.
     ///
-    /// Updates the generator mask to all legal moves.
+    /// Allows all legal destination squares for the generator.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -1344,8 +1343,8 @@ impl PyBoard {
 
         let gen_ref = self.ensure_move_gen(py);
 
-        // Set the iterator mask to everything (check all legal moves)
-        gen_ref.borrow_mut(py).0.set_iterator_mask(!chess::EMPTY);
+        // Allow all destination squares again for iteration
+        gen_ref.borrow_mut(py).retain_mask(!chess::EMPTY);
 
         gen_ref.borrow_mut(py).__next__()
     }
@@ -1353,7 +1352,7 @@ impl PyBoard {
     /// Get the next remaining legal capture in the generator.
     /// Updates the move generator to the next move.
     ///
-    /// Updates the generator mask to the enemy's squares (all legal captures).
+    /// Allows only enemy-occupied destination squares for the generator.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -1378,8 +1377,8 @@ impl PyBoard {
 
         let gen_ref = self.ensure_move_gen(py);
 
-        // Set the iterator mask to the targets mask (check all legal captures [moves onto enemy pieces])
-        gen_ref.borrow_mut(py).0.set_iterator_mask(*targets_mask);
+        // Allow only capture destination squares for iteration
+        gen_ref.borrow_mut(py).retain_mask(*targets_mask);
 
         gen_ref.borrow_mut(py).__next__()
     }
@@ -1390,13 +1389,13 @@ impl PyBoard {
     /// Exhausts the move generator if fully iterated over.
     /// Updates the move generator.
     ///
-    /// Unless the generator mask is set, this will generate the next legal moves by default.
+    /// Unless a mask has been set, this will generate the next legal moves by default.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())
     /// 20
-    /// >>> board.set_generator_mask(rust_chess.Bitboard(402915328))
+    /// >>> board.retain_generator_mask(rust_chess.Bitboard(402915328))
     /// >>> len(board.generate_moves())
     /// 4
     /// >>> list(board.generate_moves())
@@ -1438,8 +1437,8 @@ impl PyBoard {
 
         let gen_ref = self.ensure_move_gen(py);
 
-        // Set the iterator mask to everything (check all legal moves)
-        gen_ref.borrow_mut(py).0.set_iterator_mask(!chess::EMPTY);
+        // Allow all destination squares again for iteration
+        gen_ref.borrow_mut(py).retain_mask(!chess::EMPTY);
 
         // Share ownership with Python
         gen_ref
@@ -1477,8 +1476,8 @@ impl PyBoard {
 
         let gen_ref = self.ensure_move_gen(py);
 
-        // Set the iterator mask to the targets mask (check all legal captures [moves onto enemy pieces])
-        gen_ref.borrow_mut(py).0.set_iterator_mask(*targets_mask);
+        // Allow only capture destination squares for iteration
+        gen_ref.borrow_mut(py).retain_mask(*targets_mask);
 
         // Share ownership with Python
         gen_ref

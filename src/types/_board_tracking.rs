@@ -1,4 +1,5 @@
 // Has WIP no clear move history implementation to potentially enable undoing moves.
+// Not used currently, but might use in the future
 
 use std::fmt::Write;
 use std::str::FromStr;
@@ -132,7 +133,7 @@ impl PyBoard {
                 let py = unsafe { Python::assume_attached() };
 
                 // Create a new move generator using the chess crate
-                let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
+                let move_gen = Py::new(py, PyMoveGenerator::new(&board))?;
 
                 // Create move history vector and add the initial board hash
                 // Also create irreversible moves vector to store the history index of the last irreversible move
@@ -202,7 +203,7 @@ impl PyBoard {
         let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
-        let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
+        let move_gen = Py::new(py, PyMoveGenerator::new(&board))?;
 
         // Create move history vector and add the initial board hash
         // Also create irreversible moves vector to store the history index of the last irreversible move
@@ -896,7 +897,7 @@ impl PyBoard {
         Ok(Some(PyBoard {
             board: new_board,
             // Create a new move generator using the chess crate
-            move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
+            move_gen: Py::new(py, PyMoveGenerator::new(&new_board))?,
             // // Increment the halfmove clock
             halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
             // // Increment fullmove number if black moves
@@ -966,7 +967,7 @@ impl PyBoard {
         let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
-        self.move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&temp_board)))?;
+        self.move_gen = Py::new(py, PyMoveGenerator::new(&temp_board))?;
 
         // Update the current board
         self.board = temp_board;
@@ -1052,7 +1053,7 @@ impl PyBoard {
 
         Ok(PyBoard {
             board: new_board,
-            move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
+            move_gen: Py::new(py, PyMoveGenerator::new(&new_board))?,
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
             halfmove_clock: if is_zeroing {
                 0
@@ -1249,7 +1250,7 @@ impl PyBoard {
         let py = unsafe { Python::assume_attached() };
 
         // Create a new move generator using the chess crate
-        self.move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&self.board)))?;
+        self.move_gen = Py::new(py, PyMoveGenerator::new(&self.board))?;
 
         Ok(())
     }
@@ -1282,7 +1283,7 @@ impl PyBoard {
     fn remove_generator_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).0.remove_move(chess_move.0);
+        self.move_gen.borrow_mut(py).remove_move(chess_move.0);
     }
 
     /// Sets the generator mask for the move generator.
@@ -1306,7 +1307,7 @@ impl PyBoard {
     fn set_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).0.set_iterator_mask(mask.0);
+        self.move_gen.borrow_mut(py).set_iterator_mask(mask.0);
     }
 
     /// Removes the generator mask from the move generator.
@@ -1332,7 +1333,7 @@ impl PyBoard {
     fn remove_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).0.remove_mask(mask.0);
+        self.move_gen.borrow_mut(py).remove_mask(mask.0);
     }
 
     /// Get the next remaining move in the generator.

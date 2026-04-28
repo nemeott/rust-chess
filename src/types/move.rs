@@ -184,9 +184,43 @@ impl PyMove {
 /// Move iterator class for generating legal moves.
 /// Not intended for direct use.
 /// Use the `Board` class methods for generating moves.
+///
+/// The generator stores all currently available legal moves in a buffer.
+/// `retain_mask` narrows which destination squares are returned next.
+/// `exclude_mask` permanently removes buffered moves whose destination squares match the mask.
+///
+
+// TODO: Use old lazy implementation if this is fixed: https://github.com/jordanbray/chess/issues/66
 #[gen_stub_pyclass]
 #[pyclass(name = "MoveGenerator")]
-pub(crate) struct PyMoveGenerator(pub(crate) chess::MoveGen);
+pub(crate) struct PyMoveGenerator {
+    moves: Vec<chess::ChessMove>,
+    allowed_mask: chess::BitBoard,
+}
+
+impl PyMoveGenerator {
+    pub(crate) fn new(board: &chess::Board) -> Self {
+        let mut moves: Vec<chess::ChessMove> = chess::MoveGen::new_legal(board).collect();
+        moves.reverse(); // Reverse so we can pop from the end
+        Self {
+            moves,
+            allowed_mask: !chess::EMPTY,
+        }
+    }
+
+    pub(crate) fn remove_move(&mut self, move_to_remove: chess::ChessMove) {
+        self.moves.retain(|&m| m != move_to_remove);
+    }
+
+    pub(crate) fn exclude_mask(&mut self, mask: chess::BitBoard) {
+        self.moves
+            .retain(|&m| (mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) == 0);
+    }
+
+    pub(crate) fn retain_mask(&mut self, mask: chess::BitBoard) {
+        self.allowed_mask = mask;
+    }
+}
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -221,7 +255,18 @@ impl PyMoveGenerator {
     /// ```
     #[inline]
     pub(crate) fn __next__(&mut self) -> Option<PyMove> {
-        self.0.next().map(PyMove)
+        let mut idx_to_remove = None;
+        for (i, m) in self.moves.iter().enumerate().rev() {
+            if (self.allowed_mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) != 0 {
+                idx_to_remove = Some(i);
+                break;
+            }
+        }
+        if let Some(i) = idx_to_remove {
+            Some(PyMove(self.moves.remove(i)))
+        } else {
+            None
+        }
     }
 
     /// Get the length of the generator.
@@ -240,7 +285,12 @@ impl PyMoveGenerator {
     /// ```
     #[inline]
     pub(crate) fn __len__(&self) -> usize {
-        self.0.len()
+        self.moves
+            .iter()
+            .filter(|&m| {
+                (self.allowed_mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) != 0
+            })
+            .count()
     }
 
     /// Get the type of the move generator.

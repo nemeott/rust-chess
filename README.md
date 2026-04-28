@@ -273,7 +273,7 @@ uv pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
 
 More detailed analysis is documented inside the file, including time deltas per function.
 
-`benchmark.py` was used for a benchmark comparision between similar functions in `rust-chess` and `python-chess`. The results from `rust-chess` v0.3.2 are as follows:
+`benchmark.py` was used for a benchmark comparision between similar functions in `rust-chess` and `python-chess`. Benchmarked on my Chromebook (Intel i5-1135G7). The results from `rust-chess` v0.3.2 are as follows:
 
 Benchmark Results (n=100,000)
 

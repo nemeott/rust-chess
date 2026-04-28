@@ -1842,7 +1842,7 @@ class Board:
         ```
         
         TODO: Quick check (only check last few moves since that is common error for engines)
-        TODO: Add option to use full, partial, or no repetition checks
+        TODO: Add option to use full, or no repetition checks
         """
     def is_threefold_repetition(self) -> builtins.bool:
         r"""
@@ -2728,6 +2728,5 @@ class CastleRights(enum.Enum):
 @typing.final
 class RepetitionDetectionMode(enum.Enum):
     NONE = ...
-    PARTIAL = ...
     FULL = ...
 

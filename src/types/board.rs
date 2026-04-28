@@ -60,8 +60,6 @@ pub(crate) enum PyCastleRights {
 pub(crate) enum PyRepetitionDetectionMode {
     #[pyo3(name = "NONE")]
     None,
-    #[pyo3(name = "PARTIAL")]
-    Partial,
     #[pyo3(name = "FULL")]
     Full,
 }
@@ -139,7 +137,6 @@ impl PyBoard {
                 // Create move history vector and add the initial board hash
                 let mut board_history = match mode {
                     PyRepetitionDetectionMode::None => None,
-                    PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to VecDeque
                     PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
                 };
                 if let Some(history) = &mut board_history {
@@ -192,7 +189,6 @@ impl PyBoard {
         // Create move history vector and add the initial board hash
         let mut board_history = match mode {
             PyRepetitionDetectionMode::None => None,
-            PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
             PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
         };
         if let Some(history) = &mut board_history {
@@ -1318,7 +1314,8 @@ impl PyBoard {
     /// >>> len(board.generate_moves())
     /// 18
     /// ```
-    /// FIXME: Entire generator consumed after generating next move
+
+    // FIXME: Entire generator consumed after generating next move
     #[inline]
     fn generate_next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -1598,7 +1595,7 @@ impl PyBoard {
     /// ```
     ///
     /// TODO: Quick check (only check last few moves since that is common error for engines)
-    /// TODO: Add option to use full, partial, or no repetition checks
+    /// TODO: Add option to use full, or no repetition checks
     #[inline]
     fn is_n_repetition(&self, n: u8) -> bool {
         if let Some(history) = &self.board_history {

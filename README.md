@@ -137,9 +137,9 @@ cd rust-chess
 
 ```sh
 ./build.sh
-pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
+pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
 # Or
-uv pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
+uv pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
 
 # Or build and install in current virtual environment
 ./develop.sh
@@ -191,13 +191,13 @@ uv pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
   - [x] Move creation from data types or UCI
   - [ ] Castling move constants
   - [ ] Null move constant?
-- [ ] `MoveGenerator`
-  - [x] Generate the next move\*, legal move, and legal capture
+- [x] `MoveGenerator`
+  - [x] Generate the next move, legal move, and legal capture
   - [x] Generate moves, legal moves, and legal captures
   - [x] Support iterating over the generator
-  - [x] Specify the generator mask (bitboard of squares the generator will generate for)
-  - [x] Remove a generator mask (bitboard of squares the generator will avoid)
-  - [ ] Remove a move from the generator
+  - [x] Set a retain generator mask (bitboard of squares the generator will generate for)
+  - [x] Set an exclude generator mask (bitboard of squares the generator will avoid)
+  - [x] Remove a move from the generator
   - [x] Reset the generator
 - [x] `CastleRights`
   - [x] Get castle rights (No rights, queenside, kingside, both)
@@ -251,7 +251,7 @@ uv pip install target/wheels/rust_chess-0.3.2-cp313-cp313-linux_x86_64.whl
   - [ ] Improved Python ergonomics (e.g., more Pythonic wrappers where appropriate)
   - [ ] Comprehensive test suite
     - [x] Docstring tests
-    - [ ] Benchmark comparision to `python-chess`
+    - [x] Benchmark comparision to `python-chess`
     - [ ] Other tests
   - [ ] Working GitHub action (😢)
 

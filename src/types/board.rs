@@ -108,9 +108,7 @@ impl PyBoard {
     #[inline]
     fn ensure_move_gen(&self, py: Python<'_>) -> Py<PyMoveGenerator> {
         self.move_gen
-            .get_or_init(|| {
-                Py::new(py, PyMoveGenerator::new(&self.board)).unwrap()
-            })
+            .get_or_init(|| Py::new(py, PyMoveGenerator::new(&self.board)).unwrap())
             .clone_ref(py)
     }
 }
@@ -459,7 +457,7 @@ impl PyBoard {
     }
 
     /// Get the castle rights of a color.
-    /// Returns a `CastlingRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
+    /// Returns a `CastleRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -1199,10 +1197,9 @@ impl PyBoard {
 
         // Invalidate the move generator and create a new one with all legal moves using the chess crate
         self.move_gen.take();
-        let _ = self.move_gen.set(Py::new(
-            py,
-            PyMoveGenerator::new(&self.board),
-        )?);
+        let _ = self
+            .move_gen
+            .set(Py::new(py, PyMoveGenerator::new(&self.board))?);
 
         Ok(())
     }
@@ -1229,8 +1226,6 @@ impl PyBoard {
     /// >>> len(board.generate_moves())
     /// 0
     /// ```
-
-    // FIXME: Sometimes consumes the entire generator (length -> 0) (maybe only when using next move?)
     #[inline]
     fn remove_generator_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -1262,9 +1257,7 @@ impl PyBoard {
     fn retain_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py)
-            .borrow_mut(py)
-            .retain_mask(mask.0);
+        self.ensure_move_gen(py).borrow_mut(py).retain_mask(mask.0);
     }
 
     /// Excludes moves whose destination squares are in the given mask.
@@ -1291,9 +1284,7 @@ impl PyBoard {
     fn exclude_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py)
-            .borrow_mut(py)
-            .exclude_mask(mask.0);
+        self.ensure_move_gen(py).borrow_mut(py).exclude_mask(mask.0);
     }
 
     /// Get the next remaining move in the generator.
@@ -1305,7 +1296,7 @@ impl PyBoard {
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())
     /// 20
-    /// >>> board.remove_generator_move(rust_chess.Move("a2a3"))  # FIXME: Currently makes len -> 0
+    /// >>> board.remove_generator_move(rust_chess.Move("a2a3"))
     /// >>> len(board.generate_moves())
     /// 19
     /// >>> board.generate_next_move()
@@ -1313,8 +1304,6 @@ impl PyBoard {
     /// >>> len(board.generate_moves())
     /// 18
     /// ```
-
-    // FIXME: Entire generator consumed after generating next move
     #[inline]
     fn generate_next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python

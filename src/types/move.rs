@@ -199,6 +199,7 @@ pub(crate) struct PyMoveGenerator {
 }
 
 impl PyMoveGenerator {
+    #[inline]
     pub(crate) fn new(board: &chess::Board) -> Self {
         let mut moves: Vec<chess::ChessMove> = chess::MoveGen::new_legal(board).collect();
         moves.reverse(); // Reverse so we can pop from the end
@@ -208,15 +209,18 @@ impl PyMoveGenerator {
         }
     }
 
+    #[inline]
     pub(crate) fn remove_move(&mut self, move_to_remove: chess::ChessMove) {
         self.moves.retain(|&m| m != move_to_remove);
     }
 
+    #[inline]
     pub(crate) fn exclude_mask(&mut self, mask: chess::BitBoard) {
         self.moves
             .retain(|&m| (mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) == 0);
     }
 
+    #[inline]
     pub(crate) fn retain_mask(&mut self, mask: chess::BitBoard) {
         self.allowed_mask = mask;
     }

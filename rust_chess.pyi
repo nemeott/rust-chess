@@ -1098,7 +1098,7 @@ class Board:
     def get_castle_rights(self, color: Color) -> CastleRights:
         r"""
         Get the castle rights of a color.
-        Returns a `CastlingRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
+        Returns a `CastleRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
         
         ```python
         >>> board = rust_chess.Board()
@@ -1658,7 +1658,7 @@ class Board:
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
         20
-        >>> board.remove_generator_move(rust_chess.Move("a2a3"))  # FIXME: Currently makes len -> 0
+        >>> board.remove_generator_move(rust_chess.Move("a2a3"))
         >>> len(board.generate_moves())
         19
         >>> board.generate_next_move()

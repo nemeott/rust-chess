@@ -443,7 +443,6 @@ class Bitboard:
         ...
         StopIteration
         ```
-        TODO: Next on bb with multiple squares
         """
     def extract_bitboard_or_u64(self, other: typing.Any) -> builtins.int: ...
     def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
@@ -1838,7 +1837,7 @@ class Board:
         ...     board.make_move(rust_chess.Move("c6b8"))
         >>> board.is_n_repetition(4)  # Check for fourfold repetition
         True
-        >>> board.move_history.count(board.zobrist_hash)  # Position appears 4 times
+        >>> board.board_history.count(board.zobrist_hash)  # Position appears 4 times
         4
         ```
         
@@ -1861,7 +1860,7 @@ class Board:
         ...     board.make_move(rust_chess.Move("c6b8"))
         >>> board.is_threefold_repetition()
         True
-        >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 3 times
+        >>> board.board_history.count(board.zobrist_hash)  # Position has appeared 3 times
         3
         ```
         """
@@ -1881,7 +1880,7 @@ class Board:
         ...     board.make_move(rust_chess.Move("c6b8"))
         >>> board.is_fivefold_repetition()
         True
-        >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 5 times
+        >>> board.board_history.count(board.zobrist_hash)  # Position has appeared 5 times
         5
         ```
         """

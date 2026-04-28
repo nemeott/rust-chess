@@ -75,7 +75,8 @@ pub(crate) enum PyRepetitionDetectionMode {
 pub(crate) struct PyBoard {
     board: chess::Board,
 
-    move_gen: Py<PyMoveGenerator>, // Use a Py to be able to share between Python and Rust
+    // Use a OnceLock to lazily initialize the move generator when needed
+    move_gen: std::sync::OnceLock<Py<PyMoveGenerator>>, // Use a Py to be able to share between Python and Rust
 
     /// Get the halfmove clock.
     ///
@@ -104,6 +105,18 @@ pub(crate) struct PyBoard {
     board_history: Option<Vec<u64>>,
 }
 
+impl PyBoard {
+    /// Helper to lazily initialize and return a reference to the generator
+    #[inline]
+    fn ensure_move_gen(&self, py: Python<'_>) -> Py<PyMoveGenerator> {
+        self.move_gen
+            .get_or_init(|| {
+                Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&self.board))).unwrap()
+            })
+            .clone_ref(py)
+    }
+}
+
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyBoard {
@@ -123,29 +136,23 @@ impl PyBoard {
             None => {
                 let board = chess::Board::default();
 
-                // We can assume the GIL is acquired, since this function is only called from Python
-                let py = unsafe { Python::assume_attached() };
-
-                // Create a new move generator using the chess crate
-                let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
-
                 // Create move history vector and add the initial board hash
-                let mut move_history = match mode {
+                let mut board_history = match mode {
                     PyRepetitionDetectionMode::None => None,
                     PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to VecDeque
                     PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
                 };
-                if let Some(history) = &mut move_history {
+                if let Some(history) = &mut board_history {
                     history.push(board.get_hash());
                 }
 
                 Ok(PyBoard {
                     board,
-                    move_gen,
+                    move_gen: std::sync::OnceLock::new(),
                     halfmove_clock: 0,
                     fullmove_number: 1,
                     repetition_detection_mode: mode,
-                    board_history: move_history,
+                    board_history: board_history,
                 })
             }
             // Otherwise, parse the FEN string using the chess crate
@@ -182,29 +189,23 @@ impl PyBoard {
         let board = chess::Board::from_str(fen)
             .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
 
-        // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_attached() };
-
-        // Create a new move generator using the chess crate
-        let move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&board)))?;
-
         // Create move history vector and add the initial board hash
-        let mut move_history = match mode {
+        let mut board_history = match mode {
             PyRepetitionDetectionMode::None => None,
             PyRepetitionDetectionMode::Partial => Some(Vec::with_capacity(16)), // TODO: Change to deque
             PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
         };
-        if let Some(history) = &mut move_history {
+        if let Some(history) = &mut board_history {
             history.push(board.get_hash());
         }
 
         Ok(PyBoard {
             board,
-            move_gen,
+            move_gen: std::sync::OnceLock::new(),
             halfmove_clock,
             fullmove_number,
             repetition_detection_mode: mode,
-            board_history: move_history,
+            board_history: board_history,
         })
     }
 
@@ -862,13 +863,10 @@ impl PyBoard {
             return Ok(None);
         };
 
-        // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_attached() };
-
         Ok(Some(PyBoard {
             board: new_board,
-            // Create a new move generator using the chess crate
-            move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
+            // Create a new uninitialized move generator using the chess crate
+            move_gen: std::sync::OnceLock::new(),
             // // Increment the halfmove clock
             halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
             // // Increment fullmove number if black moves
@@ -932,11 +930,8 @@ impl PyBoard {
         // Increment fullmove number if black moves
         self.fullmove_number += self.board.side_to_move().to_index() as u8; // White is 0, black is 1
 
-        // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_attached() };
-
-        // Create a new move generator using the chess crate
-        self.move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&temp_board)))?;
+        // Invalidate the move generator since the board has changed
+        self.move_gen.take();
 
         // Update the current board
         self.board = temp_board;
@@ -997,14 +992,11 @@ impl PyBoard {
         // Make the move onto a new board using the chess crate
         let new_board: chess::Board = self.board.make_move_new(chess_move.0);
 
-        // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_attached() };
-
         let is_zeroing: bool = self.is_zeroing(chess_move);
 
         Ok(PyBoard {
             board: new_board,
-            move_gen: Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&new_board)))?,
+            move_gen: std::sync::OnceLock::new(),
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
             halfmove_clock: if is_zeroing {
                 0
@@ -1187,7 +1179,7 @@ impl PyBoard {
     fn get_generator_num_remaining(&self) -> usize {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow(py).__len__()
+        self.ensure_move_gen(py).borrow(py).__len__()
     }
 
     /// Reset the move generator for the current board.
@@ -1209,8 +1201,12 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
-        // Create a new move generator using the chess crate
-        self.move_gen = Py::new(py, PyMoveGenerator(chess::MoveGen::new_legal(&self.board)))?;
+        // Invalidate the move generator and create a new one with all legal moves using the chess crate
+        self.move_gen.take();
+        let _ = self.move_gen.set(Py::new(
+            py,
+            PyMoveGenerator(chess::MoveGen::new_legal(&self.board)),
+        )?);
 
         Ok(())
     }
@@ -1243,7 +1239,10 @@ impl PyBoard {
     fn remove_generator_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).0.remove_move(chess_move.0);
+        self.ensure_move_gen(py)
+            .borrow_mut(py)
+            .0
+            .remove_move(chess_move.0);
     }
 
     /// Sets the generator mask for the move generator.
@@ -1267,7 +1266,10 @@ impl PyBoard {
     fn set_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).0.set_iterator_mask(mask.0);
+        self.ensure_move_gen(py)
+            .borrow_mut(py)
+            .0
+            .set_iterator_mask(mask.0);
     }
 
     /// Removes the generator mask from the move generator.
@@ -1293,7 +1295,10 @@ impl PyBoard {
     fn remove_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).0.remove_mask(mask.0);
+        self.ensure_move_gen(py)
+            .borrow_mut(py)
+            .0
+            .remove_mask(mask.0);
     }
 
     /// Get the next remaining move in the generator.
@@ -1313,11 +1318,12 @@ impl PyBoard {
     /// >>> len(board.generate_moves())
     /// 18
     /// ```
+    /// FIXME: Entire generator consumed after generating next move
     #[inline]
     fn generate_next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.move_gen.borrow_mut(py).__next__()
+        self.ensure_move_gen(py).borrow_mut(py).__next__()
     }
 
     /// Get the next remaining legal move in the generator.
@@ -1339,13 +1345,12 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
-        // Set the iterator mask to everything (check all legal moves)
-        self.move_gen
-            .borrow_mut(py)
-            .0
-            .set_iterator_mask(!chess::EMPTY);
+        let gen_ref = self.ensure_move_gen(py);
 
-        self.move_gen.borrow_mut(py).__next__()
+        // Set the iterator mask to everything (check all legal moves)
+        gen_ref.borrow_mut(py).0.set_iterator_mask(!chess::EMPTY);
+
+        gen_ref.borrow_mut(py).__next__()
     }
 
     /// Get the next remaining legal capture in the generator.
@@ -1374,13 +1379,12 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
-        // Set the iterator mask to the targets mask (check all legal captures [moves onto enemy pieces])
-        self.move_gen
-            .borrow_mut(py)
-            .0
-            .set_iterator_mask(*targets_mask);
+        let gen_ref = self.ensure_move_gen(py);
 
-        self.move_gen.borrow_mut(py).__next__()
+        // Set the iterator mask to the targets mask (check all legal captures [moves onto enemy pieces])
+        gen_ref.borrow_mut(py).0.set_iterator_mask(*targets_mask);
+
+        gen_ref.borrow_mut(py).__next__()
     }
 
     // TODO: Generate moves_list (PyList<PyMove>)
@@ -1409,7 +1413,7 @@ impl PyBoard {
         let py = unsafe { Python::assume_attached() };
 
         // Share ownership with Python
-        self.move_gen.clone_ref(py)
+        self.ensure_move_gen(py)
     }
 
     /// Generate the next remaining legal moves for the current board.
@@ -1435,14 +1439,13 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
+        let gen_ref = self.ensure_move_gen(py);
+
         // Set the iterator mask to everything (check all legal moves)
-        self.move_gen
-            .borrow_mut(py)
-            .0
-            .set_iterator_mask(!chess::EMPTY);
+        gen_ref.borrow_mut(py).0.set_iterator_mask(!chess::EMPTY);
 
         // Share ownership with Python
-        self.move_gen.clone_ref(py)
+        gen_ref
     }
 
     /// Generate the next remaining legal captures for the current board.
@@ -1475,14 +1478,13 @@ impl PyBoard {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
+        let gen_ref = self.ensure_move_gen(py);
+
         // Set the iterator mask to the targets mask (check all legal captures [moves onto enemy pieces])
-        self.move_gen
-            .borrow_mut(py)
-            .0
-            .set_iterator_mask(*targets_mask);
+        gen_ref.borrow_mut(py).0.set_iterator_mask(*targets_mask);
 
         // Share ownership with Python
-        self.move_gen.clone_ref(py)
+        gen_ref
     }
 
     /// Checks if the halfmoves since the last pawn move or capture is >= 100
@@ -1591,7 +1593,7 @@ impl PyBoard {
     /// ...     board.make_move(rust_chess.Move("c6b8"))
     /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
     /// True
-    /// >>> board.move_history.count(board.zobrist_hash)  # Position appears 4 times
+    /// >>> board.board_history.count(board.zobrist_hash)  # Position appears 4 times
     /// 4
     /// ```
     ///
@@ -1655,7 +1657,7 @@ impl PyBoard {
     /// ...     board.make_move(rust_chess.Move("c6b8"))
     /// >>> board.is_threefold_repetition()
     /// True
-    /// >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 3 times
+    /// >>> board.board_history.count(board.zobrist_hash)  # Position has appeared 3 times
     /// 3
     /// ```
     #[inline]
@@ -1677,7 +1679,7 @@ impl PyBoard {
     /// ...     board.make_move(rust_chess.Move("c6b8"))
     /// >>> board.is_fivefold_repetition()
     /// True
-    /// >>> board.move_history.count(board.zobrist_hash)  # Position has appeared 5 times
+    /// >>> board.board_history.count(board.zobrist_hash)  # Position has appeared 5 times
     /// 5
     /// ```
     #[inline]

@@ -5,40 +5,40 @@ Automated benchmarking with timing for each function category.
 Notable differences between rust-chess and python-chess:
     - rust-chess does not currently support popping since there is no board history.
 
-Results for rust-chess v0.3.2
+Results for rust-chess v0.3.3
 
 Benchmark Results (n=100,000)
 ============================================================
 Category          | Rust Time | Python Time |    Speedup
 ------------------------------------------------------------
-Colors            |  0.016065 |    0.012318 |   0.766806
-Pieces            |  0.049637 |    0.024064 |   0.484804
-Squares           |  0.219638 |    0.129289 |   0.588642
-Moves             |  0.199704 |    0.529470 |   2.651279
-Board Init        |  0.335161 |   13.430625 |  40.072099
-Board Props       |  1.298156 |   29.795857 |  22.952452
-Board Ops         |  0.288097 |    1.520427 |   5.277486
-Board Ops 2       |  0.302560 |   14.180215 |  46.867483
-Make Move         |  0.267429 |    1.426689 |   5.334830
-Make Move (New)   |  0.288349 |    1.564129 |   5.424435
-Undo Move         |  0.293443 |    1.244496 |   4.241022
-Next Move         |  0.190191 |    1.191897 |   6.266846
-Generate Moves    |  0.464642 |   27.850348 |  59.939411
-SAN Parse         |  0.197984 |    1.679059 |   8.480800
-King Square       |  0.157012 |    0.347282 |   2.211823
-Zobrist Hash      |  0.157230 |    0.477519 |   3.037071
-Checkmate         |  0.167358 |    0.540827 |   3.231553
-Insufficient Mat. |  0.146011 |    0.451302 |   3.090864
-Bitboard Ops      |  0.090062 |    0.163109 |   1.811083
-Board Bitboards   |  0.211134 |    0.360695 |   1.708374
-Castle Rights     |  0.212845 |    0.857012 |   4.026456
-Repetitions       |  0.181474 |   34.823705 | 191.893642
-Board Status      |  0.188590 |    1.596025 |   8.462921
-Move Gen Ops      |  0.202239 |    6.456320 |  31.924206
-Square/Piece Adv. |  0.074712 |    0.114715 |   1.535423
-Null Move         |  0.191068 |    0.787012 |   4.119012
+Colors            |  0.005984 |    0.005000 |   0.835522
+Pieces            |  0.018027 |    0.010013 |   0.555457
+Squares           |  0.100246 |    0.050748 |   0.506237
+Moves             |  0.081464 |    0.233518 |   2.866533
+Board Init        |  0.124393 |    5.755372 |  46.267831
+Board Props       |  0.536860 |   12.948269 |  24.118516
+Board Ops         |  0.123148 |    0.651657 |   5.291663
+Board Ops 2       |  0.125103 |    6.091119 |  48.688761
+Make Move         |  0.097239 |    0.612142 |   6.295251
+Make Move (New)   |  0.116476 |    0.675119 |   5.796185
+Undo Move         |  0.116492 |    0.546462 |   4.690968
+Next Move         |  0.088875 |    0.521804 |   5.871237
+Generate Moves    |  0.231044 |   11.898766 |  51.499890
+SAN Parse         |  0.080517 |    0.728861 |   9.052248
+King Square       |  0.063195 |    0.142741 |   2.258742
+Zobrist Hash      |  0.061044 |    0.207519 |   3.399503
+Checkmate         |  0.064979 |    0.225174 |   3.465352
+Insufficient Mat. |  0.057646 |    0.188977 |   3.278253
+Bitboard Ops      |  0.040343 |    0.074741 |   1.852658
+Board Bitboards   |  0.088542 |    0.149370 |   1.687001
+Castle Rights     |  0.073861 |    0.368107 |   4.983796
+Repetitions       |  0.064046 |   14.735448 | 230.077646
+Board Status      |  0.065619 |    0.712765 |  10.862113
+Move Gen Ops      |  0.085632 |    2.896838 |  33.828864
+Square/Piece Adv. |  0.034378 |    0.050981 |   1.482981
+Null Move         |  0.064223 |    0.339842 |   5.291582
 ------------------------------------------------------------
-Total             |  6.390789 |  141.554406 |  22.149753
+Total             |  2.609374 |   60.821353 |  23.308795
 """
 
 import time

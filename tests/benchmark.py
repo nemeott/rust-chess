@@ -11,34 +11,34 @@ Benchmark Results (n=100,000)
 ============================================================
 Category          | Rust Time | Python Time |    Speedup
 ------------------------------------------------------------
-Colors            |  0.005984 |    0.005000 |   0.835522
-Pieces            |  0.018027 |    0.010013 |   0.555457
-Squares           |  0.100246 |    0.050748 |   0.506237
-Moves             |  0.081464 |    0.233518 |   2.866533
-Board Init        |  0.124393 |    5.755372 |  46.267831
-Board Props       |  0.536860 |   12.948269 |  24.118516
-Board Ops         |  0.123148 |    0.651657 |   5.291663
-Board Ops 2       |  0.125103 |    6.091119 |  48.688761
-Make Move         |  0.097239 |    0.612142 |   6.295251
-Make Move (New)   |  0.116476 |    0.675119 |   5.796185
-Undo Move         |  0.116492 |    0.546462 |   4.690968
-Next Move         |  0.088875 |    0.521804 |   5.871237
-Generate Moves    |  0.231044 |   11.898766 |  51.499890
-SAN Parse         |  0.080517 |    0.728861 |   9.052248
-King Square       |  0.063195 |    0.142741 |   2.258742
-Zobrist Hash      |  0.061044 |    0.207519 |   3.399503
-Checkmate         |  0.064979 |    0.225174 |   3.465352
-Insufficient Mat. |  0.057646 |    0.188977 |   3.278253
-Bitboard Ops      |  0.040343 |    0.074741 |   1.852658
-Board Bitboards   |  0.088542 |    0.149370 |   1.687001
-Castle Rights     |  0.073861 |    0.368107 |   4.983796
-Repetitions       |  0.064046 |   14.735448 | 230.077646
-Board Status      |  0.065619 |    0.712765 |  10.862113
-Move Gen Ops      |  0.085632 |    2.896838 |  33.828864
-Square/Piece Adv. |  0.034378 |    0.050981 |   1.482981
-Null Move         |  0.064223 |    0.339842 |   5.291582
+Colors            |  0.005998 |    0.004842 |   0.807248
+Pieces            |  0.017569 |    0.009143 |   0.520384
+Squares           |  0.098369 |    0.047939 |   0.487340
+Moves             |  0.075502 |    0.216398 |   2.866129
+Board Init        |  0.119149 |    5.198251 |  43.628108
+Board Props       |  0.485058 |   11.891324 |  24.515271
+Board Ops         |  0.112402 |    0.621973 |   5.533447
+Board Ops 2       |  0.117081 |    5.603935 |  47.863628
+Make Move         |  0.088191 |    0.589247 |   6.681462
+Make Move (New)   |  0.106330 |    0.644731 |   6.063521
+Undo Move         |  0.106368 |    0.517714 |   4.867222
+Next Move         |  0.102310 |    0.485101 |   4.741503
+Generate Moves    |  0.229806 |   11.129185 |  48.428666
+SAN Parse         |  0.075681 |    0.693389 |   9.161989
+King Square       |  0.058984 |    0.136314 |   2.311033
+Zobrist Hash      |  0.058187 |    0.202811 |   3.485509
+Checkmate         |  0.062048 |    0.215870 |   3.479102
+Insufficient Mat. |  0.055382 |    0.178450 |   3.222183
+Bitboard Ops      |  0.039851 |    0.069541 |   1.745032
+Board Bitboards   |  0.084836 |    0.141772 |   1.671135
+Castle Rights     |  0.071389 |    0.368000 |   5.154844
+Repetitions       |  0.060330 |   14.024073 | 232.456000
+Board Status      |  0.061715 |    0.678618 |  10.995920
+Move Gen Ops      |  0.091647 |    2.726762 |  29.752994
+Square/Piece Adv. |  0.032743 |    0.048103 |   1.469109
+Null Move         |  0.060172 |    0.325820 |   5.414844
 ------------------------------------------------------------
-Total             |  2.609374 |   60.821353 |  23.308795
+Total             |  2.477097 |   56.769306 |  22.917678
 """
 
 import time
@@ -395,9 +395,9 @@ def python_board_status():
 def rust_move_gen_ops():
     board = rc.Board()
     board.reset_move_generator()
-    board.set_generator_mask(rc.BB_RANK_4)
+    board.exclude_generator_mask(rc.BB_RANK_4)
     board.get_generator_num_remaining()
-    board.remove_generator_mask(rc.BB_RANK_5)
+    board.exclude_generator_mask(rc.BB_RANK_5)
 
 
 def python_move_gen_ops():

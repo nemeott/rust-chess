@@ -18,7 +18,11 @@ use crate::types::{
     color::{BLACK, COLORS, PyColor, WHITE},
     r#move::{PyMove, PyMoveGenerator},
     piece::{
-        BISHOP, KING, KNIGHT, PAWN, PIECE_TYPES, PyPiece, PyPieceType, QUEEN, ROOK, pieces::*,
+        BISHOP, KING, KNIGHT, PAWN, PIECE_TYPES, PyPiece, PyPieceType, QUEEN, ROOK,
+        pieces::{
+            BLACK_BISHOP, BLACK_KING, BLACK_KNIGHT, BLACK_PAWN, BLACK_QUEEN, BLACK_ROOK, PIECES,
+            WHITE_BISHOP, WHITE_KING, WHITE_KNIGHT, WHITE_PAWN, WHITE_QUEEN, WHITE_ROOK,
+        },
     },
     square::PySquare,
 };

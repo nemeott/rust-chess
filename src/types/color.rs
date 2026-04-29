@@ -2,9 +2,9 @@ use pyo3::{basic::CompareOp, prelude::*, types::PyAny};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 // Color constants
-pub(crate) const WHITE: PyColor = PyColor(chess::Color::White);
-pub(crate) const BLACK: PyColor = PyColor(chess::Color::Black);
-pub(crate) const COLORS: [PyColor; 2] = [WHITE, BLACK];
+pub const WHITE: PyColor = PyColor(chess::Color::White);
+pub const BLACK: PyColor = PyColor(chess::Color::Black);
+pub const COLORS: [PyColor; 2] = [WHITE, BLACK];
 
 /// Color enum class.
 /// White is True, Black is False.
@@ -24,7 +24,7 @@ pub(crate) const COLORS: [PyColor; 2] = [WHITE, BLACK];
 #[gen_stub_pyclass]
 #[pyclass(name = "Color", frozen, from_py_object)]
 #[derive(PartialOrd, PartialEq, Eq, Copy, Clone, Hash)]
-pub(crate) struct PyColor(pub(crate) chess::Color);
+pub struct PyColor(pub(crate) chess::Color);
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -70,7 +70,7 @@ impl PyColor {
 
     #[inline]
     fn __hash__(&self) -> u64 {
-        self.__bool__() as u64
+        u64::from(self.__bool__())
     }
 
     /// Get the color as a boolean string.
@@ -114,7 +114,7 @@ impl PyColor {
     #[inline]
     fn __richcmp__(&self, other: &Bound<'_, PyAny>, op: CompareOp) -> PyResult<bool> {
         let self_bool = self.__bool__();
-        let other_bool = if let Ok(other_color) = other.extract::<PyColor>() {
+        let other_bool = if let Ok(other_color) = other.extract::<Self>() {
             other_color.__bool__()
         } else if let Ok(other_bool) = other.extract::<bool>() {
             other_bool

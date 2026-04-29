@@ -1,7 +1,7 @@
-pub(crate) mod bitboard;
-pub(crate) mod board;
-pub(crate) mod color;
-// pub(crate) mod file_rank;
-pub(crate) mod r#move;
-pub(crate) mod piece;
-pub(crate) mod square;
+pub mod bitboard;
+pub mod board;
+pub mod color;
+// pub mod file_rank;
+pub mod r#move;
+pub mod piece;
+pub mod square;

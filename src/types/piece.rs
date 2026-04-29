@@ -4,35 +4,35 @@ use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 use crate::types::color::{BLACK, PyColor, WHITE};
 
 // Piece constants
-pub(crate) const PAWN: PyPieceType = PyPieceType(chess::Piece::Pawn);
-pub(crate) const KNIGHT: PyPieceType = PyPieceType(chess::Piece::Knight);
-pub(crate) const BISHOP: PyPieceType = PyPieceType(chess::Piece::Bishop);
-pub(crate) const ROOK: PyPieceType = PyPieceType(chess::Piece::Rook);
-pub(crate) const QUEEN: PyPieceType = PyPieceType(chess::Piece::Queen);
-pub(crate) const KING: PyPieceType = PyPieceType(chess::Piece::King);
+pub const PAWN: PyPieceType = PyPieceType(chess::Piece::Pawn);
+pub const KNIGHT: PyPieceType = PyPieceType(chess::Piece::Knight);
+pub const BISHOP: PyPieceType = PyPieceType(chess::Piece::Bishop);
+pub const ROOK: PyPieceType = PyPieceType(chess::Piece::Rook);
+pub const QUEEN: PyPieceType = PyPieceType(chess::Piece::Queen);
+pub const KING: PyPieceType = PyPieceType(chess::Piece::King);
 
-pub(crate) const PIECE_TYPES: [PyPieceType; 6] = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING];
+pub const PIECE_TYPES: [PyPieceType; 6] = [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING];
 
 // Colored piece constants
 #[rustfmt::skip]
-pub(crate) mod pieces{
+pub mod pieces{
     use crate::{PyPiece, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, WHITE, BLACK};
     
-    pub(crate) const WHITE_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: WHITE };
-    pub(crate) const WHITE_KNIGHT: PyPiece = PyPiece { piece_type: KNIGHT, color: WHITE };
-    pub(crate) const WHITE_BISHOP: PyPiece = PyPiece { piece_type: BISHOP, color: WHITE };
-    pub(crate) const WHITE_ROOK: PyPiece = PyPiece { piece_type: ROOK, color: WHITE };
-    pub(crate) const WHITE_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: WHITE };
-    pub(crate) const WHITE_KING: PyPiece = PyPiece { piece_type: KING, color: WHITE };
+    pub const WHITE_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: WHITE };
+    pub const WHITE_KNIGHT: PyPiece = PyPiece { piece_type: KNIGHT, color: WHITE };
+    pub const WHITE_BISHOP: PyPiece = PyPiece { piece_type: BISHOP, color: WHITE };
+    pub const WHITE_ROOK: PyPiece = PyPiece { piece_type: ROOK, color: WHITE };
+    pub const WHITE_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: WHITE };
+    pub const WHITE_KING: PyPiece = PyPiece { piece_type: KING, color: WHITE };
     
-    pub(crate) const BLACK_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: BLACK };
-    pub(crate) const BLACK_KNIGHT: PyPiece = PyPiece { piece_type: KNIGHT, color: BLACK };
-    pub(crate) const BLACK_BISHOP: PyPiece = PyPiece { piece_type: BISHOP, color: BLACK };
-    pub(crate) const BLACK_ROOK: PyPiece = PyPiece { piece_type: ROOK, color: BLACK };
-    pub(crate) const BLACK_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: BLACK };
-    pub(crate) const BLACK_KING: PyPiece = PyPiece { piece_type: KING, color: BLACK };
+    pub const BLACK_PAWN: PyPiece = PyPiece { piece_type: PAWN, color: BLACK };
+    pub const BLACK_KNIGHT: PyPiece = PyPiece { piece_type: KNIGHT, color: BLACK };
+    pub const BLACK_BISHOP: PyPiece = PyPiece { piece_type: BISHOP, color: BLACK };
+    pub const BLACK_ROOK: PyPiece = PyPiece { piece_type: ROOK, color: BLACK };
+    pub const BLACK_QUEEN: PyPiece = PyPiece { piece_type: QUEEN, color: BLACK };
+    pub const BLACK_KING: PyPiece = PyPiece { piece_type: KING, color: BLACK };
     
-    pub(crate) const PIECES: [PyPiece; 12] = [
+    pub const PIECES: [PyPiece; 12] = [
         WHITE_PAWN, WHITE_KNIGHT, WHITE_BISHOP, WHITE_ROOK, WHITE_QUEEN, WHITE_KING,
         BLACK_PAWN, BLACK_KNIGHT, BLACK_BISHOP, BLACK_ROOK, BLACK_QUEEN, BLACK_KING,
     ];
@@ -40,11 +40,11 @@ pub(crate) mod pieces{
 
 /// Piece type enum class.
 /// Represents the different types of chess pieces.
-/// Indexing starts at 0 (PAWN) and ends at 5 (KING).
+/// Indexing starts at 0 (`PAWN`) and ends at 5 (`KING`).
 /// Supports comparison and equality.
 /// Does not include color.
 ///
-/// `rust_chess` has constants for each piece type (e.g. PAWN, KNIGHT, etc.).
+/// `rust_chess` has constants for each piece type (e.g. `PAWN`, `KNIGHT`, etc.).
 ///
 /// ```python
 /// >>> piece = rust_chess.PAWN
@@ -63,13 +63,13 @@ pub(crate) mod pieces{
 #[gen_stub_pyclass]
 #[pyclass(name = "PieceType", frozen, eq, ord, from_py_object)]
 #[derive(PartialEq, Eq, Ord, PartialOrd, Copy, Clone, Hash)]
-pub(crate) struct PyPieceType(pub(crate) chess::Piece);
+pub struct PyPieceType(pub(crate) chess::Piece);
 
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyPieceType {
     /// Get the index of the piece.
-    /// Ranges from 0 (PAWN) to 5 (KING).
+    /// Ranges from 0 (`PAWN`) to 5 (`KING`).
     ///
     /// ```python
     /// >>> rust_chess.BISHOP.get_index()
@@ -136,7 +136,7 @@ impl PyPieceType {
 
     /// Convert the piece to a unicode string.
     /// Returns the white unicode piece by default.
-    /// 
+    ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
     /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
@@ -160,7 +160,7 @@ impl PyPieceType {
         } else {
             color
         };
-        
+
         match self.get_string(actual_color).as_str() {
             "P" => "♙", "p" => "♟",
             "N" => "♘", "n" => "♞",
@@ -175,7 +175,7 @@ impl PyPieceType {
 
 /// Piece class.
 /// Represents a chess piece with a type and color.
-/// Uses the PieceType and Color classes.
+/// Uses the `PieceType` and `Color` classes.
 /// Supports comparison and equality.
 /// A white piece is considered less than a black piece of the same type.
 ///
@@ -192,7 +192,7 @@ impl PyPieceType {
 #[gen_stub_pyclass]
 #[pyclass(name = "Piece", frozen, eq, ord, from_py_object)]
 #[derive(PartialOrd, PartialEq, Eq, Copy, Clone, Hash)]
-pub(crate) struct PyPiece {
+pub struct PyPiece {
     /// Get the piece type of the piece
     /// TODO
     #[pyo3(get)]
@@ -210,10 +210,11 @@ impl PyPiece {
     #[new]
     #[inline]
     fn new(piece_type: PyPieceType, color_or_bool: &Bound<'_, PyAny>) -> PyResult<Self> {
+        #[allow(clippy::option_if_let_else)]
         if let Ok(color) = color_or_bool.extract::<PyColor>() {
-            Ok(PyPiece { piece_type, color })
+            Ok(Self { piece_type, color })
         } else if let Ok(boolean) = color_or_bool.extract::<bool>() {
-            Ok(PyPiece {
+            Ok(Self {
                 piece_type,
                 color: PyColor(if boolean {
                     chess::Color::White
@@ -273,9 +274,9 @@ impl PyPiece {
     fn __repr__(&self) -> String {
         self.get_string()
     }
-    
+
     /// Convert the piece to a unicode string.
-    /// 
+    ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
     /// Unicode assumes black text on white background, where in most terminals, it is the opposite.

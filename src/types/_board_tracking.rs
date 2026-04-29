@@ -39,7 +39,7 @@ pub(crate) enum PyBoardStatus {
     Checkmate,
 }
 
-/// Castle rights enum class..
+/// Castle rights enum class.
 /// The castle rights can be one of the following:
 ///     No rights, king-side, queen-side, both.
 /// TODO: docs

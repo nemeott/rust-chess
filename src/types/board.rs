@@ -20,8 +20,8 @@ use crate::types::{
 /// TODO: docs
 #[gen_stub_pyclass_enum]
 #[pyclass(name = "BoardStatus", frozen, eq, ord, from_py_object)]
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
-pub(crate) enum PyBoardStatus {
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
+pub enum PyBoardStatus {
     #[pyo3(name = "ONGOING")]
     Ongoing,
     #[pyo3(name = "SEVENTY_FIVE_MOVES")]
@@ -36,14 +36,14 @@ pub(crate) enum PyBoardStatus {
     Checkmate,
 }
 
-/// Castle rights enum class..
+/// Castle rights enum class.
 /// The castle rights can be one of the following:
 ///     No rights, king-side, queen-side, both.
 /// TODO: docs
 #[gen_stub_pyclass_enum]
 #[pyclass(name = "CastleRights", frozen, eq, ord, from_py_object)]
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
-pub(crate) enum PyCastleRights {
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
+pub enum PyCastleRights {
     #[pyo3(name = "NO_RIGHTS")]
     NoRights,
     #[pyo3(name = "QUEEN_SIDE")]
@@ -56,8 +56,8 @@ pub(crate) enum PyCastleRights {
 
 #[gen_stub_pyclass_enum]
 #[pyclass(name = "RepetitionDetectionMode", frozen, eq, ord, from_py_object)]
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
-pub(crate) enum PyRepetitionDetectionMode {
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
+pub enum PyRepetitionDetectionMode {
     #[pyo3(name = "NONE")]
     None,
     #[pyo3(name = "FULL")]
@@ -70,7 +70,7 @@ pub(crate) enum PyRepetitionDetectionMode {
 /// TODO: docs
 #[gen_stub_pyclass]
 #[pyclass(name = "Board")]
-pub(crate) struct PyBoard {
+pub struct PyBoard {
     board: chess::Board,
 
     // Use a OnceLock to lazily initialize the move generator when needed
@@ -127,6 +127,7 @@ impl PyBoard {
     #[new]
     #[pyo3(signature = (fen = None, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
     fn new(fen: Option<&str>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
+        #[allow(clippy::option_if_let_else)]
         match fen {
             // If no FEN string is provided, use the default starting position
             None => {
@@ -141,17 +142,17 @@ impl PyBoard {
                     history.push(board.get_hash());
                 }
 
-                Ok(PyBoard {
+                Ok(Self {
                     board,
                     move_gen: std::sync::OnceLock::new(),
                     halfmove_clock: 0,
                     fullmove_number: 1,
                     repetition_detection_mode: mode,
-                    board_history: board_history,
+                    board_history,
                 })
             }
             // Otherwise, parse the FEN string using the chess crate
-            Some(fen_str) => PyBoard::from_fen(fen_str, mode),
+            Some(fen_str) => Self::from_fen(fen_str, mode),
         }
     }
 
@@ -193,13 +194,13 @@ impl PyBoard {
             history.push(board.get_hash());
         }
 
-        Ok(PyBoard {
+        Ok(Self {
             board,
             move_gen: std::sync::OnceLock::new(),
             halfmove_clock,
             fullmove_number,
             repetition_detection_mode: mode,
-            board_history: board_history,
+            board_history,
         })
     }
 
@@ -266,7 +267,7 @@ impl PyBoard {
                     unsafe { write!(s, ". ").unwrap_unchecked() };
                 }
             }
-            unsafe { write!(s, "\n").unwrap_unchecked() };
+            unsafe { writeln!(s).unwrap_unchecked() };
         }
         s
     }
@@ -333,7 +334,7 @@ impl PyBoard {
                     unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
                 }
             }
-            unsafe { write!(s, "\n").unwrap_unchecked() };
+            unsafe { writeln!(s).unwrap_unchecked() };
         }
         s
     }
@@ -347,7 +348,7 @@ impl PyBoard {
     /// ```
     #[inline]
     fn get_move_from_san(&self, san: &str) -> PyResult<PyMove> {
-        chess::ChessMove::from_san(&self.board, &san)
+        chess::ChessMove::from_san(&self.board, san)
             .map(PyMove)
             .map_err(|_| PyValueError::new_err("Invalid SAN move"))
     }
@@ -402,7 +403,7 @@ impl PyBoard {
     /// False
     /// ```
     #[inline]
-    fn __eq__(&self, other: &PyBoard) -> bool {
+    fn __eq__(&self, other: &Self) -> bool {
         self.get_zobrist_hash() == other.get_zobrist_hash()
     }
 
@@ -418,8 +419,8 @@ impl PyBoard {
     /// True
     /// ```
     #[inline]
-    fn __ne__(&self, other: &PyBoard) -> bool {
-        !self.__eq__(&other)
+    fn __ne__(&self, other: &Self) -> bool {
+        !self.__eq__(other)
     }
 
     /// Get the current player to move.
@@ -457,7 +458,7 @@ impl PyBoard {
     }
 
     /// Get the castle rights of a color.
-    /// Returns a `CastleRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
+    /// Returns a `CastleRights` enum type, which has values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -578,9 +579,10 @@ impl PyBoard {
         {
             // Check if the move is two squares horizontally
             let dest = chess_move.0.get_dest();
+            #[allow(clippy::cast_possible_truncation)]
             return (dest.to_index() as i8 - source.to_index() as i8).abs() == 2;
         }
-        return false;
+        false
     }
 
     /// Check if a move is queenside castling.
@@ -605,9 +607,10 @@ impl PyBoard {
         {
             // Check if the move is two squares to the left
             let dest = chess_move.0.get_dest();
+            #[allow(clippy::cast_possible_truncation)]
             return dest.to_index() as i8 - source.to_index() as i8 == -2;
         }
-        return false;
+        false
     }
 
     /// Check if a move is kingside castling.
@@ -632,9 +635,10 @@ impl PyBoard {
         {
             // Check if the move is two squares to the right
             let dest = chess_move.0.get_dest();
+            #[allow(clippy::cast_possible_truncation)]
             return dest.to_index() as i8 - source.to_index() as i8 == 2;
         }
-        return false;
+        false
     }
 
     /// Get the piece type on a square, otherwise None.
@@ -746,6 +750,7 @@ impl PyBoard {
             && self.board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
             && {
                 // Moving diagonally
+                #[allow(clippy::cast_possible_truncation)]
                 let diff = (dest.to_index() as i8 - source.to_index() as i8).abs();
                 diff == 7 || diff == 9
             }
@@ -851,24 +856,23 @@ impl PyBoard {
     /// None
     /// ```
     #[inline]
-    fn make_null_move_new(&self) -> PyResult<Option<Self>> {
+    fn make_null_move_new(&self) -> Option<Self> {
         // Get the new board using the chess crate
-        let Some(new_board) = self.board.null_move() else {
-            return Ok(None);
-        };
+        let new_board = self.board.null_move()?;
 
-        Ok(Some(PyBoard {
+        Some(Self {
             board: new_board,
             // Create a new uninitialized move generator using the chess crate
             move_gen: std::sync::OnceLock::new(),
             // // Increment the halfmove clock
             halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
             // // Increment fullmove number if black moves
+            #[allow(clippy::cast_possible_truncation)]
             fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
             repetition_detection_mode: self.repetition_detection_mode,
             // Don't update move history when making a null move
             board_history: self.board_history.clone(),
-        }))
+        })
     }
 
     /// Make a move onto the current board.
@@ -918,8 +922,8 @@ impl PyBoard {
                 history.clear();
             }
         } else {
-            self.halfmove_clock += 1 // Add one if not zeroing
-        };
+            self.halfmove_clock += 1; // Add one if not zeroing
+        }
 
         // Increment fullmove number if black moves
         self.fullmove_number += self.board.side_to_move().to_index() as u8; // White is 0, black is 1
@@ -932,7 +936,7 @@ impl PyBoard {
 
         // Add the new board's Zobrist hash to history
         if let Some(history) = &mut self.board_history {
-            history.push(temp_board.get_hash())
+            history.push(temp_board.get_hash());
         }
 
         Ok(())
@@ -988,7 +992,7 @@ impl PyBoard {
 
         let is_zeroing: bool = self.is_zeroing(chess_move);
 
-        Ok(PyBoard {
+        Ok(Self {
             board: new_board,
             move_gen: std::sync::OnceLock::new(),
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
@@ -998,6 +1002,7 @@ impl PyBoard {
                 self.halfmove_clock + 1
             },
             // Increment fullmove number if black moves
+            #[allow(clippy::cast_possible_truncation)]
             fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
             repetition_detection_mode: self.repetition_detection_mode,
             // Add the new board's Zobrist hash to history
@@ -1588,11 +1593,11 @@ impl PyBoard {
     fn is_n_repetition(&self, n: u8) -> bool {
         if let Some(history) = &self.board_history {
             // Move history length is one greater than the halfmove clock since when halfmove clock is 0, there is 1 position in history
-            let length: i16 = (self.halfmove_clock + 1) as i16;
+            let length: i16 = i16::from(self.halfmove_clock + 1);
             // If checking threefold (n = 3), then it would be (4 * (3-1)) + 1 = 9
             // Fivefold requires 17 positions minimum
             //   Takes 4 halfmoves to return to a position
-            let calc_min_pos_req_for_nfold = |n: u8| -> i16 { ((4 * (n - 1)) + 1) as i16 };
+            let calc_min_pos_req_for_nfold = |n: u8| -> i16 { i16::from((4 * (n - 1)) + 1) };
 
             // n-fold repetition is not possible when length is less than (n * 4) - 1
             // For example, threefold repetition (n=3) can occur with a move history length minimum of 9
@@ -1603,6 +1608,7 @@ impl PyBoard {
                 return false;
             }
 
+            #[allow(clippy::cast_sign_loss)]
             let current_hash: u64 = history[length as usize - 1];
             let mut num_repetitions: u8 = 1;
 
@@ -1610,6 +1616,7 @@ impl PyBoard {
             let mut i: i16 = length - 5;
             // n-fold still possible if enough positions still left in history
             while i >= calc_min_pos_req_for_nfold(n - num_repetitions) - 1 {
+                #[allow(clippy::cast_sign_loss)]
                 if history[i as usize] == current_hash {
                     num_repetitions += 1;
                     if num_repetitions >= n {

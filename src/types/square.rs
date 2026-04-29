@@ -9,7 +9,7 @@ use crate::types::{
 };
 
 /// Bitboard u64 consisting of dark colored squares (used for color calculation).
-const DARK_SQUARES_BB: u64 = 0xAA55AA55AA55AA55;
+const DARK_SQUARES_BB: u64 = 0xAA55_AA55_AA55_AA55;
 
 /// Square class.
 /// Represents a square on the chessboard.
@@ -41,7 +41,7 @@ const DARK_SQUARES_BB: u64 = 0xAA55AA55AA55AA55;
 #[gen_stub_pyclass]
 #[pyclass(name = "Square", frozen, from_py_object)]
 #[derive(PartialEq, Ord, Eq, PartialOrd, Copy, Clone, Default, Hash)]
-pub(crate) struct PySquare(pub(crate) chess::Square);
+pub struct PySquare(pub(crate) chess::Square);
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -58,9 +58,9 @@ impl PySquare {
     #[inline]
     fn new(square_index_or_name: &Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(index) = square_index_or_name.extract::<u8>() {
-            return PySquare::from_index(index);
+            return Self::from_index(index);
         } else if let Ok(square_name) = square_index_or_name.extract::<&str>() {
-            return PySquare::from_name(square_name);
+            return Self::from_name(square_name);
         }
         Err(PyValueError::new_err(
             "Square must be an integer (0-63) or a string (e.g. \"e4\")",
@@ -110,7 +110,7 @@ impl PySquare {
     /// ```
     #[inline]
     fn __hash__(&self) -> u64 {
-        self.get_index() as u64
+        u64::from(self.get_index())
     }
 
     /// Flips a square (eg. A1 -> A8).
@@ -122,8 +122,9 @@ impl PySquare {
     /// h1
     /// ```
     #[inline]
-    fn flip(&self) -> PySquare {
-        PySquare(unsafe { chess::Square::new(self.0.to_int() ^ 56) })
+    fn flip(&self) -> Self {
+        #[allow(clippy::decimal_bitwise_operands)]
+        Self(unsafe { chess::Square::new(self.0.to_int() ^ 56) })
     }
 
     /// Convert a square to a bitboard.
@@ -162,7 +163,7 @@ impl PySquare {
                 "Square index must be between 0 and 63",
             ));
         }
-        Ok(PySquare(unsafe { chess::Square::new(index) }))
+        Ok(Self(unsafe { chess::Square::new(index) }))
     }
 
     /// Create a new square from rank and file.
@@ -180,7 +181,7 @@ impl PySquare {
                 "Rank and file must be between 0 and 7",
             ));
         }
-        Ok(PySquare(chess::Square::make_square(
+        Ok(Self(chess::Square::make_square(
             chess::Rank::from_index(rank as usize),
             chess::File::from_index(file as usize),
         )))
@@ -201,7 +202,7 @@ impl PySquare {
                 "Rank and file must be between 0 and 7",
             ));
         }
-        Ok(PySquare(chess::Square::make_square(
+        Ok(Self(chess::Square::make_square(
             chess::Rank::from_index(rank as usize),
             chess::File::from_index(file as usize),
         )))
@@ -291,7 +292,7 @@ impl PySquare {
         let self_index = self.get_index();
 
         // Convert other to index
-        let other_index = if let Ok(other_square) = other.extract::<PySquare>() {
+        let other_index = if let Ok(other_square) = other.extract::<Self>() {
             other_square.get_index()
         } else if let Ok(other_index) = other.extract::<u8>() {
             other_index

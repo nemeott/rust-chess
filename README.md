@@ -6,7 +6,7 @@ This repository provides:
 
 - A Python package `rust-chess` created using Maturin.
 - A type stub (`rust_chess.pyi`) providing hover documentation and examples in IDEs.
-- A micro-benchmark comparison against `python-chess` in the file `compare.py`.
+- A micro-benchmark comparison against `python-chess` in the file `tests/benchmark.py`.
 
 ## WARNING
 
@@ -261,7 +261,7 @@ uv pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
 
 ### Performance
 
-`compare.py` was used for a quick benchmark and comparison between the same operations for `rust-chess` and `python-chess`. The comparison script was run with large iteration counts (n = 100,000) and profiled using PySpy. The key observations from that analysis are as follows:
+`scripts/compare.py` was used for a quick benchmark and comparison between the same operations for `rust-chess` and `python-chess`. The comparison script was run with large iteration counts (n = 100,000) and profiled using PySpy. The key observations from that analysis are as follows:
 
 - Small/simple operations (e.g., some tiny getters, Python-exposed primitives) can be slightly slower because of Rust<->Python boundary costs.
 - Complex and heavy operations are substantially faster in `rust-chess`:
@@ -273,7 +273,7 @@ uv pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
 
 More detailed analysis is documented inside the file, including time deltas per function.
 
-`benchmark.py` was used for a benchmark comparision between similar functions in `rust-chess` and `python-chess`. Benchmarked on my Chromebook (Intel i5-1135G7). The results from `rust-chess` v0.3.3 are as follows:
+`scripts/benchmark.py` was used for a more complete benchmark comparision between similar functions in `rust-chess` and `python-chess`. Benchmarked on my Chromebook (Intel i5-1135G7). The results from `rust-chess` v0.3.3 are as follows:
 
 Benchmark Results (n=100,000)
 
@@ -311,7 +311,7 @@ Benchmark Results (n=100,000)
 
 - **Bridge overhead**: Small functions and data types are slower due to the bridge overhead, however heavy computations are much faster.
 - **No board history yet**: Undo/pop are not available currently. Make moves onto a new board and pass it into a function instead for now.
-- **Reliability**: The library has not been widely tested yet. It has somewhat detailed docstring tests but not every edge case is guaranteed to be covered.
+- **Reliability**: The library has not been widely tested yet. It has pretty detailed docstring tests but not every edge case is guaranteed to be covered.
 
 ## License
 

@@ -1,37 +1,38 @@
-use std::u64::MAX;
-
 use chess::EMPTY;
 use pyo3::{basic::CompareOp, exceptions::PyValueError, prelude::*, types::PyAny};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::types::square::PySquare;
 
-pub(crate) const BB_EMPTY: PyBitboard = PyBitboard(EMPTY);
-pub(crate) const BB_FULL: PyBitboard = PyBitboard(chess::BitBoard(MAX));
+pub const BB_EMPTY: PyBitboard = PyBitboard(EMPTY);
+pub const BB_FULL: PyBitboard = PyBitboard(chess::BitBoard(u64::MAX));
 
-pub(crate) const BB_FILE_A: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 0));
-pub(crate) const BB_FILE_B: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 1));
-pub(crate) const BB_FILE_C: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 2));
-pub(crate) const BB_FILE_D: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 3));
-pub(crate) const BB_FILE_E: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 4));
-pub(crate) const BB_FILE_F: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 5));
-pub(crate) const BB_FILE_G: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 6));
-pub(crate) const BB_FILE_H: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 7));
+#[allow(clippy::identity_op)]
+pub const BB_FILE_A: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 0));
+pub const BB_FILE_B: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 1));
+pub const BB_FILE_C: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 2));
+pub const BB_FILE_D: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 3));
+pub const BB_FILE_E: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 4));
+pub const BB_FILE_F: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 5));
+pub const BB_FILE_G: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 6));
+pub const BB_FILE_H: PyBitboard = PyBitboard(chess::BitBoard(0x0101_0101_0101_0101 << 7));
 
-pub(crate) const BB_FILES: [PyBitboard; 8] = [
+pub const BB_FILES: [PyBitboard; 8] = [
     BB_FILE_A, BB_FILE_B, BB_FILE_C, BB_FILE_D, BB_FILE_E, BB_FILE_F, BB_FILE_G, BB_FILE_H,
 ];
 
-pub(crate) const BB_RANK_1: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 0)));
-pub(crate) const BB_RANK_2: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 1)));
-pub(crate) const BB_RANK_3: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 2)));
-pub(crate) const BB_RANK_4: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 3)));
-pub(crate) const BB_RANK_5: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 4)));
-pub(crate) const BB_RANK_6: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 5)));
-pub(crate) const BB_RANK_7: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 6)));
-pub(crate) const BB_RANK_8: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 7)));
+#[allow(clippy::erasing_op, clippy::identity_op)]
+pub const BB_RANK_1: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 0)));
+#[allow(clippy::identity_op)]
+pub const BB_RANK_2: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 1)));
+pub const BB_RANK_3: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 2)));
+pub const BB_RANK_4: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 3)));
+pub const BB_RANK_5: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 4)));
+pub const BB_RANK_6: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 5)));
+pub const BB_RANK_7: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 6)));
+pub const BB_RANK_8: PyBitboard = PyBitboard(chess::BitBoard(0xff << (8 * 7)));
 
-pub(crate) const BB_RANKS: [PyBitboard; 8] = [
+pub const BB_RANKS: [PyBitboard; 8] = [
     BB_RANK_1, BB_RANK_2, BB_RANK_3, BB_RANK_4, BB_RANK_5, BB_RANK_6, BB_RANK_7, BB_RANK_8,
 ];
 
@@ -45,7 +46,7 @@ pub(crate) const BB_RANKS: [PyBitboard; 8] = [
 #[gen_stub_pyclass]
 #[pyclass(name = "Bitboard", from_py_object)]
 #[derive(PartialEq, Eq, PartialOrd, Clone, Copy, Default, Hash)]
-pub(crate) struct PyBitboard(pub(crate) chess::BitBoard);
+pub struct PyBitboard(pub(crate) chess::BitBoard);
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -54,10 +55,11 @@ impl PyBitboard {
     #[new]
     #[inline]
     fn new(bitboard_or_square: &Bound<'_, PyAny>) -> PyResult<Self> {
+        #[allow(clippy::option_if_let_else)]
         if let Ok(square) = bitboard_or_square.extract::<PySquare>() {
-            Ok(PyBitboard::from_square(square))
+            Ok(Self::from_square(square))
         } else if let Ok(bitboard) = bitboard_or_square.extract::<u64>() {
-            Ok(PyBitboard::from_uint(bitboard))
+            Ok(Self::from_uint(bitboard))
         } else {
             Err(PyValueError::new_err(
                 "Bitboard must be a 64-bit integer or a square",
@@ -81,7 +83,7 @@ impl PyBitboard {
     #[staticmethod]
     #[inline]
     pub(crate) fn from_square(square: PySquare) -> Self {
-        PyBitboard(chess::BitBoard::from_square(square.0))
+        Self(chess::BitBoard::from_square(square.0))
     }
 
     /// Create a new Bitboard from an unsigned 64-bit integer.
@@ -99,8 +101,8 @@ impl PyBitboard {
     /// ```
     #[staticmethod]
     #[inline]
-    fn from_uint(bitboard: u64) -> Self {
-        PyBitboard(chess::BitBoard(bitboard))
+    const fn from_uint(bitboard: u64) -> Self {
+        Self(chess::BitBoard(bitboard))
     }
 
     /// Convert the Bitboard to a square.
@@ -126,7 +128,7 @@ impl PyBitboard {
     /// 268435456
     /// ```
     #[inline]
-    fn to_uint(&self) -> u64 {
+    const fn to_uint(&self) -> u64 {
         self.0.0
     }
 
@@ -138,7 +140,7 @@ impl PyBitboard {
     /// 268435456
     /// ```
     #[inline]
-    fn __int__(&self) -> u64 {
+    const fn __int__(&self) -> u64 {
         self.to_uint()
     }
 
@@ -251,7 +253,7 @@ impl PyBitboard {
     /// ```
     #[inline]
     fn flip_vertical(&self) -> Self {
-        PyBitboard(self.0.reverse_colors())
+        Self(self.0.reverse_colors())
     }
 
     /// Return an iterator of the bitboard.
@@ -264,7 +266,7 @@ impl PyBitboard {
     /// [a1, c2]
     /// ```
     #[inline]
-    fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
+    const fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
         slf
     }
 
@@ -287,7 +289,8 @@ impl PyBitboard {
 
     #[inline]
     fn extract_bitboard_or_u64(&self, other: &Bound<'_, PyAny>) -> PyResult<u64> {
-        if let Ok(other_bitboard) = other.extract::<PyBitboard>() {
+        #[allow(clippy::option_if_let_else)]
+        if let Ok(other_bitboard) = other.extract::<Self>() {
             Ok(other_bitboard.0.0)
         } else if let Ok(other_u64) = other.extract::<u64>() {
             Ok(other_u64)
@@ -386,7 +389,7 @@ impl PyBitboard {
     /// ```
     #[inline]
     fn __invert__(&self) -> Self {
-        PyBitboard(!self.0)
+        Self(!self.0)
     }
 
     /// Bitwise AND operation (self & other).
@@ -413,7 +416,7 @@ impl PyBitboard {
     #[inline]
     fn __and__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         let other_value = self.extract_bitboard_or_u64(other)?;
-        Ok(PyBitboard::from_uint(self.0.0 & other_value))
+        Ok(Self::from_uint(self.0.0 & other_value))
     }
 
     /// Reflected bitwise AND operation (other & self).
@@ -491,7 +494,7 @@ impl PyBitboard {
     #[inline]
     fn __or__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         let other_value = self.extract_bitboard_or_u64(other)?;
-        Ok(PyBitboard::from_uint(self.0.0 | other_value))
+        Ok(Self::from_uint(self.0.0 | other_value))
     }
 
     /// Reflected bitwise OR operation (other | self).
@@ -569,7 +572,7 @@ impl PyBitboard {
     #[inline]
     fn __xor__(&self, other: &Bound<'_, PyAny>) -> PyResult<Self> {
         let other_value = self.extract_bitboard_or_u64(other)?;
-        Ok(PyBitboard::from_uint(self.0.0 ^ other_value))
+        Ok(Self::from_uint(self.0.0 ^ other_value))
     }
 
     /// Reflected bitwise XOR operation (other ^ self).
@@ -651,8 +654,8 @@ impl PyBitboard {
     /// . . . . . . . .
     /// ```
     #[inline]
-    fn __lshift__(&self, shift: u32) -> Self {
-        PyBitboard::from_uint(self.0.0 << shift)
+    const fn __lshift__(&self, shift: u32) -> Self {
+        Self::from_uint(self.0.0 << shift)
     }
 
     /// In-place left shift operation (self <<= shift).
@@ -680,7 +683,7 @@ impl PyBitboard {
     /// . . . . . . . .
     /// ```
     #[inline]
-    fn __ilshift__(&mut self, shift: u32) {
+    const fn __ilshift__(&mut self, shift: u32) {
         self.0.0 <<= shift;
     }
 
@@ -708,8 +711,8 @@ impl PyBitboard {
     /// . . . . . . . .
     /// ```
     #[inline]
-    fn __rshift__(&self, shift: u32) -> Self {
-        PyBitboard::from_uint(self.0.0 >> shift)
+    const fn __rshift__(&self, shift: u32) -> Self {
+        Self::from_uint(self.0.0 >> shift)
     }
 
     /// In-place right shift operation (self >>= shift).
@@ -737,7 +740,7 @@ impl PyBitboard {
     /// . . . . . . . .
     /// ```
     #[inline]
-    fn __irshift__(&mut self, shift: u32) {
+    const fn __irshift__(&mut self, shift: u32) {
         self.0.0 >>= shift;
     }
 }

@@ -34,7 +34,7 @@ use crate::types::{color::WHITE, piece::PyPieceType, square::PySquare};
 
 // TODO: Keeping this as a wrapper for the chess crate for now for more performance in other functions.
 // Small functions are slow however, so maybe also cache my class representations too?
-pub(crate) struct PyMove(pub(crate) chess::ChessMove);
+pub struct PyMove(pub(crate) chess::ChessMove);
 
 #[gen_stub_pymethods]
 #[pymethods]
@@ -55,19 +55,19 @@ impl PyMove {
         promotion: Option<PyPieceType>,
     ) -> PyResult<Self> {
         // Expect source and destination squares
-        if let Ok(source) = source_or_uci.extract::<PySquare>() {
-            if let Some(dest) = dest {
-                // Create a new move using the chess crate
-                return Ok(PyMove(chess::ChessMove::new(
-                    source.0,
-                    dest.0,
-                    promotion.map(|p| p.0),
-                )));
-            }
+        if let Ok(source) = source_or_uci.extract::<PySquare>()
+            && let Some(dest) = dest
+        {
+            // Create a new move using the chess crate
+            return Ok(Self(chess::ChessMove::new(
+                source.0,
+                dest.0,
+                promotion.map(|p| p.0),
+            )));
         }
         // Otherwise, try treating the first argument as a UCI string
         if let Ok(uci) = source_or_uci.extract::<&str>() {
-            return PyMove::from_uci(uci);
+            return Self::from_uci(uci);
         }
         // If we reach here, the input was invalid
         Err(PyValueError::new_err(
@@ -130,8 +130,7 @@ impl PyMove {
             self.0.get_source(),
             self.0.get_dest(),
             self.get_promotion()
-                .map(|p| p.get_string(WHITE))
-                .unwrap_or_else(|| String::from("None"))
+                .map_or_else(|| String::from("None"), |p| p.get_string(WHITE))
         )
     }
 
@@ -193,7 +192,7 @@ impl PyMove {
 // TODO: Use old lazy implementation if this is fixed: https://github.com/jordanbray/chess/issues/66
 #[gen_stub_pyclass]
 #[pyclass(name = "MoveGenerator")]
-pub(crate) struct PyMoveGenerator {
+pub struct PyMoveGenerator {
     moves: Vec<chess::ChessMove>,
     allowed_mask: chess::BitBoard,
 }
@@ -221,7 +220,7 @@ impl PyMoveGenerator {
     }
 
     #[inline]
-    pub(crate) fn retain_mask(&mut self, mask: chess::BitBoard) {
+    pub(crate) const fn retain_mask(&mut self, mask: chess::BitBoard) {
         self.allowed_mask = mask;
     }
 }
@@ -241,7 +240,7 @@ impl PyMoveGenerator {
     /// []
     /// ```
     #[inline]
-    fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
+    const fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
         slf
     }
 
@@ -305,7 +304,7 @@ impl PyMoveGenerator {
     /// MoveGenerator()
     /// ```
     #[inline]
-    fn __repr__(&self) -> &'static str {
+    const fn __repr__(&self) -> &'static str {
         "MoveGenerator()"
     }
 }

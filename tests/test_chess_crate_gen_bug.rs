@@ -13,8 +13,7 @@ fn test_remove_move() {
     let _new_move = iterable.next().unwrap();
     assert_eq!(iterable.len(), 18);
 
-    let moves = iterable.collect::<Vec<ChessMove>>();
-    assert!(!moves.contains(&move_to_remove));
+    assert!(!iterable.any(|x| x == move_to_remove));
 }
 
 #[test]
@@ -30,8 +29,7 @@ fn test_remove_first_move() {
     let _new_move = iterable.next().unwrap();
     assert_eq!(iterable.len(), 18); // Assertion fails with 0 != 18
 
-    let moves = iterable.collect::<Vec<ChessMove>>();
-    assert!(!moves.contains(&move_to_remove));
+    assert!(!iterable.any(|x| x == move_to_remove));
 }
 
 #[test]
@@ -47,8 +45,7 @@ fn test_remove_second_move() {
     let _new_move = iterable.next().unwrap();
     assert_eq!(iterable.len(), 18); // Assertion fails with 0 != 18
 
-    let moves = iterable.collect::<Vec<ChessMove>>();
-    assert!(!moves.contains(&move_to_remove));
+    assert!(!iterable.any(|x| x == move_to_remove));
 }
 
 #[test]

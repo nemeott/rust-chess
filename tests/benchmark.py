@@ -6,50 +6,51 @@ Automated benchmarking with timing for each function category.
 Notable differences between rust-chess and python-chess:
     - rust-chess does not currently support popping since there is no board history.
 
-Results for rust-chess v0.3.3
+Results for rust-chess v0.4.0
 
 Benchmark Results (n=100,000)
 ============================================================
 Category          | Rust Time | Python Time |    Speedup
 ------------------------------------------------------------
-Colors            |  0.005998 |    0.004842 |   0.807248
-Pieces            |  0.017569 |    0.009143 |   0.520384
-Squares           |  0.098369 |    0.047939 |   0.487340
-Moves             |  0.075502 |    0.216398 |   2.866129
-Board Init        |  0.119149 |    5.198251 |  43.628108
-Board Props       |  0.485058 |   11.891324 |  24.515271
-Board Ops         |  0.112402 |    0.621973 |   5.533447
-Board Ops 2       |  0.117081 |    5.603935 |  47.863628
-Make Move         |  0.088191 |    0.589247 |   6.681462
-Make Move (New)   |  0.106330 |    0.644731 |   6.063521
-Undo Move         |  0.106368 |    0.517714 |   4.867222
-Next Move         |  0.102310 |    0.485101 |   4.741503
-Generate Moves    |  0.229806 |   11.129185 |  48.428666
-SAN Parse         |  0.075681 |    0.693389 |   9.161989
-King Square       |  0.058984 |    0.136314 |   2.311033
-Zobrist Hash      |  0.058187 |    0.202811 |   3.485509
-Checkmate         |  0.062048 |    0.215870 |   3.479102
-Insufficient Mat. |  0.055382 |    0.178450 |   3.222183
-Bitboard Ops      |  0.039851 |    0.069541 |   1.745032
-Board Bitboards   |  0.084836 |    0.141772 |   1.671135
-Castle Rights     |  0.071389 |    0.368000 |   5.154844
-Repetitions       |  0.060330 |   14.024073 | 232.456000
-Board Status      |  0.061715 |    0.678618 |  10.995920
-Move Gen Ops      |  0.091647 |    2.726762 |  29.752994
-Square/Piece Adv. |  0.032743 |    0.048103 |   1.469109
-Null Move         |  0.060172 |    0.325820 |   5.414844
+Colors            |  0.005692 |    0.004810 |   0.844988
+Pieces            |  0.019511 |    0.009280 |   0.475612
+Squares           |  0.097308 |    0.046960 |   0.482594
+Moves             |  0.075439 |    0.222098 |   2.944068
+Board Init        |  0.115494 |    5.056072 |  43.777746
+Board Props       |  0.464962 |   11.582599 |  24.910832
+Board Ops         |  0.111060 |    0.590793 |   5.319606
+Board Ops 2       |  0.121183 |    5.410480 |  44.647260
+Make Move         |  0.085856 |    0.575763 |   6.706137
+Make Move (New)   |  0.103021 |    0.621993 |   6.037526
+Undo Move         |  0.102815 |    0.498640 |   4.849874
+Next Move         |  0.076867 |    0.469303 |   6.105418
+Batch Next Move   |  0.722411 |   11.540474 |  15.974933
+Generate Moves    |  0.247435 |   11.193479 |  45.238102
+SAN Parse         |  0.075366 |    0.695462 |   9.227806
+King Square       |  0.059030 |    0.137941 |   2.336785
+Zobrist Hash      |  0.058366 |    1.827596 |  31.312670
+Checkmate         |  0.059936 |    0.217054 |   3.621401
+Insufficient Mat. |  0.053174 |    0.182522 |   3.432556
+Bitboard Ops      |  0.038896 |    0.071503 |   1.838287
+Board Bitboards   |  0.084948 |    0.143996 |   1.695111
+Castle Rights     |  0.070184 |    0.350442 |   4.993182
+Repetitions       |  0.059686 |   14.117219 | 236.526460
+Board Status      |  0.065425 |    0.730943 |  11.172210
+Square/Piece Adv. |  0.036606 |    0.053071 |   1.449767
+Null Move         |  0.067505 |    0.346673 |   5.135495
 ------------------------------------------------------------
-Total             |  2.477097 |   56.769306 |  22.917678
+Total             |  3.078178 |   66.697165 |  21.667744
 """
 
 import time
 
 import chess
+import chess.polyglot
 
 import rust_chess as rc
 
 
-def benchmark(name, rust_func, python_func, n=100000):
+def benchmark(_name, rust_func, python_func, n=100_000):
     start = time.perf_counter()
     for _ in range(n):
         rust_func()
@@ -251,6 +252,18 @@ def python_next_move():
     next(iter(board.legal_moves))
 
 
+def rust_batch_next_moves():
+    boards = rc.BoardBatch(25)
+    boards.generate_next_moves()
+    boards.reset_move_generators()
+
+
+def python_batch_next_moves():
+    boards = [chess.Board() for _ in range(25)]
+    [next(iter(b.legal_moves)) for b in boards]
+    # pass
+
+
 def rust_generate(fen):
     board = rc.Board(fen)
     list(board.generate_legal_captures())
@@ -290,7 +303,8 @@ def rust_zobrist():
 
 def python_zobrist():
     board = chess.Board()
-    board._transposition_key()
+    chess.polyglot.zobrist_hash(board)
+    # board._transposition_key()
 
 
 def rust_checkmate():
@@ -393,17 +407,17 @@ def python_board_status():
     board.outcome()
 
 
-def rust_move_gen_ops():
-    board = rc.Board()
-    board.reset_move_generator()
-    board.exclude_generator_mask(rc.BB_RANK_4)
-    board.get_generator_num_remaining()
-    board.exclude_generator_mask(rc.BB_RANK_5)
+# def rust_move_gen_ops():
+#     board = rc.Board()
+#     board.reset_move_generator()
+#     board.exclude_generator_mask(rc.BB_RANK_4)
+#     board.get_generator_num_remaining()
+#     board.exclude_generator_mask(rc.BB_RANK_5)
 
-
-def python_move_gen_ops():
-    board = chess.Board()
-    moves = list(board.legal_moves)
+# TODO: Find valid comparison?
+# def python_move_gen_ops():
+#     board = chess.Board()
+#     moves = list(board.legal_moves)
 
 
 def rust_square_piece_advanced():
@@ -450,6 +464,7 @@ if __name__ == "__main__":
         ("Make Move (New)", rust_make_move_new, python_make_move_new),
         ("Undo Move", rust_undo_move, python_undo_move),
         ("Next Move", rust_next_move, python_next_move),
+        ("Batch Next Move", rust_batch_next_moves, python_batch_next_moves),
         ("Generate Moves", lambda: rust_generate(fen), lambda: python_generate(fen)),
         ("SAN Parse", rust_san_parse, python_san_parse),
         ("King Square", rust_king_square, python_king_square),
@@ -461,7 +476,7 @@ if __name__ == "__main__":
         ("Castle Rights", rust_castle_rights, python_castle_rights),
         ("Repetitions", rust_repetitions, python_repetitions),
         ("Board Status", rust_board_status, python_board_status),
-        ("Move Gen Ops", rust_move_gen_ops, python_move_gen_ops),
+        # ("Move Gen Ops", rust_move_gen_ops, python_move_gen_ops),
         ("Square/Piece Adv.", rust_square_piece_advanced, python_square_piece_advanced),
         ("Null Move", rust_null_move, python_null_move),
     ]

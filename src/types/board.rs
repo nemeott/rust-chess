@@ -92,8 +92,8 @@ pub struct PyBoard {
     /// 1
     /// ```
     #[pyo3(get)]
-    fullmove_number: u8, // Fullmove number (increments after black moves)
-    // (theoretical maximum is 218 moves (fits within 2^8=256))
+    fullmove_number: u8, // Fullmove number; increments after black moves (theoretical max 218, fits in u8)
+
     /// The repetition dectection mode the board will use.
     #[pyo3(get)]
     repetition_detection_mode: PyRepetitionDetectionMode,
@@ -186,13 +186,14 @@ impl PyBoard {
             .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
 
         // Create move history vector and add the initial board hash
-        let mut board_history = match mode {
+        let board_history = match mode {
             PyRepetitionDetectionMode::None => None,
             PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
-        };
-        if let Some(history) = &mut board_history {
-            history.push(board.get_hash());
         }
+        .map(|mut history| {
+            history.push(board.get_hash());
+            history
+        });
 
         Ok(Self {
             board,
@@ -1196,17 +1197,9 @@ impl PyBoard {
     /// 20
     /// ```
     #[inline]
-    fn reset_move_generator(&mut self) -> PyResult<()> {
-        // We can assume the GIL is acquired, since this function is only called from Python
-        let py = unsafe { Python::assume_attached() };
-
-        // Invalidate the move generator and create a new one with all legal moves using the chess crate
+    fn reset_move_generator(&mut self) {
+        // Invalidate the move generator
         self.move_gen.take();
-        let _ = self
-            .move_gen
-            .set(Py::new(py, PyMoveGenerator::new(&self.board))?);
-
-        Ok(())
     }
 
     /// Remove a move from the move generator.

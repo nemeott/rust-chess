@@ -51,6 +51,7 @@ __all__ = [
     "BLACK_ROOK",
     "Bitboard",
     "Board",
+    "BoardBatch",
     "BoardStatus",
     "C1",
     "C2",
@@ -1927,6 +1928,60 @@ class Board:
         BoardStatus.ONGOING
         ```
         TODO
+        """
+
+@typing.final
+class BoardBatch:
+    r"""
+    BoardBatch class.
+    Represents a batch of chess boards.
+    
+    TODO: docs
+    """
+    @property
+    def halfmove_clocks(self) -> builtins.list[builtins.int]: ...
+    @property
+    def fullmove_numbers(self) -> builtins.list[builtins.int]: ...
+    @property
+    def repetition_detection_mode(self) -> RepetitionDetectionMode:
+        r"""
+        The repetition dectection mode the board will use.
+        """
+    @property
+    def board_histories(self) -> builtins.list[typing.Optional[builtins.list[builtins.int]]]:
+        r"""
+        Store board Zobrist hashes for board history
+        """
+    def __new__(cls, count: builtins.int, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
+        r"""
+        Create new boards.
+        """
+    def reset_move_generators(self) -> None:
+        r"""
+        Create a new board from a FEN string.
+        
+        Reset the move generators for the current boards.
+        """
+    def generate_next_moves(self) -> builtins.list[typing.Optional[Move]]:
+        r"""
+        Get the next remaining move in each generator.
+        Updates the move generators to the next move.
+        
+        Unless masks have been set, this will return the next legal move for each generator by default.
+        """
+    def generate_next_legal_moves(self) -> builtins.list[typing.Optional[Move]]:
+        r"""
+        Get the next remaining legal move in each generator.
+        Updates the move generators to the next legal move.
+        
+        Allows all legal destination squares for each generator.
+        """
+    def generate_next_legal_captures(self) -> builtins.list[typing.Optional[Move]]:
+        r"""
+        Get the next remaining legal capture in each generator.
+        Updates the move generators to the next move.
+        
+        Allows only enemy-occupied destination squares for each generator.
         """
 
 @typing.final

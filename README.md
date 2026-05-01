@@ -67,6 +67,7 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 - `CastleRights` enum: `.NO_RIGHTS`, `.QUEENSIDE`, `.KINGSIDE`, `.BOTH`
 - `BoardStatus` enum: `.ONGOING`, `.FIVE_FOLD_REPETITION`, `.SEVENTY_FIVE_MOVES`, `.INSUFFICIENT_MATERIAL`, `.STALEMATE`, `.CHECKMATE`
 - `Board`: No constants.
+- `BoardBatch`: No constants.
 
 ### Basic Features Overview
 
@@ -89,6 +90,7 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 - Check what piece, piece type, or color is on a square with the corresponding `get_piece_on`, `get_piece_type_on`, and `get_color_on` functions.
 - Get the `BoardStatus` enum of a board with `board.get_status()`.
   - Can also call individual status check functions like `board.is_checkmate()`, `board.is_insufficient_material()`, `board.is_fifty_moves()`, and more.
+- Create a `BoardBatch` to apply functions to multiple boards at once.
 
 ## Installation
 
@@ -136,13 +138,13 @@ cd rust-chess
 3. Build and install the Python package:
 
 ```sh
-./build.sh
-pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
+./scripts/build.sh
+pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
 # Or
-uv pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
+uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
 
 # Or build and install in current virtual environment
-./develop.sh
+./scripts/develop.sh
 ```
 
 ## Roadmap
@@ -244,6 +246,17 @@ uv pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
     - [x] Repetition detection
   - [ ] Cache default board for faster creation?
   - [ ] Piece-Square Table support?
+- [ ] `BoardBatch`
+  - [x] Create a batch of boards from a count
+  - [ ] Create a batch of boards from a list of FEN strings.
+  - [ ] Create a batch of boards from a list of boards.
+  - [x] Generate the next move, legal move, and legal capture for a batch
+  - [ ] Generate moves, legal moves, and legal captures for a batch
+  - [ ] Support iterating over the generators of a bacth? (how would this work?)
+  - [ ] Set the retain generator masks
+  - [ ] Set the exclude generator masks
+  - [ ] Remove moves from the generators
+  - [x] Reset the generators
 - [ ] Miscellaneous
   - [ ] PGN support (parsing and writing)
   - [ ] UCI protocol basics
@@ -261,51 +274,55 @@ uv pip install target/wheels/rust_chess-0.3.3-cp313-cp313-linux_x86_64.whl
 
 ### Performance
 
-`scripts/compare.py` was used for a quick benchmark and comparison between the same operations for `rust-chess` and `python-chess`. The comparison script was run with large iteration counts (n = 100,000) and profiled using PySpy. The key observations from that analysis are as follows:
+`scripts/benchmark.py` was used as a comprehensive benchmark comparision between similar functions in `rust-chess` and `python-chess`. Benchmarked on my Chromebook (Intel i5-1135G7). The results from `rust-chess` v0.4.0 are as follows:
+
+Benchmark Results (n=100,000)
+
+|          Category |    Rust Time |   Python Time |       Speedup |
+| ----------------: | -----------: | ------------: | ------------: |
+|            Colors |     0.005692 |      0.004810 |      0.844988 |
+|            Pieces |     0.019511 |      0.009280 |      0.475612 |
+|           Squares |     0.097308 |      0.046960 |      0.482594 |
+|             Moves |     0.075439 |      0.222098 |      2.944068 |
+|        Board Init |     0.115494 |      5.056072 |     43.777746 |
+|       Board Props |     0.464962 |     11.582599 |     24.910832 |
+|         Board Ops |     0.111060 |      0.590793 |      5.319606 |
+|       Board Ops 2 |     0.121183 |      5.410480 |     44.647260 |
+|         Make Move |     0.085856 |      0.575763 |      6.706137 |
+|   Make Move (New) |     0.103021 |      0.621993 |      6.037526 |
+|         Undo Move |     0.102815 |      0.498640 |      4.849874 |
+|         Next Move |     0.076867 |      0.469303 |      6.105418 |
+|   Batch Next Move |     0.722411 |     11.540474 |     15.974933 |
+|    Generate Moves |     0.247435 |     11.193479 |     45.238102 |
+|         SAN Parse |     0.075366 |      0.695462 |      9.227806 |
+|       King Square |     0.059030 |      0.137941 |      2.336785 |
+|      Zobrist Hash |     0.058366 |      1.827596 |     31.312670 |
+|         Checkmate |     0.059936 |      0.217054 |      3.621401 |
+| Insufficient Mat. |     0.053174 |      0.182522 |      3.432556 |
+|      Bitboard Ops |     0.038896 |      0.071503 |      1.838287 |
+|   Board Bitboards |     0.084948 |      0.143996 |      1.695111 |
+|     Castle Rights |     0.070184 |      0.350442 |      4.993182 |
+|       Repetitions |     0.059686 |     14.117219 |    236.526460 |
+|      Board Status |     0.065425 |      0.730943 |     11.172210 |
+| Square/Piece Adv. |     0.036606 |      0.053071 |      1.449767 |
+|         Null Move |     0.067505 |      0.346673 |      5.135495 |
+|         **Total** | **3.078178** | **66.697165** | **21.667744** |
+
+#### Analysis
 
 - Small/simple operations (e.g., some tiny getters, Python-exposed primitives) can be slightly slower because of Rust<->Python boundary costs.
 - Complex and heavy operations are substantially faster in `rust-chess`:
   - Creating moves from UCI.
   - Board initialization.
   - FEN parsing and printing.
-  - Generating legal moves and legal captures.
+  - Getting piece bitboards.
+  - Generating moves, legal moves, and legal captures.
+  - Batch move generation (WIP).
+  - San parsing.
+  - Zobrist hashing.
   - Checking move legality and check.
-
-More detailed analysis is documented inside the file, including time deltas per function.
-
-`scripts/benchmark.py` was used for a more complete benchmark comparision between similar functions in `rust-chess` and `python-chess`. Benchmarked on my Chromebook (Intel i5-1135G7). The results from `rust-chess` v0.3.3 are as follows:
-
-Benchmark Results (n=100,000)
-
-| Category          |    Rust Time |   Python Time |       Speedup |
-| ----------------- | -----------: | ------------: | ------------: |
-| Colors            |     0.005998 |      0.004842 |      0.807248 |
-| Pieces            |     0.017569 |      0.009143 |      0.520384 |
-| Squares           |     0.098369 |      0.047939 |      0.487340 |
-| Moves             |     0.075502 |      0.216398 |      2.866129 |
-| Board Init        |     0.119149 |      5.198251 |     43.628108 |
-| Board Props       |     0.485058 |     11.891324 |     24.515271 |
-| Board Ops         |     0.112402 |      0.621973 |      5.533447 |
-| Board Ops 2       |     0.117081 |      5.603935 |     47.863628 |
-| Make Move         |     0.088191 |      0.589247 |      6.681462 |
-| Make Move (New)   |     0.106330 |      0.644731 |      6.063521 |
-| Undo Move         |     0.106368 |      0.517714 |      4.867222 |
-| Next Move         |     0.102310 |      0.485101 |      4.741503 |
-| Generate Moves    |     0.229806 |     11.129185 |     48.428666 |
-| SAN Parse         |     0.075681 |      0.693389 |      9.161989 |
-| King Square       |     0.058984 |      0.136314 |      2.311033 |
-| Zobrist Hash      |     0.058187 |      0.202811 |      3.485509 |
-| Checkmate         |     0.062048 |      0.215870 |      3.479102 |
-| Insufficient Mat. |     0.055382 |      0.178450 |      3.222183 |
-| Bitboard Ops      |     0.039851 |      0.069541 |      1.745032 |
-| Board Bitboards   |     0.084836 |      0.141772 |      1.671135 |
-| Castle Rights     |     0.071389 |      0.368000 |      5.154844 |
-| Repetitions       |     0.060330 |     14.024073 |    232.456000 |
-| Board Status      |     0.061715 |      0.678618 |     10.995920 |
-| Move Gen Ops      |     0.091647 |      2.726762 |     29.752994 |
-| Square/Piece Adv. |     0.032743 |      0.048103 |      1.469109 |
-| Null Move         |     0.060172 |      0.325820 |      5.414844 |
-| Total             | **2.477097** | **56.769306** | **22.917678** |
+  - Repetition detection.
+  - Board status checks.
 
 ## Notable Limitations
 

@@ -15,6 +15,7 @@ use crate::types::{
         BB_RANK_6, BB_RANK_7, BB_RANK_8, BB_RANKS, PyBitboard,
     },
     board::{PyBoard, PyBoardStatus, PyCastleRights, PyRepetitionDetectionMode},
+    board_batch::PyBoardBatch,
     color::{BLACK, COLORS, PyColor, WHITE},
     r#move::{PyMove, PyMoveGenerator},
     piece::{
@@ -26,6 +27,8 @@ use crate::types::{
     },
     square::PySquare,
 };
+
+// TODO: No .extract::?
 
 // TODO: Remove inline for Python-called only?
 // TODO: Add PSQT table support?
@@ -44,6 +47,7 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<PyCastleRights>()?;
     module.add_class::<PyBoardStatus>()?;
     module.add_class::<PyBoard>()?;
+    module.add_class::<PyBoardBatch>()?;
 
     // Define a macro to add constants and their stubs
     macro_rules! add_constant {

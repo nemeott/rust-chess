@@ -1,4 +1,4 @@
-# ruff: noqa: ANN001, ANN201, ARG001, D103, F841, B018
+# ruff: noqa: ANN001, ANN201, D103, F841, B018
 """Comparison between python-chess and rust-chess.
 
 Automated benchmarking with timing for each function category.

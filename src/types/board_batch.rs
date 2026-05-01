@@ -28,9 +28,11 @@ pub struct PyBoardBatch {
     move_gens: Vec<std::sync::OnceLock<Py<PyMoveGenerator>>>, // Use a Py to be able to share between Python and Rust
 
     #[pyo3(get)]
+    // FIXME: __repr__ returns raw bytes (u8 converted to bytes in PyO3)
     halfmove_clocks: Vec<u8>, // Halfmoves since last pawn move or capture
 
     #[pyo3(get)]
+    // FIXME: __repr__ returns raw bytes (u8 converted to bytes in PyO3)
     fullmove_numbers: Vec<u8>, // Fullmove number; increments after black moves (theoretical max 218, fits in u8)
 
     /// The repetition dectection mode the board will use.

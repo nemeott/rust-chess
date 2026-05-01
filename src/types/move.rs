@@ -198,6 +198,7 @@ pub struct PyMoveGenerator {
 }
 
 impl PyMoveGenerator {
+    // TODO: Docs
     #[inline]
     pub(crate) fn new(board: &chess::Board) -> Self {
         let mut moves: Vec<chess::ChessMove> = chess::MoveGen::new_legal(board).collect();
@@ -215,8 +216,11 @@ impl PyMoveGenerator {
 
     #[inline]
     pub(crate) fn exclude_mask(&mut self, mask: chess::BitBoard) {
-        self.moves
-            .retain(|&m| (mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) == 0);
+        // Retain only moves whose destination squares do not match the mask
+        self.moves.retain(|&m| {
+            let idx = m.get_dest().to_int();
+            (mask.0 & (1u64 << idx)) == 0
+        });
     }
 
     #[inline]
@@ -260,11 +264,13 @@ impl PyMoveGenerator {
     pub(crate) fn __next__(&mut self) -> Option<PyMove> {
         let mut idx_to_remove = None;
         for (i, m) in self.moves.iter().enumerate().rev() {
-            if (self.allowed_mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) != 0 {
+            let idx = m.get_dest().to_int();
+            if (self.allowed_mask.0 & (1u64 << idx)) != 0 {
                 idx_to_remove = Some(i);
                 break;
             }
         }
+
         if let Some(i) = idx_to_remove {
             Some(PyMove(self.moves.remove(i)))
         } else {
@@ -291,7 +297,8 @@ impl PyMoveGenerator {
         self.moves
             .iter()
             .filter(|&m| {
-                (self.allowed_mask & chess::BitBoard::from_square(m.get_dest())).to_size(0) != 0
+                let idx = m.get_dest().to_int();
+                (self.allowed_mask.0 & (1u64 << idx)) != 0
             })
             .count()
     }

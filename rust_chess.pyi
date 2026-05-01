@@ -1098,7 +1098,7 @@ class Board:
     def get_castle_rights(self, color: Color) -> CastleRights:
         r"""
         Get the castle rights of a color.
-        Returns a `CastleRights` enum type, which has values: NO_RIGHTS, KING_SIDE, QUEEN_SIDE, BOTH.
+        Returns a `CastleRights` enum type, which has values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
         
         ```python
         >>> board = rust_chess.Board()
@@ -2214,7 +2214,7 @@ class Piece:
     r"""
     Piece class.
     Represents a chess piece with a type and color.
-    Uses the PieceType and Color classes.
+    Uses the `PieceType` and `Color` classes.
     Supports comparison and equality.
     A white piece is considered less than a black piece of the same type.
     
@@ -2314,11 +2314,11 @@ class PieceType:
     r"""
     Piece type enum class.
     Represents the different types of chess pieces.
-    Indexing starts at 0 (PAWN) and ends at 5 (KING).
+    Indexing starts at 0 (`PAWN`) and ends at 5 (`KING`).
     Supports comparison and equality.
     Does not include color.
     
-    `rust_chess` has constants for each piece type (e.g. PAWN, KNIGHT, etc.).
+    `rust_chess` has constants for each piece type (e.g. `PAWN`, `KNIGHT`, etc.).
     
     ```python
     >>> piece = rust_chess.PAWN
@@ -2343,7 +2343,7 @@ class PieceType:
     def get_index(self) -> builtins.int:
         r"""
         Get the index of the piece.
-        Ranges from 0 (PAWN) to 5 (KING).
+        Ranges from 0 (`PAWN`) to 5 (`KING`).
         
         ```python
         >>> rust_chess.BISHOP.get_index()
@@ -2721,7 +2721,7 @@ class BoardStatus(enum.Enum):
 @typing.final
 class CastleRights(enum.Enum):
     r"""
-    Castle rights enum class..
+    Castle rights enum class.
     The castle rights can be one of the following:
         No rights, king-side, queen-side, both.
     TODO: docs

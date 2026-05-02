@@ -65,6 +65,7 @@ impl PyBoardBatch {
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyBoardBatch {
+    // TODO: Reword docs to make more sense
     // TODO: Optimize
 
     /// Create a new batch of boards.
@@ -624,71 +625,60 @@ impl PyBoardBatch {
             .collect()
     }
 
-    // /// Get the en passant square, otherwise None.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().en_passant
-    // ///
-    // /// >>> rust_chess.Board().en_passant == None
-    // /// True
-    // ///
-    // /// >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
-    // /// >>> board.en_passant
-    // /// f6
-    // /// ```
-    // #[getter]
-    // #[inline]
-    // fn get_en_passant(&self) -> Option<PySquare> {
-    //     // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
-    //     // The actual en passant square is the one that one can move to that would cause en passant.
-    //     // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
-    //     self.board.en_passant().map(|sq| {
-    //         if self.board.side_to_move() == chess::Color::White {
-    //             PySquare(sq.up().unwrap())
-    //         } else {
-    //             PySquare(sq.down().unwrap())
-    //         }
-    //     })
-    // }
+    /// Get the en passant square of each board, otherwise None.
+    ///
+    #[getter]
+    #[inline]
+    fn get_en_passant(&self) -> Vec<Option<PySquare>> {
+        // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
+        // The actual en passant square is the one that one can move to that would cause en passant.
+        // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
+        self.boards
+            .iter()
+            .map(|board| {
+                board.en_passant().map(|sq| match board.side_to_move() {
+                    chess::Color::White => PySquare(sq.up().unwrap()),
+                    chess::Color::Black => PySquare(sq.down().unwrap()),
+                })
+            })
+            .collect()
+    }
 
-    // /// Check if a move is en passant.
-    // ///
-    // /// Assumes the move is legal.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
-    // /// False
-    // ///
-    // /// >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
-    // /// >>> board.is_en_passant(rust_chess.Move("e5f6"))
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_en_passant(&self, chess_move: PyMove) -> bool {
-    //     let source = chess_move.0.get_source();
-    //     let dest = chess_move.0.get_dest();
+    /// Check if a respective move is en passant for each board.
+    ///
+    /// Assumes the moves are legal.
+    ///
+    #[inline]
+    fn is_en_passant(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(chess_moves.iter())
+            .map(|(board, chess_move)| {
+                let source = chess_move.0.get_source();
+                let dest = chess_move.0.get_dest();
 
-    //     // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
-    //     // The actual en passant square is the one that one can move to that would cause en passant.
-    //     // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
-    //     let ep_square = self.board.en_passant().and_then(|sq| {
-    //         if self.board.side_to_move() == chess::Color::White {
-    //             sq.up()
-    //         } else {
-    //             sq.down()
-    //         }
-    //     });
+                // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
+                // The actual en passant square is the one that one can move to that would cause en passant.
+                // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
+                let ep_square = board
+                    .en_passant()
+                    .and_then(|sq| match board.side_to_move() {
+                        chess::Color::White => sq.up(),
+                        chess::Color::Black => sq.down(),
+                    });
 
-    //     ep_square.is_some_and(|ep_sq| ep_sq == dest) // Use our en passant square function since it is accurate
-    //         && self.board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
-    //         && {
-    //             // Moving diagonally
-    //             #[allow(clippy::cast_possible_truncation)]
-    //             let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
-    //             diff == 7 || diff == 9
-    //         }
-    //         && self.board.piece_on(dest).is_none() // Target square is empty
-    // }
+                ep_square.is_some_and(|ep_sq| ep_sq == dest) // Use our en passant square function since it is accurate
+                    && board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
+                    && {
+                        // Moving diagonally
+                        #[allow(clippy::cast_possible_truncation)]
+                        let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
+                        diff == 7 || diff == 9
+                    }
+                    && board.piece_on(dest).is_none() // Target square is empty
+            })
+            .collect()
+    }
 
     // /// Check if a move is a capture.
     // ///

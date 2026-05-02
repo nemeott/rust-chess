@@ -1041,8 +1041,9 @@ class Board:
         """
     def __hash__(self) -> builtins.int:
         r"""
-        Get the hash of the board based on its Zobrist hash.
+        Get a hash of the board based on its Zobrist hash.
         **This is not the same as the `zobrist_hash` field since Python doesn't support unsigned 64-bit integers for this function.**
+        Use `zobrist_hash` directly for the actual Zobrist hash value.
         
         ```python
         >>> board = rust_chess.Board()
@@ -1087,7 +1088,7 @@ class Board:
         """
     def get_king_square(self, color: Color) -> Square:
         r"""
-        Get the king square of a color
+        Get the king square for a color.
         
         ```python
         >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
@@ -1098,8 +1099,8 @@ class Board:
         """
     def get_castle_rights(self, color: Color) -> CastleRights:
         r"""
-        Get the castle rights of a color.
-        Returns a `CastleRights` enum type, which has values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
+        Get the castle rights for a color.
+        Returns a `CastleRights` enum type, which has the values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
         
         ```python
         >>> board = rust_chess.Board()
@@ -1218,18 +1219,6 @@ class Board:
         False
         ```
         """
-    def get_piece_type_on(self, square: Square) -> typing.Optional[PieceType]:
-        r"""
-        Get the piece type on a square, otherwise None.
-        Different than `get_piece_on` because it returns the piece type, which does not include color.
-        
-        ```python
-        >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
-        R
-        >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
-        K
-        ```
-        """
     def get_color_on(self, square: Square) -> typing.Optional[Color]:
         r"""
         Get the color of the piece on a square, otherwise None.
@@ -1245,9 +1234,21 @@ class Board:
         BLACK
         ```
         """
+    def get_piece_type_on(self, square: Square) -> typing.Optional[PieceType]:
+        r"""
+        Get the piece type on a square, otherwise None.
+        Different than `get_piece_on` because it returns the piece type, which does not include color.
+        
+        ```python
+        >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
+        R
+        >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
+        K
+        ```
+        """
     def get_piece_on(self, square: Square) -> typing.Optional[Piece]:
         r"""
-        Get the piece on a square (color-inclusive), otherwise None.
+        Get the piece on a square, otherwise None.
         Different than `get_piece_on` because it returns the piece, which includes color.
         
         ```python
@@ -1935,6 +1936,7 @@ class BoardBatch:
     r"""
     BoardBatch class.
     Represents a batch of chess boards.
+    Uses the same method names as `Board`, however they operate on a batch now.
     
     TODO: docs
     """
@@ -1952,6 +1954,18 @@ class BoardBatch:
         r"""
         Store board Zobrist hashes for board history
         """
+    @property
+    def zobrist_hash(self) -> builtins.list[builtins.int]: ...
+    @property
+    def turn(self) -> builtins.list[Color]:
+        r"""
+        Get the current player to move for each board.
+        """
+    @property
+    def en_passant(self) -> builtins.list[typing.Optional[Square]]:
+        r"""
+        Get the en passant square of each board, otherwise None.
+        """
     def __new__(cls, count: builtins.int, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
         r"""
         Create a new batch of boards.
@@ -1963,6 +1977,91 @@ class BoardBatch:
         """
     @staticmethod
     def from_boards(boards: list, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch: ...
+    def __hash__(self) -> builtins.int:
+        r"""
+        Get a hash of the board batch based on the sum of the Zobrist hashes.
+        Will likely overflow which is fine since this is a fast hash.
+        """
+    def __eq__(self, other: BoardBatch) -> builtins.bool:
+        r"""
+        Check if two board batches are equal based on the Zobrist hashes of their boards.
+        """
+    def __ne__(self, other: BoardBatch) -> builtins.bool:
+        r"""
+        Check if two board batches are not equal based on the Zobrist hashes of their boards.
+        """
+    def compare(self, other: BoardBatch) -> builtins.list[builtins.bool]:
+        r"""
+        Compare two board batches based on the Zobrist hashes of their boards.
+        Returns a list of booleans where `True` indicates the respective boards match.
+        """
+    def get_king_square(self, color: Color) -> builtins.list[Square]:
+        r"""
+        Get the king square of each board for a color.
+        """
+    def get_castle_rights(self, color: Color) -> builtins.list[CastleRights]:
+        r"""
+        Get the castle rights of each board for a color.
+        Returns a list `CastleRights` enum types, which has the values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
+        """
+    def get_my_castle_rights(self) -> builtins.list[CastleRights]:
+        r"""
+        Get the castle rights of the current player to move for each board.
+        """
+    def get_their_castle_rights(self) -> builtins.list[CastleRights]:
+        r"""
+        Get the castle rights of the opponent for each board.
+        """
+    def can_castle(self, color: Color) -> builtins.list[builtins.bool]:
+        r"""
+        Check if a color can castle (either side) for each board.
+        Returns a list of booleans.
+        """
+    def can_castle_queenside(self, color: Color) -> builtins.list[builtins.bool]:
+        r"""
+        Check if a color can castle queenside for each board.
+        Returns a list of booleans.
+        """
+    def can_castle_kingside(self, color: Color) -> builtins.list[builtins.bool]:
+        r"""
+        Check if a color can castle kingside for each board.
+        Returns a list of booleans.
+        """
+    def is_castling(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
+        r"""
+        Check if the respective move is castling for each board.
+        Assumes the moves are pseudo-legal.
+        """
+    def is_castling_queenside(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
+        r"""
+        Check if the respective move is queenside castling for each board.
+        Assumes the move is pseudo-legal.
+        """
+    def is_castling_kingside(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
+        r"""
+        Check if the respective move is kingside castling for each board.
+        Assumes the move is pseudo-legal.
+        """
+    def get_color_on(self, squares: typing.Sequence[Square]) -> builtins.list[typing.Optional[Color]]:
+        r"""
+        Get the color of the piece on a respective square for each board, otherwise None.
+        """
+    def get_piece_type_on(self, squares: typing.Sequence[Square]) -> builtins.list[typing.Optional[PieceType]]:
+        r"""
+        Get the piece type on a respective square for each board, otherwise None.
+        Different than `get_piece_on` because it returns the piece type, which does not include color.
+        """
+    def get_piece_on(self, squares: typing.Sequence[Square]) -> builtins.list[typing.Optional[Piece]]:
+        r"""
+        Get the piece on a respective square, otherwise None.
+        Different than `get_piece_on` because it returns the piece, which includes color.
+        """
+    def is_en_passant(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
+        r"""
+        Check if a respective move is en passant for each board.
+        
+        Assumes the moves are legal.
+        """
     def reset_move_generators(self) -> None:
         r"""
         Reset the move generators for the current boards.

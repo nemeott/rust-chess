@@ -291,6 +291,8 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] Docstring tests
     - [x] Benchmark comparision to `python-chess`
     - [ ] Other tests
+  - [ ] Multi-threading
+  - [ ] Python thread support?
   - [ ] Working GitHub action (😢)
 
 ## Comparison with python-chess

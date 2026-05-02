@@ -71,10 +71,10 @@ pub enum PyRepetitionDetectionMode {
 #[gen_stub_pyclass]
 #[pyclass(name = "Board")]
 pub struct PyBoard {
-    board: chess::Board,
+    pub(crate) board: chess::Board,
 
     // Use a OnceLock to lazily initialize the move generator when needed
-    move_gen: std::sync::OnceLock<Py<PyMoveGenerator>>, // Use a Py to be able to share between Python and Rust
+    pub(crate) move_gen: std::sync::OnceLock<Py<PyMoveGenerator>>, // Use a Py to be able to share between Python and Rust
 
     /// Get the halfmove clock.
     ///
@@ -83,7 +83,7 @@ pub struct PyBoard {
     /// 0
     /// ```
     #[pyo3(get)]
-    halfmove_clock: u8, // Halfmoves since last pawn move or capture
+    pub(crate) halfmove_clock: u8, // Halfmoves since last pawn move or capture
 
     /// Get the fullmove number.
     ///
@@ -92,21 +92,21 @@ pub struct PyBoard {
     /// 1
     /// ```
     #[pyo3(get)]
-    fullmove_number: u8, // Fullmove number; increments after black moves (theoretical max 218, fits in u8)
+    pub(crate) fullmove_number: u8, // Fullmove number; increments after black moves (theoretical max 218, fits in u8)
 
     /// The repetition dectection mode the board will use.
     #[pyo3(get)]
-    repetition_detection_mode: PyRepetitionDetectionMode,
+    pub(crate) repetition_detection_mode: PyRepetitionDetectionMode,
 
     /// Store board Zobrist hashes for board history
     #[pyo3(get)]
-    board_history: Option<Vec<u64>>,
+    pub(crate) board_history: Option<Vec<u64>>,
 }
 
 impl PyBoard {
     /// Helper to lazily initialize and return a reference to the generator
     #[inline]
-    fn ensure_move_gen(&self, py: Python<'_>) -> Py<PyMoveGenerator> {
+    pub(crate) fn ensure_move_gen(&self, py: Python<'_>) -> Py<PyMoveGenerator> {
         self.move_gen
             .get_or_init(|| Py::new(py, PyMoveGenerator::new(&self.board)).unwrap())
             .clone_ref(py)
@@ -134,13 +134,14 @@ impl PyBoard {
                 let board = chess::Board::default();
 
                 // Create move history vector and add the initial board hash
-                let mut board_history = match mode {
+                let board_history = match mode {
                     PyRepetitionDetectionMode::None => None,
-                    PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
+                    PyRepetitionDetectionMode::Full => {
+                        let mut history = Vec::with_capacity(256);
+                        history.push(board.get_hash());
+                        Some(history)
+                    }
                 };
-                if let Some(history) = &mut board_history {
-                    history.push(board.get_hash());
-                }
 
                 Ok(Self {
                     board,
@@ -188,12 +189,12 @@ impl PyBoard {
         // Create move history vector and add the initial board hash
         let board_history = match mode {
             PyRepetitionDetectionMode::None => None,
-            PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
-        }
-        .map(|mut history| {
-            history.push(board.get_hash());
-            history
-        });
+            PyRepetitionDetectionMode::Full => {
+                let mut history = Vec::with_capacity(256);
+                history.push(board.get_hash());
+                Some(history)
+            }
+        };
 
         Ok(Self {
             board,

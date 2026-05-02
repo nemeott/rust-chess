@@ -1954,12 +1954,17 @@ class BoardBatch:
         """
     def __new__(cls, count: builtins.int, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
         r"""
-        Create new boards.
+        Create a new batch of boards.
         """
+    @staticmethod
+    def from_fens(fens: typing.Sequence[builtins.str], mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
+        r"""
+        Create a new batch of boards from a list of FEN strings.
+        """
+    @staticmethod
+    def from_boards(boards: list, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch: ...
     def reset_move_generators(self) -> None:
         r"""
-        Create a new board from a FEN string.
-        
         Reset the move generators for the current boards.
         """
     def generate_next_moves(self) -> builtins.list[typing.Optional[Move]]:

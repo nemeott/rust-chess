@@ -248,8 +248,8 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [ ] Piece-Square Table support?
 - [ ] `BoardBatch`
   - [x] Create a batch of boards from a count
-  - [ ] Create a batch of boards from a list of FEN strings.
-  - [ ] Create a batch of boards from a list of boards.
+  - [x] Create a batch of boards from a list of FEN strings.
+  - [x] Create a batch of boards from a list of boards.
   - [x] Generate the next move, legal move, and legal capture for a batch
   - [ ] Generate moves, legal moves, and legal captures for a batch
   - [ ] Support iterating over the generators of a bacth? (how would this work?)

@@ -1,9 +1,10 @@
+use std::fmt::Write;
 use std::str::FromStr;
-use std::{fmt::Write, thread};
 
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyList};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
+use crate::types::board::PyBoard;
 use crate::types::{
     bitboard::PyBitboard,
     board::PyRepetitionDetectionMode,
@@ -63,14 +64,12 @@ impl PyBoardBatch {
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyBoardBatch {
-    /// Create new boards.
-    ///
+    // TODO: Optimize
 
-    //...from a FEN string, otherwise default to the starting position.
-    // TODO: from fens
-    // TODO: From list of PyBoards
+    /// Create a new batch of boards.
+    ///
     #[new]
-    #[pyo3(signature = (count, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
+    #[pyo3(signature = (count, mode = PyRepetitionDetectionMode::Full))] // Default to full repetition detection
     fn new(count: usize, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
         let boards = vec![chess::Board::default(); count];
 
@@ -98,60 +97,112 @@ impl PyBoardBatch {
         })
     }
 
-    /// Create a new board from a FEN string.
+    /// Create a new batch of boards from a list of FEN strings.
     ///
-    // #[staticmethod]
-    // #[pyo3(signature = (fen, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
-    // fn from_fen(fen: &str, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
-    //     // Extract the halfmove clock and fullmove number from the FEN string
-    //     let parts: Vec<&str> = fen.split_whitespace().collect();
-    //     if parts.len() != 6 {
-    //         return Err(PyValueError::new_err(
-    //             "FEN string must have exactly 6 parts",
-    //         ));
-    //     }
+    #[staticmethod]
+    #[pyo3(signature = (fens, mode = PyRepetitionDetectionMode::Full))] // Default full repetition detection
+    fn from_fens(fens: Vec<String>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
+        let count = fens.len();
 
-    //     // Parse the halfmove clock and fullmove number
-    //     let halfmove_clock = parts[4]
-    //         .parse::<u8>()
-    //         .map_err(|_| PyValueError::new_err("Invalid halfmove clock"))?;
-    //     let fullmove_number = parts[5]
-    //         .parse::<u8>()
-    //         .map_err(|_| PyValueError::new_err("Invalid fullmove number"))?;
+        let mut boards = Vec::with_capacity(count);
+        let mut move_gens = Vec::with_capacity(count);
+        let mut halfmove_clocks = Vec::with_capacity(count);
+        let mut fullmove_numbers = Vec::with_capacity(count);
+        let mut board_histories = Vec::with_capacity(count);
 
-    //     // Parse the board using the chess crate
-    //     let board = chess::Board::from_str(fen)
-    //         .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
+        for fen in fens {
+            // Extract the halfmove clock and fullmove number from the FEN string
+            let parts: Vec<&str> = fen.split_whitespace().collect();
+            if parts.len() != 6 {
+                return Err(PyValueError::new_err(
+                    "FEN string must have exactly 6 parts",
+                ));
+            }
 
-    //     // Create move history vector and add the initial board hash
-    //     let mut board_history = match mode {
-    //         PyRepetitionDetectionMode::None => None,
-    //         PyRepetitionDetectionMode::Full => Some(Vec::with_capacity(256)),
-    //     };
-    //     if let Some(history) = &mut board_history {
-    //         history.push(board.get_hash());
-    //     }
+            // Parse the halfmove clock and fullmove number
+            halfmove_clocks.push(
+                parts[4]
+                    .parse::<u8>()
+                    .map_err(|_| PyValueError::new_err("Invalid halfmove clock"))?,
+            );
+            fullmove_numbers.push(
+                parts[5]
+                    .parse::<u8>()
+                    .map_err(|_| PyValueError::new_err("Invalid fullmove number"))?,
+            );
 
-    //     Ok(Self {
-    //         board,
-    //         move_gen: std::sync::OnceLock::new(),
-    //         halfmove_clock,
-    //         fullmove_number,
-    //         repetition_detection_mode: mode,
-    //         board_history,
-    //     })
-    // }
+            // Parse the board using the chess crate
+            let board = chess::Board::from_str(&fen)
+                .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
 
-    // #[staticmethod]
-    // #[pyo3(signature = (fens, mode = PyRepetitionDetectionMode::Full))]
-    // pub fn batch_from_fens(
-    //     fens: Vec<String>,
-    //     mode: PyRepetitionDetectionMode,
-    // ) -> PyResult<Vec<Self>> {
-    //     fens.iter()
-    //         .map(|fen| Self::new(Some(fen.as_str()), mode))
-    //         .collect()
-    // }
+            board_histories.push(match mode {
+                PyRepetitionDetectionMode::None => None,
+                PyRepetitionDetectionMode::Full => {
+                    let mut history = Vec::with_capacity(256);
+                    history.push(board.get_hash());
+                    Some(history)
+                }
+            });
+
+            boards.push(board);
+
+            move_gens.push(std::sync::OnceLock::new());
+        }
+
+        Ok(Self {
+            boards,
+            move_gens,
+            halfmove_clocks,
+            fullmove_numbers,
+            repetition_detection_mode: mode,
+            board_histories,
+        })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (boards, mode = PyRepetitionDetectionMode::Full))] // Default to full repetition detection
+    fn from_boards(boards: &Bound<'_, PyList>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
+        let pyboards: Vec<Py<PyBoard>> = boards
+            .extract()
+            .map_err(|_| PyValueError::new_err("Expected a list of Board objects"))?;
+
+        let count = pyboards.len();
+
+        let mut boards = Vec::with_capacity(count);
+        let mut move_gens = Vec::with_capacity(count);
+        let mut halfmove_clocks = Vec::with_capacity(count);
+        let mut fullmove_numbers = Vec::with_capacity(count);
+        let mut board_histories = Vec::with_capacity(count);
+
+        // We can assume the GIL is acquired, since this function is only called from Python
+        let py = unsafe { Python::assume_attached() };
+
+        for pyboard in pyboards {
+            let b = pyboard.borrow(py);
+
+            boards.push(b.board.clone());
+            move_gens.push(std::sync::OnceLock::new());
+            halfmove_clocks.push(b.halfmove_clock);
+            fullmove_numbers.push(b.fullmove_number);
+            board_histories.push(match mode {
+                PyRepetitionDetectionMode::None => None,
+                PyRepetitionDetectionMode::Full => {
+                    let mut history = Vec::with_capacity(256);
+                    history.push(b.board.get_hash());
+                    Some(history)
+                }
+            });
+        }
+
+        Ok(Self {
+            boards,
+            move_gens,
+            halfmove_clocks,
+            fullmove_numbers,
+            repetition_detection_mode: mode,
+            board_histories,
+        })
+    }
 
     // /// Get the FEN string representation of the board.
     // ///

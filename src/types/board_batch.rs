@@ -4,7 +4,7 @@ use std::str::FromStr;
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyList};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
-use crate::types::board::PyBoard;
+use crate::types::board::{PyBoard, PyCastleRights};
 use crate::types::{
     bitboard::PyBitboard,
     board::PyRepetitionDetectionMode,
@@ -16,6 +16,7 @@ use crate::types::{
 
 /// BoardBatch class.
 /// Represents a batch of chess boards.
+/// Uses the same method names as `Board`, however they operate on a batch now.
 ///
 /// TODO: docs
 
@@ -355,341 +356,273 @@ impl PyBoardBatch {
 
     // // TODO: get_san_from_move
 
-    // // Get the Zobrist hash of the board
-    // //
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.zobrist_hash
-    // /// 9023329949471135578
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.zobrist_hash
-    // /// 9322854110900140515
-    // /// ```
-    // #[getter]
-    // #[inline]
-    // fn get_zobrist_hash(&self) -> u64 {
-    //     self.board.get_hash()
-    // }
+    // Get the Zobrist hashes of the boards.
+    //
+    #[getter]
+    #[inline]
+    fn get_zobrist_hash(&self) -> Vec<u64> {
+        self.boards.iter().map(|board| board.get_hash()).collect()
+    }
 
-    // /// Get the hash of the board based on its Zobrist hash.
-    // /// **This is not the same as the `zobrist_hash` field since Python doesn't support unsigned 64-bit integers for this function.**
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> hash(board)
-    // /// 9023329949471135578
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> hash(board)
-    // /// -9123889962809411101
-    // /// >>> board.zobrist_hash
-    // /// 9322854110900140515
-    // /// >>> hash(board) == board.zobrist_hash
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn __hash__(&self) -> u64 {
-    //     self.get_zobrist_hash()
-    // }
+    /// Get a hash of the board batch based on the sum of the Zobrist hashes.
+    /// Will likely overflow which is fine since this is a fast hash.
+    #[inline]
+    fn __hash__(&self) -> u64 {
+        self.boards.iter().map(|board| board.get_hash()).sum()
+    }
 
-    // /// Check if two boards are equal based on their Zobrist hash.
-    // ///
-    // /// ```python
-    // /// >>> board1 = rust_chess.Board()
-    // /// >>> board2 = rust_chess.Board()
-    // /// >>> board1 == board2
-    // /// True
-    // /// >>> board1.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board1 == board2
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn __eq__(&self, other: &Self) -> bool {
-    //     self.get_zobrist_hash() == other.get_zobrist_hash()
-    // }
+    /// Check if two board batches are equal based on the Zobrist hashes of their boards.
+    ///
+    #[inline]
+    fn __eq__(&self, other: &Self) -> bool {
+        self.boards
+            .iter()
+            .zip(other.boards.iter())
+            .all(|(b1, b2)| b1.get_hash() == b2.get_hash())
+    }
 
-    // /// Check if two boards are not equal based on their Zobrist hash.
-    // ///
-    // /// ```python
-    // /// >>> board1 = rust_chess.Board()
-    // /// >>> board2 = rust_chess.Board()
-    // /// >>> board1 != board2
-    // /// False
-    // /// >>> board1.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board1 != board2
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn __ne__(&self, other: &Self) -> bool {
-    //     !self.__eq__(other)
-    // }
+    /// Check if two board batches are not equal based on the Zobrist hashes of their boards.
+    ///
+    #[inline]
+    fn __ne__(&self, other: &Self) -> bool {
+        !self.__eq__(other)
+    }
 
-    // /// Get the current player to move.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.turn
-    // /// True
-    // /// >>> print(board.turn)
-    // /// WHITE
-    // ///
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.turn
-    // /// False
-    // /// >>> print(board.turn)
-    // /// BLACK
-    // /// ```
-    // #[getter]
-    // #[inline]
-    // fn get_turn(&self) -> PyColor {
-    //     PyColor(self.board.side_to_move())
-    // }
+    /// Compare two board batches based on the Zobrist hashes of their boards.
+    /// Returns a list of booleans where `True` indicates the respective boards match.
+    ///
+    #[inline]
+    fn compare(&self, other: &Self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(other.boards.iter())
+            .map(|(b1, b2)| b1.get_hash() == b2.get_hash())
+            .collect()
+    }
 
-    // /// Get the king square of a color
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
-    // /// e1
-    // /// >>> rust_chess.Board().get_king_square(rust_chess.BLACK)
-    // /// e8
-    // /// ```
-    // #[inline]
-    // fn get_king_square(&self, color: PyColor) -> PySquare {
-    //     PySquare(self.board.king_square(color.0))
-    // }
+    /// Get the current player to move for each board.
+    ///
+    #[getter]
+    #[inline]
+    fn get_turn(&self) -> Vec<PyColor> {
+        self.boards
+            .iter()
+            .map(|board| PyColor(board.side_to_move()))
+            .collect()
+    }
 
-    // /// Get the castle rights of a color.
-    // /// Returns a `CastleRights` enum type, which has values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.get_castle_rights(board.turn)
-    // /// CastleRights.BOTH
-    // /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    // /// >>> board.get_castle_rights(rust_chess.WHITE)
-    // /// CastleRights.QUEEN_SIDE
-    // /// >>> board.get_castle_rights(rust_chess.BLACK)
-    // /// CastleRights.NO_RIGHTS
-    // /// ```
-    // #[inline]
-    // fn get_castle_rights(&self, color: PyColor) -> PyCastleRights {
-    //     match self.board.castle_rights(color.0) {
-    //         chess::CastleRights::NoRights => PyCastleRights::NoRights,
-    //         chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
-    //         chess::CastleRights::KingSide => PyCastleRights::KingSide,
-    //         chess::CastleRights::Both => PyCastleRights::Both,
-    //     }
-    // }
+    // TODO: List of colors for below functions?
 
-    // /// Get the castle rights of the current player to move.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_my_castle_rights()
-    // /// CastleRights.BOTH
-    // /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    // /// >>> board.get_my_castle_rights()  # White to move
-    // /// CastleRights.QUEEN_SIDE
-    // /// ```
-    // #[inline]
-    // fn get_my_castle_rights(&self) -> PyCastleRights {
-    //     self.get_castle_rights(self.get_turn())
-    // }
+    /// Get the king square of each board for a color.
+    ///
+    #[inline]
+    fn get_king_square(&self, color: PyColor) -> Vec<PySquare> {
+        self.boards
+            .iter()
+            .map(|board| PySquare(board.king_square(color.0)))
+            .collect()
+    }
 
-    // /// Get the castle rights of the opponent.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_their_castle_rights()
-    // /// CastleRights.BOTH
-    // /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    // /// >>> board.get_their_castle_rights()  # White to move (so black is opponent)
-    // /// CastleRights.NO_RIGHTS
-    // /// ```
-    // #[inline]
-    // fn get_their_castle_rights(&self) -> PyCastleRights {
-    //     self.get_castle_rights(PyColor(!self.board.side_to_move()))
-    // }
+    /// Get the castle rights of each board for a color.
+    /// Returns a list `CastleRights` enum types, which has the values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
+    ///
+    #[inline]
+    fn get_castle_rights(&self, color: PyColor) -> Vec<PyCastleRights> {
+        self.boards
+            .iter()
+            .map(|board| match board.castle_rights(color.0) {
+                chess::CastleRights::NoRights => PyCastleRights::NoRights,
+                chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
+                chess::CastleRights::KingSide => PyCastleRights::KingSide,
+                chess::CastleRights::Both => PyCastleRights::Both,
+            })
+            .collect()
+    }
 
-    // /// Check if a color can castle (either side).
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.can_castle(board.turn)
-    // /// True
-    // /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    // /// >>> board.can_castle(rust_chess.WHITE)
-    // /// True
-    // /// >>> board.can_castle(rust_chess.BLACK)
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn can_castle(&self, color: PyColor) -> bool {
-    //     self.board.castle_rights(color.0) != chess::CastleRights::NoRights
-    // }
+    /// Get the castle rights of the current player to move for each board.
+    ///
+    #[inline]
+    fn get_my_castle_rights(&self) -> Vec<PyCastleRights> {
+        self.boards
+            .iter()
+            .map(|board| match board.castle_rights(board.side_to_move()) {
+                chess::CastleRights::NoRights => PyCastleRights::NoRights,
+                chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
+                chess::CastleRights::KingSide => PyCastleRights::KingSide,
+                chess::CastleRights::Both => PyCastleRights::Both,
+            })
+            .collect()
+    }
 
-    // /// Check if a color can castle queenside.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.can_castle_queenside(board.turn)
-    // /// True
-    // /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    // /// >>> board.can_castle_queenside(rust_chess.WHITE)
-    // /// True
-    // /// >>> board.can_castle_queenside(rust_chess.BLACK)
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn can_castle_queenside(&self, color: PyColor) -> bool {
-    //     self.board.castle_rights(color.0).has_queenside()
-    // }
+    /// Get the castle rights of the opponent for each board.
+    ///
+    #[inline]
+    fn get_their_castle_rights(&self) -> Vec<PyCastleRights> {
+        self.boards
+            .iter()
+            .map(|board| match board.castle_rights(!board.side_to_move()) {
+                chess::CastleRights::NoRights => PyCastleRights::NoRights,
+                chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
+                chess::CastleRights::KingSide => PyCastleRights::KingSide,
+                chess::CastleRights::Both => PyCastleRights::Both,
+            })
+            .collect()
+    }
 
-    // /// Check if a color can castle kingside.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.can_castle_kingside(board.turn)
-    // /// True
-    // /// >>> board = rust_chess.Board("r6r/4k3/8/8/8/8/7R/R3K3 w Q - 2 2")
-    // /// >>> board.can_castle_kingside(rust_chess.WHITE)
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn can_castle_kingside(&self, color: PyColor) -> bool {
-    //     self.board.castle_rights(color.0).has_kingside()
-    // }
+    /// Check if a color can castle (either side) for each board.
+    /// Returns a list of booleans.
+    ///
+    #[inline]
+    fn can_castle(&self, color: PyColor) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| board.castle_rights(color.0) != chess::CastleRights::NoRights)
+            .collect()
+    }
 
-    // /// Check if a move is castling.
-    // /// Assumes the move is pseudo-legal.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_castling(rust_chess.Move("e1g1"))
-    // /// True
-    // /// >>> board.is_castling(rust_chess.Move("e1e2"))
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn is_castling(&self, chess_move: PyMove) -> bool {
-    //     let source = chess_move.0.get_source();
+    /// Check if a color can castle queenside for each board.
+    /// Returns a list of booleans.
+    ///
+    #[inline]
+    fn can_castle_queenside(&self, color: PyColor) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| board.castle_rights(color.0).has_queenside())
+            .collect()
+    }
 
-    //     // Check if the moving piece is a king
-    //     if self
-    //         .board
-    //         .piece_on(source)
-    //         .is_some_and(|p| p == chess::Piece::King)
-    //     {
-    //         // Check if the move is two squares horizontally
-    //         let dest = chess_move.0.get_dest();
-    //         #[allow(clippy::cast_possible_truncation)]
-    //         return (dest.to_index() as i8 - source.to_index() as i8).abs() == 2;
-    //     }
-    //     false
-    // }
+    /// Check if a color can castle kingside for each board.
+    /// Returns a list of booleans.
+    ///
+    #[inline]
+    fn can_castle_kingside(&self, color: PyColor) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| board.castle_rights(color.0).has_kingside())
+            .collect()
+    }
 
-    // /// Check if a move is queenside castling.
-    // /// Assumes the move is pseudo-legal.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_castling_queenside(rust_chess.Move("e1c1"))
-    // /// True
-    // /// >>> board.is_castling_queenside(rust_chess.Move("e1g1"))
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn is_castling_queenside(&self, chess_move: PyMove) -> bool {
-    //     let source = chess_move.0.get_source();
+    // TODO: Reword
 
-    //     // Check if the moving piece is a king
-    //     if self
-    //         .board
-    //         .piece_on(source)
-    //         .is_some_and(|p| p == chess::Piece::King)
-    //     {
-    //         // Check if the move is two squares to the left
-    //         let dest = chess_move.0.get_dest();
-    //         #[allow(clippy::cast_possible_truncation)]
-    //         return dest.to_index() as i8 - source.to_index() as i8 == -2;
-    //     }
-    //     false
-    // }
+    /// Check if the respective move is castling for each board.
+    /// Assumes the moves are pseudo-legal.
+    ///
+    #[inline]
+    fn is_castling(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        chess_moves
+            .iter()
+            .zip(self.boards.iter())
+            .map(|(chess_move, board)| {
+                let source = chess_move.0.get_source();
 
-    // /// Check if a move is kingside castling.
-    // /// Assumes the move is pseudo-legal.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
-    // /// True
-    // /// >>> board.is_castling_kingside(rust_chess.Move("e1c1"))
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn is_castling_kingside(&self, chess_move: PyMove) -> bool {
-    //     let source = chess_move.0.get_source();
+                // Check if the moving piece is a king
+                if board
+                    .piece_on(source)
+                    .is_some_and(|p| p == chess::Piece::King)
+                {
+                    // Check if the move is two squares horizontally
+                    let dest = chess_move.0.get_dest();
+                    // #[allow(clippy::cast_possible_truncation)] //
+                    return (dest.to_int() as i8 - source.to_int() as i8).abs() == 2;
+                }
+                false
+            })
+            .collect()
+    }
 
-    //     // Check if the moving piece is a king
-    //     if self
-    //         .board
-    //         .piece_on(source)
-    //         .is_some_and(|p| p == chess::Piece::King)
-    //     {
-    //         // Check if the move is two squares to the right
-    //         let dest = chess_move.0.get_dest();
-    //         #[allow(clippy::cast_possible_truncation)]
-    //         return dest.to_index() as i8 - source.to_index() as i8 == 2;
-    //     }
-    //     false
-    // }
+    /// Check if the respective move is queenside castling for each board.
+    /// Assumes the move is pseudo-legal.
+    ///
+    #[inline]
+    fn is_castling_queenside(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        chess_moves
+            .iter()
+            .zip(self.boards.iter())
+            .map(|(chess_move, board)| {
+                let source = chess_move.0.get_source();
 
-    // /// Get the piece type on a square, otherwise None.
-    // /// Different than `get_piece_on` because it returns the piece type, which does not include color.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
-    // /// R
-    // /// >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
-    // /// K
-    // /// ```
-    // #[inline]
-    // fn get_piece_type_on(&self, square: PySquare) -> Option<PyPieceType> {
-    //     // Get the piece on the square using the chess crate
-    //     self.board.piece_on(square.0).map(PyPieceType)
-    // }
+                // Check if the moving piece is a king
+                if board
+                    .piece_on(source)
+                    .is_some_and(|p| p == chess::Piece::King)
+                {
+                    // Check if the move is two squares to the left
+                    let dest = chess_move.0.get_dest();
+                    #[allow(clippy::cast_possible_truncation)]
+                    return dest.to_int() as i8 - source.to_int() as i8 == -2;
+                }
+                false
+            })
+            .collect()
+    }
 
-    // /// Get the color of the piece on a square, otherwise None.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_color_on(rust_chess.A1)
-    // /// True
-    // /// >>> print(rust_chess.Board().get_color_on(rust_chess.A1))
-    // /// WHITE
-    // /// >>> rust_chess.Board().get_color_on(rust_chess.E8)
-    // /// False
-    // /// >>> print(rust_chess.Board().get_color_on(rust_chess.E8))
-    // /// BLACK
-    // /// ```
-    // #[inline]
-    // fn get_color_on(&self, square: PySquare) -> Option<PyColor> {
-    //     // Get the color of the piece on the square using the chess crate
-    //     self.board.color_on(square.0).map(PyColor)
-    // }
+    /// Check if the respective move is kingside castling for each board.
+    /// Assumes the move is pseudo-legal.
+    ///
+    #[inline]
+    fn is_castling_kingside(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        chess_moves
+            .iter()
+            .zip(self.boards.iter())
+            .map(|(chess_move, board)| {
+                let source = chess_move.0.get_source();
 
-    // /// Get the piece on a square (color-inclusive), otherwise None.
-    // /// Different than `get_piece_on` because it returns the piece, which includes color.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_piece_on(rust_chess.A1)
-    // /// R
-    // /// >>> rust_chess.Board().get_piece_on(rust_chess.E8)
-    // /// k
-    // /// ```
-    // #[inline]
-    // fn get_piece_on(&self, square: PySquare) -> Option<PyPiece> {
-    //     self.get_color_on(square).and_then(|color| {
-    //         self.get_piece_type_on(square)
-    //             .map(|piece_type| PyPiece { piece_type, color })
-    //     })
-    // }
+                // Check if the moving piece is a king
+                if board
+                    .piece_on(source)
+                    .is_some_and(|p| p == chess::Piece::King)
+                {
+                    // Check if the move is two squares to the right
+                    let dest = chess_move.0.get_dest();
+                    #[allow(clippy::cast_possible_truncation)]
+                    return dest.to_int() as i8 - source.to_int() as i8 == 2;
+                }
+                false
+            })
+            .collect()
+    }
+
+    /// Get the color of the piece on a respective square for each board, otherwise None.
+    ///
+    #[inline]
+    fn get_color_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyColor>> {
+        // Get the color of the piece on the respective square using the chess crate
+        self.boards
+            .iter()
+            .zip(squares.iter())
+            .map(|(board, square)| board.color_on(square.0).map(PyColor))
+            .collect()
+    }
+
+    /// Get the piece type on a respective square for each board, otherwise None.
+    /// Different than `get_piece_on` because it returns the piece type, which does not include color.
+    ///
+    #[inline]
+    fn get_piece_type_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyPieceType>> {
+        // Get the piece on the respective square using the chess crate
+        self.boards
+            .iter()
+            .zip(squares.iter())
+            .map(|(board, square)| board.piece_on(square.0).map(PyPieceType))
+            .collect()
+    }
+
+    /// Get the piece on a respective square, otherwise None.
+    /// Different than `get_piece_on` because it returns the piece, which includes color.
+    ///
+    #[inline]
+    fn get_piece_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyPiece>> {
+        squares
+            .iter()
+            .zip(self.boards.iter())
+            .map(|(square, board)| {
+                Some(PyPiece {
+                    piece_type: board.piece_on(square.0).map(PyPieceType)?,
+                    color: board.color_on(square.0).map(PyColor)?,
+                })
+            })
+            .collect()
+    }
 
     // /// Get the en passant square, otherwise None.
     // ///
@@ -706,7 +639,7 @@ impl PyBoardBatch {
     // #[getter]
     // #[inline]
     // fn get_en_passant(&self) -> Option<PySquare> {
-    //     // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+    //     // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
     //     // The actual en passant square is the one that one can move to that would cause en passant.
     //     // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
     //     self.board.en_passant().map(|sq| {
@@ -735,7 +668,7 @@ impl PyBoardBatch {
     //     let source = chess_move.0.get_source();
     //     let dest = chess_move.0.get_dest();
 
-    //     // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+    //     // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
     //     // The actual en passant square is the one that one can move to that would cause en passant.
     //     // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
     //     let ep_square = self.board.en_passant().and_then(|sq| {
@@ -751,7 +684,7 @@ impl PyBoardBatch {
     //         && {
     //             // Moving diagonally
     //             #[allow(clippy::cast_possible_truncation)]
-    //             let diff = (dest.to_index() as i8 - source.to_index() as i8).abs();
+    //             let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
     //             diff == 7 || diff == 9
     //         }
     //         && self.board.piece_on(dest).is_none() // Target square is empty
@@ -868,7 +801,7 @@ impl PyBoardBatch {
     //         halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
     //         // // Increment fullmove number if black moves
     //         #[allow(clippy::cast_possible_truncation)]
-    //         fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
+    //         fullmove_number: self.fullmove_number + (self.board.side_to_move().to_int() as u8), // White is 0, black is 1
     //         repetition_detection_mode: self.repetition_detection_mode,
     //         // Don't update move history when making a null move
     //         board_history: self.board_history.clone(),
@@ -926,7 +859,7 @@ impl PyBoardBatch {
     //     }
 
     //     // Increment fullmove number if black moves
-    //     self.fullmove_number += self.board.side_to_move().to_index() as u8; // White is 0, black is 1
+    //     self.fullmove_number += self.board.side_to_move().to_int() as u8; // White is 0, black is 1
 
     //     // Invalidate the move generator since the board has changed
     //     self.move_gen.take();
@@ -1003,7 +936,7 @@ impl PyBoardBatch {
     //         },
     //         // Increment fullmove number if black moves
     //         #[allow(clippy::cast_possible_truncation)]
-    //         fullmove_number: self.fullmove_number + (self.board.side_to_move().to_index() as u8), // White is 0, black is 1
+    //         fullmove_number: self.fullmove_number + (self.board.side_to_move().to_int() as u8), // White is 0, black is 1
     //         repetition_detection_mode: self.repetition_detection_mode,
     //         // Add the new board's Zobrist hash to history
     //         board_history: self.board_history.as_ref().map(|history| {

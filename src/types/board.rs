@@ -357,7 +357,7 @@ impl PyBoard {
 
     // TODO: get_san_from_move
 
-    // Get the Zobrist hash of the board
+    // Get the Zobrist hash of the board.
     //
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -373,8 +373,9 @@ impl PyBoard {
         self.board.get_hash()
     }
 
-    /// Get the hash of the board based on its Zobrist hash.
+    /// Get a hash of the board based on its Zobrist hash.
     /// **This is not the same as the `zobrist_hash` field since Python doesn't support unsigned 64-bit integers for this function.**
+    /// Use `zobrist_hash` directly for the actual Zobrist hash value.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -446,7 +447,7 @@ impl PyBoard {
         PyColor(self.board.side_to_move())
     }
 
-    /// Get the king square of a color
+    /// Get the king square for a color.
     ///
     /// ```python
     /// >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
@@ -459,8 +460,8 @@ impl PyBoard {
         PySquare(self.board.king_square(color.0))
     }
 
-    /// Get the castle rights of a color.
-    /// Returns a `CastleRights` enum type, which has values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
+    /// Get the castle rights for a color.
+    /// Returns a `CastleRights` enum type, which has the values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -581,8 +582,7 @@ impl PyBoard {
         {
             // Check if the move is two squares horizontally
             let dest = chess_move.0.get_dest();
-            #[allow(clippy::cast_possible_truncation)]
-            return (dest.to_index() as i8 - source.to_index() as i8).abs() == 2;
+            return (dest.to_int() as i8 - source.to_int() as i8).abs() == 2;
         }
         false
     }
@@ -610,7 +610,7 @@ impl PyBoard {
             // Check if the move is two squares to the left
             let dest = chess_move.0.get_dest();
             #[allow(clippy::cast_possible_truncation)]
-            return dest.to_index() as i8 - source.to_index() as i8 == -2;
+            return dest.to_int() as i8 - source.to_int() as i8 == -2;
         }
         false
     }
@@ -638,24 +638,9 @@ impl PyBoard {
             // Check if the move is two squares to the right
             let dest = chess_move.0.get_dest();
             #[allow(clippy::cast_possible_truncation)]
-            return dest.to_index() as i8 - source.to_index() as i8 == 2;
+            return dest.to_int() as i8 - source.to_int() as i8 == 2;
         }
         false
-    }
-
-    /// Get the piece type on a square, otherwise None.
-    /// Different than `get_piece_on` because it returns the piece type, which does not include color.
-    ///
-    /// ```python
-    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
-    /// R
-    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
-    /// K
-    /// ```
-    #[inline]
-    fn get_piece_type_on(&self, square: PySquare) -> Option<PyPieceType> {
-        // Get the piece on the square using the chess crate
-        self.board.piece_on(square.0).map(PyPieceType)
     }
 
     /// Get the color of the piece on a square, otherwise None.
@@ -676,7 +661,22 @@ impl PyBoard {
         self.board.color_on(square.0).map(PyColor)
     }
 
-    /// Get the piece on a square (color-inclusive), otherwise None.
+    /// Get the piece type on a square, otherwise None.
+    /// Different than `get_piece_on` because it returns the piece type, which does not include color.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
+    /// R
+    /// >>> rust_chess.Board().get_piece_type_on(rust_chess.E8)
+    /// K
+    /// ```
+    #[inline]
+    fn get_piece_type_on(&self, square: PySquare) -> Option<PyPieceType> {
+        // Get the piece on the square using the chess crate
+        self.board.piece_on(square.0).map(PyPieceType)
+    }
+
+    /// Get the piece on a square, otherwise None.
     /// Different than `get_piece_on` because it returns the piece, which includes color.
     ///
     /// ```python
@@ -708,7 +708,7 @@ impl PyBoard {
     #[getter]
     #[inline]
     fn get_en_passant(&self) -> Option<PySquare> {
-        // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+        // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
         // The actual en passant square is the one that one can move to that would cause en passant.
         // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
         self.board.en_passant().map(|sq| {
@@ -737,7 +737,7 @@ impl PyBoard {
         let source = chess_move.0.get_source();
         let dest = chess_move.0.get_dest();
 
-        // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+        // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
         // The actual en passant square is the one that one can move to that would cause en passant.
         // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
         let ep_square = self.board.en_passant().and_then(|sq| {
@@ -753,7 +753,7 @@ impl PyBoard {
             && {
                 // Moving diagonally
                 #[allow(clippy::cast_possible_truncation)]
-                let diff = (dest.to_index() as i8 - source.to_index() as i8).abs();
+                let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
                 diff == 7 || diff == 9
             }
             && self.board.piece_on(dest).is_none() // Target square is empty

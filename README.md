@@ -222,14 +222,12 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] Basic characters
     - [ ] ASCII with colors?
     - [x] Unicode characters
-  - [x] Get color, piece type, and piece on a square
-  - [x] Get king square for a color
-  - [x] Get the en passant square
-  - [x] Check if move is zeroing
-  - [x] Check if move is legal
+  - [x] Get the color, piece type, and piece on a square
+  - [x] Get the king and en passant squares
+  - [x] Get castle rights
+  - [x] Check if move is zeroing or legal
   - [x] Quick legality detection for psuedo-legal moves
-  - [x] Check if move is a capture
-  - [x] Check if move is en passant
+  - [x] Check if move is a capture or en passant or is castling
   - [x] Make moves on the current or new board
     - [ ] Make null moves (make_null_move)
     - [x] Make null moves on new board
@@ -247,9 +245,36 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [ ] Cache default board for faster creation?
   - [ ] Piece-Square Table support?
 - [ ] `BoardBatch`
-  - [x] Create a batch of boards from a count
-  - [x] Create a batch of boards from a list of FEN strings.
-  - [x] Create a batch of boards from a list of boards.
+  - [x] Initialization
+    - [x] Create a batch of boards from a count
+    - [x] Create a batch of boards from a list of FEN strings.
+    - [x] Create a batch of boards from a list of boards.
+  - [ ] FEN parsing and printing
+  - [ ] SAN move parsing
+  - [ ] Human readable printing
+    - [ ] Basic characters
+    - [ ] ASCII with colors?
+    - [ ] Unicode characters
+  - [x] Get the color, piece type, and piece on a respective square
+  - [ ] Get the king and en passant squares for each board
+  - [x] Get castle rights for each board
+  - [ ] Check if a resepective move is zeroing or legal for each board
+  - [ ] Quick legality detection for psuedo-legal moves
+  - [ ] Check if a respective move is a capture or en passant or is castling for each board
+  - [ ] Make moves on the current or new board batch
+    - [ ] Make null moves (make_null_move)
+    - [ ] Make null moves on new board batch
+  - [ ] Get bitboards for the batch
+    - [ ] Pinned pieces
+    - [ ] Checking pieces
+    - [ ] Color pieces
+    - [ ] Piece type
+    - [ ] Piece
+    - [ ] All pieces
+  - [x] Zobrist hashing for each board
+  - [x] Comparison operators (using Zobrist hash)
+  - [ ] Move history
+    - [ ] Repetition detection for each board
   - [x] Generate the next move, legal move, and legal capture for a batch
   - [ ] Generate moves, legal moves, and legal captures for a batch
   - [ ] Support iterating over the generators of a bacth? (how would this work?)

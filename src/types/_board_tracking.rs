@@ -704,7 +704,7 @@ impl PyBoard {
         self.board.color_on(square.0).map(PyColor)
     }
 
-    /// Get the piece on a square (color-inclusive), otherwise None.
+    /// Get the piece on a square, otherwise None.
     /// Different than `get_piece_on` because it returns the piece, which includes color.
     ///
     /// ```python
@@ -736,7 +736,7 @@ impl PyBoard {
     #[getter]
     #[inline]
     fn get_en_passant(&self) -> Option<PySquare> {
-        // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+        // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
         // The actual en passant square is the one that one can move to that would cause en passant.
         // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
         self.board.en_passant().map(|sq| {
@@ -765,7 +765,7 @@ impl PyBoard {
         let source = chess_move.0.get_source();
         let dest = chess_move.0.get_dest();
 
-        // The Rust chess crate doesn't actually computer this right, it returns the square that the pawn was moved to.
+        // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
         // The actual en passant square is the one that one can move to that would cause en passant.
         // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
         let ep_square = self.board.en_passant().and_then(|sq| {

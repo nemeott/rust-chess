@@ -3,6 +3,10 @@
 #![allow(clippy::wrong_self_convention)]
 #![allow(clippy::unused_self)]
 
+// Use mimalloc as the global allocator for improved performance
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 use pyo3::prelude::*;
 use pyo3_stub_gen::{define_stub_info_gatherer, module_variable};
 

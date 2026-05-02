@@ -12,6 +12,7 @@ crate-type = ["cdylib", "rlib"] # For PyO3 stub gen
 chess = "3.2.0"
 pyo3 = "0.28.3"
 pyo3-stub-gen = "0.22.1" # Enable auto generating pyo3 stub files
+mimalloc = "0.1.50" # Faster allocater than the default system allocator
 
 [lints.clippy]
 correctness = "warn"
@@ -23,15 +24,11 @@ pedantic = "warn"
 nursery = "warn"
 
 [profile.dev] # Faster build time
-lto = false
-panic = "unwind"
-strip = "none"
-incremental = true # Store previous build (also sets codegen-units to 256)
+lto = "off"
 debug = 0
 
 [profile.release] # Performance optimized
+strip = true
 lto = true
 codegen-units = 1
-opt-level = 3
 panic = "abort"
-strip = true

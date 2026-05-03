@@ -1901,7 +1901,7 @@ class Board:
         """
     def is_stalemate(self) -> builtins.bool:
         r"""
-        Checks if the side to move is in stalemate
+        Checks if the side to move is in stalemate.
         
         ```python
         >>> rust_chess.Board().is_stalemate()
@@ -1911,7 +1911,7 @@ class Board:
         """
     def is_checkmate(self) -> builtins.bool:
         r"""
-        Checks if the side to move is in checkmate
+        Checks if the side to move is in checkmate.
         
         ```python
         >>> rust_chess.Board().is_checkmate()
@@ -2157,6 +2157,62 @@ class BoardBatch:
         Updates the move generators to the next move.
         
         Allows only enemy-occupied destination squares for each generator.
+        """
+    def is_fifty_moves(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the halfmoves since the last pawn move or capture is >= 100
+        and the game is ongoing (not checkmate or stalemate) for each board.
+        
+        This is a claimable draw according to FIDE rules.
+        """
+    def is_seventy_five_moves(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the halfmoves since the last pawn move or capture is >= 150
+        and the game is ongoing (not checkmate or stalemate) for each board.
+        
+        This is an automatic draw according to FIDE rules.
+        """
+    def is_insufficient_material(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the side to move has insufficient material to checkmate the opponent for each board.
+        The cases where this is true are:
+            1. K vs K
+            2. K vs K + N
+            3. K vs K + B
+            4. K + B vs K + B with the bishops on the same color.
+        """
+    def is_n_repetition(self, n: builtins.int) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the current position is a n-fold repetition for each board.
+        
+        TODO: Quick check (only check last few moves since that is common error for engines)
+        TODO: Add option to use full, or no repetition checks
+        """
+    def is_threefold_repetition(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the current position is a threefold repetition for each board.
+        This is a claimable draw according to FIDE rules.
+        """
+    def is_fivefold_repetition(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the current position is a fivefold repetition for each board.
+        This is an automatic draw according to FIDE rules.
+        """
+    def is_check(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the side to move is in check for each board.
+        """
+    def is_stalemate(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the side to move is in stalemate for each board.
+        """
+    def is_checkmate(self) -> builtins.list[builtins.bool]:
+        r"""
+        Checks if the side to move is in checkmate for each board.
+        """
+    def get_status(self) -> builtins.list[BoardStatus]:
+        r"""
+        Get the status of each board (ongoing, draw, or game-ending).
         """
 
 @typing.final

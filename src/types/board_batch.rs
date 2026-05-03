@@ -4,7 +4,7 @@ use std::str::FromStr;
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyList};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
-use crate::types::board::{PyBoard, PyCastleRights};
+use crate::types::board::{PyBoard, PyBoardStatus, PyCastleRights};
 use crate::types::{
     bitboard::PyBitboard,
     board::PyRepetitionDetectionMode,
@@ -1156,271 +1156,121 @@ impl PyBoardBatch {
     //     gen_ref
     // }
 
-    // /// Checks if the halfmoves since the last pawn move or capture is >= 100
-    // /// and the game is ongoing (not checkmate or stalemate).
-    // ///
-    // /// This is a claimable draw according to FIDE rules.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_fifty_moves()
-    // /// False
-    // /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 100 1").is_fifty_moves()
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_fifty_moves(&self) -> bool {
-    //     self.halfmove_clock >= 100 && self.board.status() == chess::BoardStatus::Ongoing
-    // }
+    /// Checks if the halfmoves since the last pawn move or capture is >= 100
+    /// and the game is ongoing (not checkmate or stalemate) for each board.
+    ///
+    /// This is a claimable draw according to FIDE rules.
+    ///
+    #[inline]
+    fn is_fifty_moves(&self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(self.halfmove_clocks.iter())
+            .map(|(board, halfmove_clock)| PyBoard::_is_fifty_moves(board, *halfmove_clock))
+            .collect()
+    }
 
-    // /// Checks if the halfmoves since the last pawn move or capture is >= 150
-    // /// and the game is ongoing (not checkmate or stalemate).
-    // ///
-    // /// This is an automatic draw according to FIDE rules.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_seventy_five_moves()
-    // /// False
-    // /// >>> rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 150 1").is_seventy_five_moves()
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_seventy_five_moves(&self) -> bool {
-    //     self.halfmove_clock >= 150 && self.board.status() == chess::BoardStatus::Ongoing
-    // }
+    /// Checks if the halfmoves since the last pawn move or capture is >= 150
+    /// and the game is ongoing (not checkmate or stalemate) for each board.
+    ///
+    /// This is an automatic draw according to FIDE rules.
+    ///
+    #[inline]
+    fn is_seventy_five_moves(&self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(self.halfmove_clocks.iter())
+            .map(|(board, halfmove_clock)| PyBoard::_is_seventy_five_moves(board, *halfmove_clock))
+            .collect()
+    }
 
-    // /// Checks if the side to move has insufficient material to checkmate the opponent.
-    // /// The cases where this is true are:
-    // ///     1. K vs K
-    // ///     2. K vs K + N
-    // ///     3. K vs K + B
-    // ///     4. K + B vs K + B with the bishops on the same color.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_insufficient_material()
-    // /// False
-    // /// >>> rust_chess.Board("4k3/8/8/8/8/8/8/4K3 w - - 0 1").is_insufficient_material() # K vs K
-    // /// True
-    // /// >>> rust_chess.Board("4k3/8/8/8/5N2/8/8/4K3 w - - 0 1").is_insufficient_material() # K vs K + N
-    // /// True
-    // /// >>> rust_chess.Board("4k3/8/8/8/5B2/8/8/4K3 w - - 0 1").is_insufficient_material() # K vs K + B
-    // /// True
-    // /// >>> rust_chess.Board("4k3/8/8/5b2/5B2/8/8/4K3 w - - 0 1").is_insufficient_material() # K + B vs K + B different color
-    // /// False
-    // /// >>> rust_chess.Board("4k3/8/5b2/8/5B2/8/8/4K3 w - - 0 1").is_insufficient_material() # K + B vs K + B same color
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_insufficient_material(&self) -> bool {
-    //     let kings = self.board.pieces(chess::Piece::King);
+    /// Checks if the side to move has insufficient material to checkmate the opponent for each board.
+    /// The cases where this is true are:
+    ///     1. K vs K
+    ///     2. K vs K + N
+    ///     3. K vs K + B
+    ///     4. K + B vs K + B with the bishops on the same color.
+    ///
+    #[inline]
+    fn is_insufficient_material(&self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_is_insufficient_material(board))
+            .collect()
+    }
 
-    //     // Get the bitboards of the white and black pieces without the kings
-    //     let white_bb = self.board.color_combined(chess::Color::White) & !kings;
-    //     let black_bb = self.board.color_combined(chess::Color::Black) & !kings;
-    //     let combined_bb = white_bb | black_bb;
+    /// Checks if the current position is a n-fold repetition for each board.
+    ///
+    /// TODO: Quick check (only check last few moves since that is common error for engines)
+    /// TODO: Add option to use full, or no repetition checks
+    #[inline]
+    fn is_n_repetition(&self, n: u8) -> Vec<bool> {
+        self.board_histories
+            .iter()
+            .zip(self.halfmove_clocks.iter())
+            .map(|(board_history, halfmove_clock)| {
+                PyBoard::_is_n_repetition(board_history, *halfmove_clock, n)
+            })
+            .collect()
+    }
 
-    //     // King vs King: Combined bitboard minus kings is empty
-    //     if combined_bb == chess::EMPTY {
-    //         return true;
-    //     }
+    /// Checks if the current position is a threefold repetition for each board.
+    /// This is a claimable draw according to FIDE rules.
+    ///
+    #[inline]
+    fn is_threefold_repetition(&self) -> Vec<bool> {
+        self.is_n_repetition(3)
+    }
 
-    //     let num_remaining_pieces = combined_bb.popcnt();
-    //     if num_remaining_pieces <= 2 {
-    //         let knights = self.board.pieces(chess::Piece::Knight);
-    //         let bishops = self.board.pieces(chess::Piece::Bishop);
+    /// Checks if the current position is a fivefold repetition for each board.
+    /// This is an automatic draw according to FIDE rules.
+    ///
+    #[inline]
+    fn is_fivefold_repetition(&self) -> Vec<bool> {
+        self.is_n_repetition(5)
+    }
 
-    //         // King vs King + Knight/Bishop: Combined bitboard minus kings and knight/bishop is empty
-    //         if num_remaining_pieces == 1 && combined_bb & !(knights | bishops) == chess::EMPTY {
-    //             return true;
-    //         } else if *knights == chess::EMPTY {
-    //             // Only bishops left
-    //             let white_bishops = bishops & white_bb;
-    //             let black_bishops = bishops & black_bb;
+    /// Checks if the side to move is in check for each board.
+    ///
+    #[inline]
+    fn is_check(&self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_is_check(board))
+            .collect()
+    }
 
-    //             // Both sides have a bishop
-    //             if white_bishops != chess::EMPTY && black_bishops != chess::EMPTY {
-    //                 let white_bishop_index = white_bishops.to_square().to_index();
-    //                 let black_bishop_index = black_bishops.to_square().to_index();
+    /// Checks if the side to move is in stalemate for each board.
+    ///
+    #[inline]
+    fn is_stalemate(&self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_is_stalemate(board))
+            .collect()
+    }
 
-    //                 // King + Bishop vs King + Bishop same color: White and black bishops are on the same color square
-    //                 return ((9 * (white_bishop_index ^ black_bishop_index)) & 8) == 0; // Check if square colors are the same
-    //             }
-    //         }
-    //     }
-    //     false
-    // }
+    /// Checks if the side to move is in checkmate for each board.
+    ///
+    #[inline]
+    fn is_checkmate(&self) -> Vec<bool> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_is_checkmate(board))
+            .collect()
+    }
 
-    // /// Checks if the current position is a n-fold repetition.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
-    // /// False
-    // /// >>> for _ in range(3):
-    // /// ...     board.make_move(rust_chess.Move("g1f3"))
-    // /// ...     board.make_move(rust_chess.Move("b8c6"))
-    // /// ...     board.make_move(rust_chess.Move("f3g1"))
-    // /// ...     board.make_move(rust_chess.Move("c6b8"))
-    // /// >>> board.is_n_repetition(4)  # Check for fourfold repetition
-    // /// True
-    // /// >>> board.board_history.count(board.zobrist_hash)  # Position appears 4 times
-    // /// 4
-    // /// ```
-    // ///
-    // /// TODO: Quick check (only check last few moves since that is common error for engines)
-    // /// TODO: Add option to use full, or no repetition checks
-    // #[inline]
-    // fn is_n_repetition(&self, n: u8) -> bool {
-    //     if let Some(history) = &self.board_history {
-    //         // Move history length is one greater than the halfmove clock since when halfmove clock is 0, there is 1 position in history
-    //         let length: i16 = i16::from(self.halfmove_clock + 1);
-    //         // If checking threefold (n = 3), then it would be (4 * (3-1)) + 1 = 9
-    //         // Fivefold requires 17 positions minimum
-    //         //   Takes 4 halfmoves to return to a position
-    //         let calc_min_pos_req_for_nfold = |n: u8| -> i16 { i16::from((4 * (n - 1)) + 1) };
-
-    //         // n-fold repetition is not possible when length is less than (n * 4) - 1
-    //         // For example, threefold repetition (n=3) can occur with a move history length minimum of 9
-    //         // A color cannot repeat a position back to back--some move has to be made, and then another to return to the position
-    //         // Example: index 0, 4, 8 are the minimum required for a threefold repetition
-    //         //   (2 and 6 are in-between positions that allow returning to repeated position (0, 4, 8))
-    //         if length < calc_min_pos_req_for_nfold(n) {
-    //             return false;
-    //         }
-
-    //         #[allow(clippy::cast_sign_loss)]
-    //         let current_hash: u64 = history[length as usize - 1];
-    //         let mut num_repetitions: u8 = 1;
-
-    //         // (length - 5) since we compare to current, which is at length - 1, and positions can't repeat back-to-back for a color
-    //         let mut i: i16 = length - 5;
-    //         // n-fold still possible if enough positions still left in history
-    //         while i >= calc_min_pos_req_for_nfold(n - num_repetitions) - 1 {
-    //             #[allow(clippy::cast_sign_loss)]
-    //             if history[i as usize] == current_hash {
-    //                 num_repetitions += 1;
-    //                 if num_repetitions >= n {
-    //                     return true;
-    //                 }
-
-    //                 // Can subtract another 2 here since if we found a repetition, our position before can't be the same
-    //                 i -= 2;
-    //             }
-
-    //             // Step by 2 since only need to check our moves
-    //             i -= 2;
-    //         }
-    //     }
-
-    //     false
-    // }
-
-    // /// Checks if the current position is a threefold repetition.
-    // /// This is a claimable draw according to FIDE rules.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_threefold_repetition()
-    // /// False
-    // /// >>> for _ in range(2):
-    // /// ...     board.make_move(rust_chess.Move("g1f3"))
-    // /// ...     board.make_move(rust_chess.Move("b8c6"))
-    // /// ...     board.make_move(rust_chess.Move("f3g1"))
-    // /// ...     board.make_move(rust_chess.Move("c6b8"))
-    // /// >>> board.is_threefold_repetition()
-    // /// True
-    // /// >>> board.board_history.count(board.zobrist_hash)  # Position has appeared 3 times
-    // /// 3
-    // /// ```
-    // #[inline]
-    // fn is_threefold_repetition(&self) -> bool {
-    //     self.is_n_repetition(3)
-    // }
-
-    // /// Checks if the current position is a fivefold repetition.
-    // /// This is an automatic draw according to FIDE rules.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_fivefold_repetition()
-    // /// False
-    // /// >>> for _ in range(4):
-    // /// ...     board.make_move(rust_chess.Move("g1f3"))
-    // /// ...     board.make_move(rust_chess.Move("b8c6"))
-    // /// ...     board.make_move(rust_chess.Move("f3g1"))
-    // /// ...     board.make_move(rust_chess.Move("c6b8"))
-    // /// >>> board.is_fivefold_repetition()
-    // /// True
-    // /// >>> board.board_history.count(board.zobrist_hash)  # Position has appeared 5 times
-    // /// 5
-    // /// ```
-    // #[inline]
-    // fn is_fivefold_repetition(&self) -> bool {
-    //     self.is_n_repetition(5)
-    // }
-
-    // /// Checks if the side to move is in check.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_check()
-    // /// False
-    // /// >>> rust_chess.Board("rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3").is_check()
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_check(&self) -> bool {
-    //     *self.board.checkers() != chess::EMPTY
-    // }
-
-    // // TODO: Docs
-
-    // /// Checks if the side to move is in stalemate
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_stalemate()
-    // /// False
-    // /// ```
-    // /// TODO
-    // #[inline]
-    // fn is_stalemate(&self) -> bool {
-    //     self.board.status() == chess::BoardStatus::Stalemate
-    // }
-
-    // /// Checks if the side to move is in checkmate
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().is_checkmate()
-    // /// False
-    // /// ```
-    // /// TODO
-    // #[inline]
-    // fn is_checkmate(&self) -> bool {
-    //     self.board.status() == chess::BoardStatus::Checkmate
-    // }
-
-    // /// Get the status of the board (ongoing, draw, or game-ending).
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.get_status()
-    // /// BoardStatus.ONGOING
-    // /// ```
-    // /// TODO
-    // #[inline]
-    // fn get_status(&self) -> PyBoardBatchStatus {
-    //     match self.board.status() {
-    //         chess::BoardStatus::Ongoing => {
-    //             if self.is_seventy_five_moves() {
-    //                 PyBoardBatchStatus::SeventyFiveMoves
-    //             } else if self.is_insufficient_material() {
-    //                 PyBoardBatchStatus::InsufficientMaterial
-    //             } else if self.is_fivefold_repetition() {
-    //                 PyBoardBatchStatus::FiveFoldRepetition
-    //             } else {
-    //                 PyBoardBatchStatus::Ongoing
-    //             }
-    //         }
-    //         chess::BoardStatus::Stalemate => PyBoardBatchStatus::Stalemate,
-    //         chess::BoardStatus::Checkmate => PyBoardBatchStatus::Checkmate,
-    //     }
-    // }
+    /// Get the status of each board (ongoing, draw, or game-ending).
+    ///
+    #[inline]
+    fn get_status(&self) -> Vec<PyBoardStatus> {
+        self.boards
+            .iter()
+            .zip(self.board_histories.iter())
+            .zip(self.halfmove_clocks.iter())
+            .map(|((board, board_history), halfmove_clock)| {
+                PyBoard::_get_status(board, board_history, *halfmove_clock)
+            })
+            .collect()
+    }
 }

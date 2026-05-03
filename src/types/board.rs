@@ -1925,7 +1925,7 @@ impl PyBoard {
 
     // TODO: Docs
 
-    /// Checks if the side to move is in stalemate
+    /// Checks if the side to move is in stalemate.
     ///
     /// ```python
     /// >>> rust_chess.Board().is_stalemate()
@@ -1937,7 +1937,7 @@ impl PyBoard {
         Self::_is_stalemate(&self.board)
     }
 
-    /// Checks if the side to move is in checkmate
+    /// Checks if the side to move is in checkmate.
     ///
     /// ```python
     /// >>> rust_chess.Board().is_checkmate()

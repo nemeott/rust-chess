@@ -229,8 +229,8 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [x] Quick legality detection for psuedo-legal moves
   - [x] Check if move is a capture or en passant or is castling
   - [x] Make moves on the current or new board
-    - [ ] Make null moves (make_null_move)
-    - [x] Make null moves on new board
+  - [ ] Make null moves (make_null_move)
+  - [x] Make null moves on new board
   - [x] Get bitboards
     - [x] Pinned pieces
     - [x] Checking pieces
@@ -256,25 +256,25 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [ ] ASCII with colors?
     - [ ] Unicode characters
   - [x] Get the color, piece type, and piece on a respective square
-  - [ ] Get the king and en passant squares for each board
+  - [x] Get the king and en passant squares for each board
   - [x] Get castle rights for each board
-  - [ ] Check if a resepective move is zeroing or legal for each board
-  - [ ] Quick legality detection for psuedo-legal moves
-  - [ ] Check if a respective move is a capture or en passant or is castling for each board
-  - [ ] Make moves on the current or new board batch
-    - [ ] Make null moves (make_null_move)
-    - [ ] Make null moves on new board batch
-  - [ ] Get bitboards for the batch
-    - [ ] Pinned pieces
-    - [ ] Checking pieces
-    - [ ] Color pieces
-    - [ ] Piece type
-    - [ ] Piece
-    - [ ] All pieces
+  - [x] Check if a resepective move is zeroing or legal for each board
+  - [x] Quick legality detection for psuedo-legal moves
+  - [x] Check if a respective move is a capture or en passant or is castling for each board
+  - [x] Make moves on the current or new board batch
+  - [ ] Make null moves (make_null_move)
+  - [x] Make null moves on new board batch
+  - [x] Get bitboards for the batch
+    - [x] Pinned pieces
+    - [x] Checking pieces
+    - [x] Color pieces
+    - [x] Piece type
+    - [x] Piece
+    - [x] All pieces
   - [x] Zobrist hashing for each board
   - [x] Comparison operators (using Zobrist hash)
-  - [ ] Move history
-    - [ ] Repetition detection for each board
+  - [x] Move history
+    - [x] Repetition detection for each board
   - [x] Generate the next move, legal move, and legal capture for a batch
   - [ ] Generate moves, legal moves, and legal captures for a batch
   - [ ] Support iterating over the generators of a bacth? (how would this work?)

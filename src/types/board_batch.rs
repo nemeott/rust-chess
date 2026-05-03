@@ -30,8 +30,6 @@ use crate::types::{
 pub struct PyBoardBatch {
     boards: Vec<chess::Board>,
 
-    // TODO: LazyLock?
-
     // Lazily initialized per board, reset to None when a move is applied
     move_gens: Vec<std::sync::OnceLock<Py<PyMoveGenerator>>>, // Use a Py to be able to share between Python and Rust
 
@@ -75,6 +73,7 @@ impl PyBoardBatch {
 impl PyBoardBatch {
     // TODO: Reword docs to make more sense
     // TODO: Optimize
+    // TODO: Length checks when passing in vectors
 
     /// Create a new batch of boards.
     ///
@@ -908,7 +907,7 @@ impl PyBoardBatch {
     /// Reset the move generators for the current boards.
     ///
     #[inline]
-    fn reset_move_generators(&mut self) {
+    fn reset_move_generator(&mut self) {
         // Invalidate the move generators
         for lock in &mut self.move_gens {
             lock.take();
@@ -1006,7 +1005,7 @@ impl PyBoardBatch {
     /// Unless masks have been set, this will return the next legal move for each generator by default.
     ///
     #[inline]
-    fn generate_next_moves(&mut self) -> Vec<Option<PyMove>> {
+    fn generate_next_move(&mut self) -> Vec<Option<PyMove>> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
@@ -1022,7 +1021,7 @@ impl PyBoardBatch {
     /// Allows all legal destination squares for each generator.
     ///
     #[inline]
-    fn generate_next_legal_moves(&mut self) -> Vec<Option<PyMove>> {
+    fn generate_next_legal_move(&mut self) -> Vec<Option<PyMove>> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 
@@ -1041,7 +1040,7 @@ impl PyBoardBatch {
     /// Allows only enemy-occupied destination squares for each generator.
     ///
     #[inline]
-    fn generate_next_legal_captures(&mut self) -> Vec<Option<PyMove>> {
+    fn generate_next_legal_capture(&mut self) -> Vec<Option<PyMove>> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
 

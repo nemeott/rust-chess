@@ -2133,25 +2133,25 @@ class BoardBatch:
         r"""
         Get the bitboard of all the pieces for each board.
         """
-    def reset_move_generators(self) -> None:
+    def reset_move_generator(self) -> None:
         r"""
         Reset the move generators for the current boards.
         """
-    def generate_next_moves(self) -> builtins.list[typing.Optional[Move]]:
+    def generate_next_move(self) -> builtins.list[typing.Optional[Move]]:
         r"""
         Get the next remaining move in each generator.
         Updates the move generators to the next move.
         
         Unless masks have been set, this will return the next legal move for each generator by default.
         """
-    def generate_next_legal_moves(self) -> builtins.list[typing.Optional[Move]]:
+    def generate_next_legal_move(self) -> builtins.list[typing.Optional[Move]]:
         r"""
         Get the next remaining legal move in each generator.
         Updates the move generators to the next legal move.
         
         Allows all legal destination squares for each generator.
         """
-    def generate_next_legal_captures(self) -> builtins.list[typing.Optional[Move]]:
+    def generate_next_legal_capture(self) -> builtins.list[typing.Optional[Move]]:
         r"""
         Get the next remaining legal capture in each generator.
         Updates the move generators to the next move.

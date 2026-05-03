@@ -12,34 +12,33 @@ Benchmark Results (n=100,000)
 ============================================================
 Category          | Rust Time | Python Time |    Speedup
 ------------------------------------------------------------
-Colors            |  0.005678 |    0.004735 |   0.833823
-Pieces            |  0.018454 |    0.009355 |   0.506933
-Squares           |  0.085749 |    0.046797 |   0.545742
-Moves             |  0.076235 |    0.224912 |   2.950262
-Board Init        |  0.090971 |    5.170796 |  56.840324
-Board Props       |  0.416971 |   11.805999 |  28.313712
-Board Ops         |  0.107745 |    0.605622 |   5.620877
-Board Ops 2       |  0.108609 |    5.467588 |  50.341875
-Make Move         |  0.075767 |    0.571195 |   7.538802
-Make Move (New)   |  0.092144 |    0.609572 |   6.615455
-Undo Move         |  0.098092 |    0.484175 |   4.935911
-Next Move         |  0.067874 |    0.475216 |   7.001415
-Batch Next Move   |  0.623416 |   11.369479 |  18.237382
-Generate Moves    |  0.210803 |   11.010742 |  52.232357
-SAN Parse         |  0.063060 |    0.677735 |  10.747506
-King Square       |  0.047065 |    0.135425 |   2.877429
-Zobrist Hash      |  0.045817 |    1.794142 |  39.158556
-Checkmate         |  0.050497 |    0.213241 |   4.222846
-Insufficient Mat. |  0.042764 |    0.179246 |   4.191545
-Bitboard Ops      |  0.037410 |    0.070243 |   1.877664
-Board Bitboards   |  0.071895 |    0.139574 |   1.941344
-Castle Rights     |  0.058403 |    0.343448 |   5.880688
-Repetitions       |  0.048380 |   13.468990 | 278.399501
-Board Status      |  0.050189 |    0.680474 |  13.558106
-Square/Piece Adv. |  0.032128 |    0.049709 |   1.547230
-Null Move         |  0.047772 |    0.316837 |   6.632254
+Colors            |  0.006386 |    0.005022 |   0.786379
+Pieces            |  0.019039 |    0.009006 |   0.473018
+Squares           |  0.098118 |    0.048066 |   0.489882
+Moves             |  0.086400 |    0.216912 |   2.510554
+Board Init        |  0.100258 |    5.018663 |  50.057617
+Board Props       |  0.437592 |   11.718235 |  26.778905
+Board Ops         |  0.102832 |    0.605381 |   5.887091
+Board Ops 2       |  0.111255 |    5.544555 |  49.836327
+Make Move         |  0.082378 |    0.582370 |   7.069442
+Make Move (New)   |  0.095266 |    0.629599 |   6.608846
+Undo Move         |  0.095382 |    0.502411 |   5.267335
+Next Move         |  0.070281 |    0.490481 |   6.978907
+Generate Moves    |  0.227567 |   11.174327 |  49.103443
+SAN Parse         |  0.065765 |    0.693099 |  10.539040
+King Square       |  0.047155 |    0.137995 |   2.926378
+Zobrist Hash      |  0.047038 |    1.827242 |  38.846229
+Checkmate         |  0.048880 |    0.215472 |   4.408168
+Insufficient Mat. |  0.042502 |    0.181757 |   4.276465
+Bitboard Ops      |  0.039632 |    0.071816 |   1.812098
+Board Bitboards   |  0.074357 |    0.141309 |   1.900411
+Castle Rights     |  0.060595 |    0.354572 |   5.851472
+Repetitions       |  0.048764 |   14.049805 | 288.118484
+Board Status      |  0.049658 |    0.689587 |  13.886646
+Square/Piece Adv. |  0.033687 |    0.049919 |   1.481863
+Null Move         |  0.049529 |    0.323132 |   6.524138
 ------------------------------------------------------------
-Total             |  2.673887 |   65.925245 |  24.655205
+Total             |  2.140316 |   55.280731 |  25.828308
 """
 
 import time
@@ -252,18 +251,6 @@ def python_next_move():
     next(iter(board.legal_moves))
 
 
-def rust_batch_next_moves():
-    boards = rc.BoardBatch(25)
-    boards.generate_next_moves()
-    boards.reset_move_generators()
-
-
-def python_batch_next_moves():
-    boards = [chess.Board() for _ in range(25)]
-    [next(iter(b.legal_moves)) for b in boards]
-    # pass
-
-
 def rust_generate(fen):
     board = rc.Board(fen)
     list(board.generate_legal_captures())
@@ -464,7 +451,6 @@ if __name__ == "__main__":
         ("Make Move (New)", rust_make_move_new, python_make_move_new),
         ("Undo Move", rust_undo_move, python_undo_move),
         ("Next Move", rust_next_move, python_next_move),
-        ("Batch Next Move", rust_batch_next_moves, python_batch_next_moves),
         ("Generate Moves", lambda: rust_generate(fen), lambda: python_generate(fen)),
         ("SAN Parse", rust_san_parse, python_san_parse),
         ("King Square", rust_king_square, python_king_square),

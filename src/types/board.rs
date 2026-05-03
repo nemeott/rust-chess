@@ -783,9 +783,9 @@ impl PyBoard {
     }
 
     /// Check if a move is a capture or a pawn move.
-    /// "Zeros" the halfmove clock (sets it to 0).
+    /// This type of move "zeros" the halfmove clock (sets it to 0).
     ///
-    /// Doesn't check legality.
+    /// Assumes the move is legal.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -820,7 +820,6 @@ impl PyBoard {
     /// ```
     #[inline]
     fn is_legal_move(&self, chess_move: PyMove) -> bool {
-        // Check if the move is legal using the chess crate
         chess::Board::legal(&self.board, chess_move.0)
     }
 
@@ -833,6 +832,7 @@ impl PyBoard {
     /// >>> board = rust_chess.Board()
     /// >>>
     /// ```
+    // TODO
     #[inline]
     fn is_legal_generator_move(&self, chess_move: PyMove) -> bool {
         chess::MoveGen::legal_quick(&self.board, chess_move.0)

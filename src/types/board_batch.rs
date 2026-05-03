@@ -14,6 +14,33 @@ use crate::types::{
     square::PySquare,
 };
 
+/// Helper function to check en passant (takes Rust types).
+#[inline]
+fn _is_en_passant(board: &chess::Board, chess_move: &PyMove) -> bool {
+    let source = chess_move.0.get_source();
+    let dest = chess_move.0.get_dest();
+
+    // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
+    // The actual en passant square is the one that one can move to that would cause en passant.
+    // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
+    let ep_square = board
+        .en_passant()
+        .and_then(|sq| match board.side_to_move() {
+            chess::Color::White => sq.up(),
+            chess::Color::Black => sq.down(),
+        });
+
+    ep_square.is_some_and(|ep_sq| ep_sq == dest) // Use our en passant square function since it is accurate
+        && board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
+        && {
+            // Moving diagonally
+            #[allow(clippy::cast_possible_truncation)]
+            let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
+            diff == 7 || diff == 9
+        }
+        && board.piece_on(dest).is_none() // Target square is empty
+}
+
 /// BoardBatch class.
 /// Represents a batch of chess boards.
 /// Uses the same method names as `Board`, however they operate on a batch now.
@@ -46,6 +73,7 @@ pub struct PyBoardBatch {
     board_histories: Vec<Option<Vec<u64>>>,
 }
 
+/// Rust only helpers
 impl PyBoardBatch {
     /// Helper to lazily initialize and return references to the generators
     #[inline]
@@ -653,112 +681,68 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(chess_moves.iter())
+            .map(|(board, chess_move)| _is_en_passant(board, chess_move))
+            .collect()
+    }
+
+    /// Check if a respective move is a capture for each board.
+    ///
+    /// Assumes the moves are legal.
+    #[inline]
+    fn is_capture(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(chess_moves.iter())
             .map(|(board, chess_move)| {
-                let source = chess_move.0.get_source();
-                let dest = chess_move.0.get_dest();
-
-                // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
-                // The actual en passant square is the one that one can move to that would cause en passant.
-                // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
-                let ep_square = board
-                    .en_passant()
-                    .and_then(|sq| match board.side_to_move() {
-                        chess::Color::White => sq.up(),
-                        chess::Color::Black => sq.down(),
-                    });
-
-                ep_square.is_some_and(|ep_sq| ep_sq == dest) // Use our en passant square function since it is accurate
-                    && board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
-                    && {
-                        // Moving diagonally
-                        #[allow(clippy::cast_possible_truncation)]
-                        let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
-                        diff == 7 || diff == 9
-                    }
-                    && board.piece_on(dest).is_none() // Target square is empty
+                board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
+                || _is_en_passant(board, chess_move) // Or the move is en passant (also a capture)
             })
             .collect()
     }
 
-    // /// Check if a move is a capture.
-    // ///
-    // /// Assumes the move is legal.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_capture(rust_chess.Move("e2e4"))
-    // /// False
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // ///
-    // /// >>> board.make_move(rust_chess.Move("d7d5"))
-    // /// >>> board.is_capture(rust_chess.Move("e4d5"))
-    // /// True
-    // ///
-    // /// >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
-    // /// >>> ep_board.is_capture(rust_chess.Move("e5f6"))
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_capture(&self, chess_move: PyMove) -> bool {
-    //     self.board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
-    //         || self.is_en_passant(chess_move) // Or the move is en passant (also a capture)
-    // }
+    /// Check if a respective move is a capture or a pawn move for each board.
+    /// This type of move "zeros" the halfmove clock (sets it to 0).
+    ///
+    /// Assumes the moves are legal.
+    ///
+    #[inline]
+    fn is_zeroing(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(chess_moves.iter())
+            .map(|(board, chess_move)| {
+                board.piece_on(chess_move.0.get_source()).is_some_and(|p| p == chess::Piece::Pawn) // Pawn move
+                || board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
+            })
+            .collect()
+    }
 
-    // /// Check if a move is a capture or a pawn move.
-    // /// "Zeros" the halfmove clock (sets it to 0).
-    // ///
-    // /// Doesn't check legality.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.is_zeroing(rust_chess.Move("e2e4"))
-    // /// True
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // ///
-    // /// >>> board.is_zeroing(rust_chess.Move("g8f6"))
-    // /// False
-    // /// >>> board.make_move(rust_chess.Move("d7d5"))
-    // ///
-    // /// >>> board.is_zeroing(rust_chess.Move("e4d5"))
-    // /// True
-    // /// ```
-    // #[inline]
-    // fn is_zeroing(&self, chess_move: PyMove) -> bool {
-    //     self.board.piece_on(chess_move.0.get_source()).is_some_and(|p| p == chess::Piece::Pawn) // Pawn move
-    //     || self.board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
-    // }
+    /// Check if the move is legal (supposedly very slow according to the chess crate).
+    /// Use this function for moves not generated by the move generator.
+    /// `is_legal_quick` is faster for moves generated by the move generator.
+    ///
+    #[inline]
+    fn is_legal_move(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(chess_moves.iter())
+            .map(|(board, chess_move)| chess::Board::legal(board, chess_move.0))
+            .collect()
+    }
 
-    // /// Check if the move is legal (supposedly very slow according to the chess crate).
-    // /// Use this function for moves not generated by the move generator.
-    // /// `is_legal_quick` is faster for moves generated by the move generator.
-    // ///
-    // /// ```python
-    // /// >>> move = rust_chess.Move("e2e4")
-    // /// >>> rust_chess.Board().is_legal_move(move)
-    // /// True
-    // /// >>> ill_move = rust_chess.Move("e2e5")
-    // /// >>> rust_chess.Board().is_legal_move(ill_move)
-    // /// False
-    // /// ```
-    // #[inline]
-    // fn is_legal_move(&self, chess_move: PyMove) -> bool {
-    //     // Check if the move is legal using the chess crate
-    //     chess::Board::legal(&self.board, chess_move.0)
-    // }
-
-    // /// Check if the move generated by the generator is legal.
-    // /// Only use this function for moves generated by the move generator.
-    // /// You would want to use this when you have a psuedo-legal move (guarenteed by the generator).
-    // /// Slightly faster than using `is_legal_move` since it doesn't have to check as much stuff.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>>
-    // /// ```
-    // #[inline]
-    // fn is_legal_generator_move(&self, chess_move: PyMove) -> bool {
-    //     chess::MoveGen::legal_quick(&self.board, chess_move.0)
-    // }
+    /// Check if the move generated by the generator is legal.
+    /// Only use this function for moves generated by the move generator.
+    /// You would want to use this when you have a psuedo-legal move (guarenteed by the generator).
+    /// Slightly faster than using `is_legal_move` since it doesn't have to check as much stuff.
+    ///
+    #[inline]
+    fn is_legal_generator_move(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
+        self.boards
+            .iter()
+            .zip(chess_moves.iter())
+            .map(|(board, chess_move)| chess::MoveGen::legal_quick(board, chess_move.0))
+            .collect()
+    }
 
     // // TODO: make_null_move (would require move history to undo (probably?))
 

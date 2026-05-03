@@ -2088,6 +2088,51 @@ class BoardBatch:
         You would want to use this when you have a psuedo-legal move (guarenteed by the generator).
         Slightly faster than using `is_legal_move` since it doesn't have to check as much stuff.
         """
+    def make_null_move_new(self) -> typing.Optional[BoardBatch]:
+        r"""
+        Make a null move for every board onto a new board batch.
+        Returns None if the current player is in check.
+        """
+    def make_move(self, chess_moves: typing.Sequence[Move], check_legality: builtins.bool = True) -> None:
+        r"""
+        Make a respective move onto each board.
+        
+        Defaults to checking move legality, unless the optional legality parameter is `False`.
+        Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+        Checking legality will return an error if the move is illegal.
+        """
+    def make_move_new(self, chess_moves: typing.Sequence[Move], check_legality: builtins.bool = True) -> BoardBatch:
+        r"""
+        Make a respective move onto a new board for each board.
+        
+        Defaults to checking move legality, unless the optional legality parameter is `False`.
+        Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+        Checking legality will return an error if the move is illegal.
+        """
+    def get_pinned_bitboard(self) -> builtins.list[Bitboard]:
+        r"""
+        Get the bitboard of the side to move's pinned pieces for each board.
+        """
+    def get_checkers_bitboard(self) -> builtins.list[Bitboard]:
+        r"""
+        Get the bitboard of the pieces putting the side to move in check for each board.
+        """
+    def get_color_bitboard(self, color: Color) -> builtins.list[Bitboard]:
+        r"""
+        Get the bitboard of all the pieces of a certain color for each board.
+        """
+    def get_piece_type_bitboard(self, piece_type: PieceType) -> builtins.list[Bitboard]:
+        r"""
+        Get the bitboard of all the pieces of a certain type for each board.
+        """
+    def get_piece_bitboard(self, piece: Piece) -> builtins.list[Bitboard]:
+        r"""
+        Get the bitboard of all the pieces of a certain color and type for each board.
+        """
+    def get_all_bitboard(self) -> builtins.list[Bitboard]:
+        r"""
+        Get the bitboard of all the pieces for each board.
+        """
     def reset_move_generators(self) -> None:
         r"""
         Reset the move generators for the current boards.

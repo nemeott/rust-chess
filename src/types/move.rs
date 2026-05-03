@@ -262,6 +262,7 @@ impl PyMoveGenerator {
     /// ```
     #[inline]
     pub(crate) fn __next__(&mut self) -> Option<PyMove> {
+        // TODO: Optimize
         let mut idx_to_remove = None;
         for (i, m) in self.moves.iter().enumerate().rev() {
             let idx = m.get_dest().to_int();

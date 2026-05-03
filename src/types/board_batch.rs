@@ -14,44 +14,23 @@ use crate::types::{
     square::PySquare,
 };
 
-/// Helper function to check en passant (takes Rust types).
-#[inline]
-fn _is_en_passant(board: &chess::Board, chess_move: &PyMove) -> bool {
-    let source = chess_move.0.get_source();
-    let dest = chess_move.0.get_dest();
-
-    // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
-    // The actual en passant square is the one that one can move to that would cause en passant.
-    // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
-    let ep_square = board
-        .en_passant()
-        .and_then(|sq| match board.side_to_move() {
-            chess::Color::White => sq.up(),
-            chess::Color::Black => sq.down(),
-        });
-
-    ep_square.is_some_and(|ep_sq| ep_sq == dest) // Use our en passant square function since it is accurate
-        && board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
-        && {
-            // Moving diagonally
-            #[allow(clippy::cast_possible_truncation)]
-            let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
-            diff == 7 || diff == 9
-        }
-        && board.piece_on(dest).is_none() // Target square is empty
-}
-
 /// BoardBatch class.
 /// Represents a batch of chess boards.
 /// Uses the same method names as `Board`, however they operate on a batch now.
 ///
 /// TODO: docs
 
-// Uses SoA apprach to improve cache locality
+// Could remove lots of code duplication from `Board`, but might be less understandable/readable.
+// Would have to define Rust-only functions, then make Python wrappers in `Board` and `BoardBatch`.
+// Might end up doing this anyway though; would save potential problems of changing a method in one but not the other.
+
+// Uses SoA apprach to improve cache locality.
 #[gen_stub_pyclass]
 #[pyclass(name = "BoardBatch")]
 pub struct PyBoardBatch {
     boards: Vec<chess::Board>,
+
+    // TODO: LazyLock?
 
     // Lazily initialized per board, reset to None when a move is applied
     move_gens: Vec<std::sync::OnceLock<Py<PyMoveGenerator>>>, // Use a Py to be able to share between Python and Rust
@@ -77,6 +56,7 @@ pub struct PyBoardBatch {
 impl PyBoardBatch {
     /// Helper to lazily initialize and return references to the generators
     #[inline]
+    // TODO: Remap
     fn ensure_move_gens(&self, py: Python<'_>) -> Vec<Py<PyMoveGenerator>> {
         self.move_gens
             .iter()
@@ -102,6 +82,8 @@ impl PyBoardBatch {
     #[pyo3(signature = (count, mode = PyRepetitionDetectionMode::Full))] // Default to full repetition detection
     fn new(count: usize, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
         let boards = vec![chess::Board::default(); count];
+
+        // TODO: One loop?
 
         let board_histories = match mode {
             PyRepetitionDetectionMode::None => vec![None; boards.len()],
@@ -390,14 +372,20 @@ impl PyBoardBatch {
     #[getter]
     #[inline]
     fn get_zobrist_hash(&self) -> Vec<u64> {
-        self.boards.iter().map(|board| board.get_hash()).collect()
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_zobrist_hash(board))
+            .collect()
     }
 
     /// Get a hash of the board batch based on the sum of the Zobrist hashes.
     /// Will likely overflow which is fine since this is a fast hash.
     #[inline]
     fn __hash__(&self) -> u64 {
-        self.boards.iter().map(|board| board.get_hash()).sum()
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_zobrist_hash(board))
+            .sum()
     }
 
     /// Check if two board batches are equal based on the Zobrist hashes of their boards.
@@ -407,7 +395,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(other.boards.iter())
-            .all(|(b1, b2)| b1.get_hash() == b2.get_hash())
+            .all(|(b1, b2)| PyBoard::_get_zobrist_hash(b1) == PyBoard::_get_zobrist_hash(b2))
     }
 
     /// Check if two board batches are not equal based on the Zobrist hashes of their boards.
@@ -425,7 +413,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(other.boards.iter())
-            .map(|(b1, b2)| b1.get_hash() == b2.get_hash())
+            .map(|(b1, b2)| PyBoard::_get_zobrist_hash(b1) == PyBoard::_get_zobrist_hash(b2))
             .collect()
     }
 
@@ -436,7 +424,7 @@ impl PyBoardBatch {
     fn get_turn(&self) -> Vec<PyColor> {
         self.boards
             .iter()
-            .map(|board| PyColor(board.side_to_move()))
+            .map(|board| PyColor(PyBoard::_get_turn(board)))
             .collect()
     }
 
@@ -448,7 +436,7 @@ impl PyBoardBatch {
     fn get_king_square(&self, color: PyColor) -> Vec<PySquare> {
         self.boards
             .iter()
-            .map(|board| PySquare(board.king_square(color.0)))
+            .map(|board| PyBoard::_get_king_square(board, color))
             .collect()
     }
 
@@ -459,12 +447,7 @@ impl PyBoardBatch {
     fn get_castle_rights(&self, color: PyColor) -> Vec<PyCastleRights> {
         self.boards
             .iter()
-            .map(|board| match board.castle_rights(color.0) {
-                chess::CastleRights::NoRights => PyCastleRights::NoRights,
-                chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
-                chess::CastleRights::KingSide => PyCastleRights::KingSide,
-                chess::CastleRights::Both => PyCastleRights::Both,
-            })
+            .map(|board| PyBoard::_get_castle_rights(board, color.0))
             .collect()
     }
 
@@ -474,12 +457,7 @@ impl PyBoardBatch {
     fn get_my_castle_rights(&self) -> Vec<PyCastleRights> {
         self.boards
             .iter()
-            .map(|board| match board.castle_rights(board.side_to_move()) {
-                chess::CastleRights::NoRights => PyCastleRights::NoRights,
-                chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
-                chess::CastleRights::KingSide => PyCastleRights::KingSide,
-                chess::CastleRights::Both => PyCastleRights::Both,
-            })
+            .map(|board| PyBoard::_get_my_castle_rights(board))
             .collect()
     }
 
@@ -489,12 +467,7 @@ impl PyBoardBatch {
     fn get_their_castle_rights(&self) -> Vec<PyCastleRights> {
         self.boards
             .iter()
-            .map(|board| match board.castle_rights(!board.side_to_move()) {
-                chess::CastleRights::NoRights => PyCastleRights::NoRights,
-                chess::CastleRights::QueenSide => PyCastleRights::QueenSide,
-                chess::CastleRights::KingSide => PyCastleRights::KingSide,
-                chess::CastleRights::Both => PyCastleRights::Both,
-            })
+            .map(|board| PyBoard::_get_their_castle_rights(board))
             .collect()
     }
 
@@ -505,7 +478,7 @@ impl PyBoardBatch {
     fn can_castle(&self, color: PyColor) -> Vec<bool> {
         self.boards
             .iter()
-            .map(|board| board.castle_rights(color.0) != chess::CastleRights::NoRights)
+            .map(|board| PyBoard::_can_castle(board, color))
             .collect()
     }
 
@@ -516,7 +489,7 @@ impl PyBoardBatch {
     fn can_castle_queenside(&self, color: PyColor) -> Vec<bool> {
         self.boards
             .iter()
-            .map(|board| board.castle_rights(color.0).has_queenside())
+            .map(|board| PyBoard::_can_castle_queenside(board, color))
             .collect()
     }
 
@@ -527,7 +500,7 @@ impl PyBoardBatch {
     fn can_castle_kingside(&self, color: PyColor) -> Vec<bool> {
         self.boards
             .iter()
-            .map(|board| board.castle_rights(color.0).has_kingside())
+            .map(|board| PyBoard::_can_castle_kingside(board, color))
             .collect()
     }
 
@@ -541,21 +514,7 @@ impl PyBoardBatch {
         chess_moves
             .iter()
             .zip(self.boards.iter())
-            .map(|(chess_move, board)| {
-                let source = chess_move.0.get_source();
-
-                // Check if the moving piece is a king
-                if board
-                    .piece_on(source)
-                    .is_some_and(|p| p == chess::Piece::King)
-                {
-                    // Check if the move is two squares horizontally
-                    let dest = chess_move.0.get_dest();
-                    // #[allow(clippy::cast_possible_truncation)] //
-                    return (dest.to_int() as i8 - source.to_int() as i8).abs() == 2;
-                }
-                false
-            })
+            .map(|(chess_move, board)| PyBoard::_is_castling(board, *chess_move))
             .collect()
     }
 
@@ -567,21 +526,7 @@ impl PyBoardBatch {
         chess_moves
             .iter()
             .zip(self.boards.iter())
-            .map(|(chess_move, board)| {
-                let source = chess_move.0.get_source();
-
-                // Check if the moving piece is a king
-                if board
-                    .piece_on(source)
-                    .is_some_and(|p| p == chess::Piece::King)
-                {
-                    // Check if the move is two squares to the left
-                    let dest = chess_move.0.get_dest();
-                    #[allow(clippy::cast_possible_truncation)]
-                    return dest.to_int() as i8 - source.to_int() as i8 == -2;
-                }
-                false
-            })
+            .map(|(chess_move, board)| PyBoard::_is_castling_queenside(board, *chess_move))
             .collect()
     }
 
@@ -593,21 +538,7 @@ impl PyBoardBatch {
         chess_moves
             .iter()
             .zip(self.boards.iter())
-            .map(|(chess_move, board)| {
-                let source = chess_move.0.get_source();
-
-                // Check if the moving piece is a king
-                if board
-                    .piece_on(source)
-                    .is_some_and(|p| p == chess::Piece::King)
-                {
-                    // Check if the move is two squares to the right
-                    let dest = chess_move.0.get_dest();
-                    #[allow(clippy::cast_possible_truncation)]
-                    return dest.to_int() as i8 - source.to_int() as i8 == 2;
-                }
-                false
-            })
+            .map(|(chess_move, board)| PyBoard::_is_castling_kingside(board, *chess_move))
             .collect()
     }
 
@@ -615,11 +546,10 @@ impl PyBoardBatch {
     ///
     #[inline]
     fn get_color_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyColor>> {
-        // Get the color of the piece on the respective square using the chess crate
         self.boards
             .iter()
             .zip(squares.iter())
-            .map(|(board, square)| board.color_on(square.0).map(PyColor))
+            .map(|(board, square)| PyBoard::_get_color_on(board, *square))
             .collect()
     }
 
@@ -628,11 +558,10 @@ impl PyBoardBatch {
     ///
     #[inline]
     fn get_piece_type_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyPieceType>> {
-        // Get the piece on the respective square using the chess crate
         self.boards
             .iter()
             .zip(squares.iter())
-            .map(|(board, square)| board.piece_on(square.0).map(PyPieceType))
+            .map(|(board, square)| PyBoard::_get_piece_type_on(board, *square))
             .collect()
     }
 
@@ -644,12 +573,7 @@ impl PyBoardBatch {
         squares
             .iter()
             .zip(self.boards.iter())
-            .map(|(square, board)| {
-                Some(PyPiece {
-                    piece_type: board.piece_on(square.0).map(PyPieceType)?,
-                    color: board.color_on(square.0).map(PyColor)?,
-                })
-            })
+            .map(|(square, board)| PyBoard::_get_piece_on(board, *square))
             .collect()
     }
 
@@ -658,17 +582,9 @@ impl PyBoardBatch {
     #[getter]
     #[inline]
     fn get_en_passant(&self) -> Vec<Option<PySquare>> {
-        // The Rust chess crate doesn't actually compute this right; it returns the square that the pawn was moved to.
-        // The actual en passant square is the one that one can move to that would cause en passant.
-        // TLDR: The actual en passant square is one above or below the one returned by the chess crate.
         self.boards
             .iter()
-            .map(|board| {
-                board.en_passant().map(|sq| match board.side_to_move() {
-                    chess::Color::White => PySquare(sq.up().unwrap()),
-                    chess::Color::Black => PySquare(sq.down().unwrap()),
-                })
-            })
+            .map(|board| PyBoard::_get_en_passant(board))
             .collect()
     }
 
@@ -681,7 +597,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(chess_moves.iter())
-            .map(|(board, chess_move)| _is_en_passant(board, chess_move))
+            .map(|(board, chess_move)| PyBoard::_is_en_passant(board, *chess_move))
             .collect()
     }
 
@@ -693,10 +609,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(chess_moves.iter())
-            .map(|(board, chess_move)| {
-                board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
-                || _is_en_passant(board, chess_move) // Or the move is en passant (also a capture)
-            })
+            .map(|(board, chess_move)| PyBoard::_is_capture(board, *chess_move))
             .collect()
     }
 
@@ -710,10 +623,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(chess_moves.iter())
-            .map(|(board, chess_move)| {
-                board.piece_on(chess_move.0.get_source()).is_some_and(|p| p == chess::Piece::Pawn) // Pawn move
-                || board.piece_on(chess_move.0.get_dest()).is_some() // Capture (moving piece onto other piece)
-            })
+            .map(|(board, chess_move)| PyBoard::_is_zeroing(board, *chess_move))
             .collect()
     }
 
@@ -726,7 +636,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(chess_moves.iter())
-            .map(|(board, chess_move)| chess::Board::legal(board, chess_move.0))
+            .map(|(board, chess_move)| PyBoard::_is_legal_move(board, *chess_move))
             .collect()
     }
 
@@ -740,333 +650,240 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(chess_moves.iter())
-            .map(|(board, chess_move)| chess::MoveGen::legal_quick(board, chess_move.0))
+            .map(|(board, chess_move)| PyBoard::_is_legal_generator_move(board, *chess_move))
             .collect()
     }
 
-    // // TODO: make_null_move (would require move history to undo (probably?))
+    // TODO: make_null_move (would require move history to undo (probably?))
 
-    // /// Make a null move onto a new board.
-    // /// Returns None if the current player is in check.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board
-    // /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    // /// >>> new_board = board.make_null_move_new()
-    // /// >>> new_board
-    // /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1
-    // ///
-    // /// >>> board = rust_chess.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
-    // /// >>> new_board = board.make_null_move_new()
-    // /// >>> print(new_board)
-    // /// None
-    // /// ```
-    // #[inline]
-    // fn make_null_move_new(&self) -> Option<Self> {
-    //     // Get the new board using the chess crate
-    //     let new_board = self.board.null_move()?;
+    /// Make a null move for every board onto a new board batch.
+    /// Returns None if the current player is in check.
+    ///
+    #[inline]
+    fn make_null_move_new(&self) -> Option<Self> {
+        let count = self.boards.len();
 
-    //     Some(Self {
-    //         board: new_board,
-    //         // Create a new uninitialized move generator using the chess crate
-    //         move_gen: std::sync::OnceLock::new(),
-    //         // // Increment the halfmove clock
-    //         halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
-    //         // // Increment fullmove number if black moves
-    //         #[allow(clippy::cast_possible_truncation)]
-    //         fullmove_number: self.fullmove_number + (self.board.side_to_move().to_int() as u8), // White is 0, black is 1
-    //         repetition_detection_mode: self.repetition_detection_mode,
-    //         // Don't update move history when making a null move
-    //         board_history: self.board_history.clone(),
-    //     })
-    // }
+        let mut new_boards = Vec::with_capacity(count);
+        let mut move_gens = Vec::with_capacity(count);
+        let mut halfmove_clocks = Vec::with_capacity(count);
+        let mut fullmove_numbers = Vec::with_capacity(count);
 
-    // /// Make a move onto the current board.
-    // ///
-    // /// Defaults to checking move legality, unless the optional legality parameter is `False`.
-    // /// Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
-    // /// Checking legality will return an error if the move is illegal.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> print(board)
-    // /// r n b q k b n r
-    // /// p p p p p p p p
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . P . . .
-    // /// . . . . . . . .
-    // /// P P P P . P P P
-    // /// R N B Q K B N R
-    // ///
-    // /// ```
-    // #[pyo3(signature = (chess_move, check_legality = true))]
-    // #[inline]
-    // fn make_move(&mut self, chess_move: PyMove, check_legality: bool) -> PyResult<()> {
-    //     // Check if draw by fivefold
-    //     if self.is_fivefold_repetition() {
-    //         return Err(PyValueError::new_err(
-    //             "Game over due to fivefold repetition",
-    //         ));
-    //     }
+        for i in 0..count {
+            // Get the new board using the chess crate
+            new_boards.push(self.boards[i].null_move()?);
 
-    //     // If we are checking legality, check if the move is legal
-    //     if check_legality && !self.is_legal_move(chess_move) {
-    //         return Err(PyValueError::new_err("Illegal move"));
-    //     }
+            // Create a new uninitialized move generator using the chess crate
+            move_gens.push(std::sync::OnceLock::new());
 
-    //     // Make the move onto a new board using the chess crate
-    //     let temp_board: chess::Board = self.board.make_move_new(chess_move.0);
+            // // Increment the halfmove clock
+            halfmove_clocks.push(self.halfmove_clocks[i] + 1); // Null moves aren't zeroing, so we can just add 1 here
 
-    //     // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-    //     if self.is_zeroing(chess_move) {
-    //         self.halfmove_clock = 0;
+            // // Increment fullmove number if black moves
+            #[allow(clippy::cast_possible_truncation)]
+            fullmove_numbers
+                .push(self.fullmove_numbers[i] + (self.boards[i].side_to_move().to_index() as u8)); // White is 0, black is 1
+        }
 
-    //         // Don't need previous history anymore since it is a zeroing move (irreversible)
-    //         if let Some(history) = &mut self.board_history {
-    //             history.clear();
-    //         }
-    //     } else {
-    //         self.halfmove_clock += 1; // Add one if not zeroing
-    //     }
+        Some(Self {
+            boards: new_boards,
+            move_gens,
+            halfmove_clocks,
+            fullmove_numbers,
+            repetition_detection_mode: self.repetition_detection_mode.clone(),
 
-    //     // Increment fullmove number if black moves
-    //     self.fullmove_number += self.board.side_to_move().to_int() as u8; // White is 0, black is 1
+            // Don't update move history when making a null move
+            board_histories: self.board_histories.clone(),
+        })
+    }
 
-    //     // Invalidate the move generator since the board has changed
-    //     self.move_gen.take();
+    /// Make a respective move onto each board.
+    ///
+    /// Defaults to checking move legality, unless the optional legality parameter is `False`.
+    /// Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+    /// Checking legality will return an error if the move is illegal.
+    ///
+    // TODO: is_generator_move
+    // TODO: Optimize
+    #[pyo3(signature = (chess_moves, check_legality = true))]
+    #[inline]
+    fn make_move(&mut self, chess_moves: Vec<PyMove>, check_legality: bool) -> PyResult<()> {
+        let count = self.boards.len();
 
-    //     // Update the current board
-    //     self.board = temp_board;
+        for i in 0..count {
+            // Check if draw by fivefold
+            if PyBoard::_is_n_repetition(&self.board_histories[i], self.halfmove_clocks[i], 5) {
+                return Err(PyValueError::new_err(
+                    "Game over due to fivefold repetition",
+                ));
+            }
 
-    //     // Add the new board's Zobrist hash to history
-    //     if let Some(history) = &mut self.board_history {
-    //         history.push(temp_board.get_hash());
-    //     }
+            // If we are checking legality, check if the move is legal
+            if check_legality && !PyBoard::_is_legal_move(&self.boards[i], chess_moves[i]) {
+                return Err(PyValueError::new_err("Illegal move"));
+            }
 
-    //     Ok(())
-    // }
+            // Make the move onto a new board using the chess crate
+            let temp_board: chess::Board = self.boards[i].make_move_new(chess_moves[i].0);
 
-    // /// Make a move onto a new board.
-    // ///
-    // /// Defaults to checking move legality, unless the optional legality parameter is `False`.
-    // /// Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
-    // /// Checking legality will return an error if the move is illegal.
-    // ///
-    // /// ```python
-    // /// >>> old_board = rust_chess.Board()
-    // /// >>> new_board = old_board.make_move_new(rust_chess.Move("e2e4"))
-    // /// >>> print(new_board)
-    // /// r n b q k b n r
-    // /// p p p p p p p p
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . P . . .
-    // /// . . . . . . . .
-    // /// P P P P . P P P
-    // /// R N B Q K B N R
-    // ///
-    // /// >>> print(old_board)
-    // /// r n b q k b n r
-    // /// p p p p p p p p
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// P P P P P P P P
-    // /// R N B Q K B N R
-    // ///
-    // /// ```
-    // #[pyo3(signature = (chess_move, check_legality = true))]
-    // #[inline]
-    // fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {
-    //     // Check if draw by fivefold
-    //     if self.is_fivefold_repetition() {
-    //         return Err(PyValueError::new_err(
-    //             "Game over due to fivefold repetition",
-    //         ));
-    //     }
+            // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
+            let mut is_zeroing = false;
+            if PyBoard::_is_zeroing(&self.boards[i], chess_moves[i]) {
+                self.halfmove_clocks[i] = 0;
+                is_zeroing = true;
+            } else {
+                self.halfmove_clocks[i] += 1; // Add one if not zeroing
+            }
 
-    //     // If we are checking legality, check if the move is legal
-    //     if check_legality && !self.is_legal_move(chess_move) {
-    //         return Err(PyValueError::new_err("Illegal move"));
-    //     }
+            // Increment fullmove number if black moves
+            self.fullmove_numbers[i] += self.boards[i].side_to_move().to_index() as u8; // White is 0, black is 1
 
-    //     // Make the move onto a new board using the chess crate
-    //     let new_board: chess::Board = self.board.make_move_new(chess_move.0);
+            // Add the new board's Zobrist hash to history
+            if let Some(history) = &mut self.board_histories[i] {
+                if is_zeroing {
+                    // Don't need previous history anymore since it is a zeroing move (irreversible)
+                    history.clear()
+                }
+                history.push(temp_board.get_hash());
+            }
 
-    //     let is_zeroing: bool = self.is_zeroing(chess_move);
+            // Invalidate the move generator since the board has changed
+            self.move_gens[i].take();
 
-    //     Ok(Self {
-    //         board: new_board,
-    //         move_gen: std::sync::OnceLock::new(),
-    //         // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-    //         halfmove_clock: if is_zeroing {
-    //             0
-    //         } else {
-    //             self.halfmove_clock + 1
-    //         },
-    //         // Increment fullmove number if black moves
-    //         #[allow(clippy::cast_possible_truncation)]
-    //         fullmove_number: self.fullmove_number + (self.board.side_to_move().to_int() as u8), // White is 0, black is 1
-    //         repetition_detection_mode: self.repetition_detection_mode,
-    //         // Add the new board's Zobrist hash to history
-    //         board_history: self.board_history.as_ref().map(|history| {
-    //             let mut new_history = if is_zeroing {
-    //                 Vec::with_capacity(history.capacity()) // Don't need previous history anymore since it is a zeroing move (irreversible)
-    //             } else {
-    //                 history.clone()
-    //             };
+            // Update the current board
+            self.boards[i] = temp_board;
+        }
 
-    //             new_history.push(new_board.get_hash());
-    //             new_history
-    //         }),
-    //     })
-    // }
+        Ok(())
+    }
 
-    // /// Get the bitboard of the side to move's pinned pieces.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.get_pinned_bitboard().popcnt()
-    // /// 0
-    // ///
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.make_move(rust_chess.Move("d7d5"))
-    // /// >>> board.make_move(rust_chess.Move("d1h5"))
-    // /// >>> board.get_pinned_bitboard().popcnt()
-    // /// 1
-    // /// >>> board.get_pinned_bitboard()
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . X . .
-    // /// . . . . . . . .
-    // /// ```
-    // #[inline]
-    // fn get_pinned_bitboard(&self) -> PyBitboard {
-    //     PyBitboard(*self.board.pinned())
-    // }
+    /// Make a respective move onto a new board for each board.
+    ///
+    /// Defaults to checking move legality, unless the optional legality parameter is `False`.
+    /// Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
+    /// Checking legality will return an error if the move is illegal.
+    ///
+    #[pyo3(signature = (chess_moves, check_legality = true))]
+    #[inline]
+    fn make_move_new(&self, chess_moves: Vec<PyMove>, check_legality: bool) -> PyResult<Self> {
+        let count = self.boards.len();
 
-    // /// Get the bitboard of the pieces putting the side to move in check.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.get_checkers_bitboard().popcnt()
-    // /// 0
-    // ///
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.make_move(rust_chess.Move("f7f6"))
-    // /// >>> board.make_move(rust_chess.Move("d1h5"))
-    // /// >>> board.get_checkers_bitboard().popcnt()
-    // /// 1
-    // /// >>> board.get_checkers_bitboard()
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . X
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// ```
-    // #[inline]
-    // fn get_checkers_bitboard(&self) -> PyBitboard {
-    //     PyBitboard(*self.board.checkers())
-    // }
+        let mut new_boards = Vec::with_capacity(count);
+        let mut move_gens = Vec::with_capacity(count);
+        let mut halfmove_clocks = Vec::with_capacity(count);
+        let mut fullmove_numbers = Vec::with_capacity(count);
+        let mut board_histories = Vec::with_capacity(count);
 
-    // /// Get the bitboard of all the pieces of a certain color.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.get_color_bitboard(rust_chess.WHITE).popcnt()
-    // /// 16
-    // /// >>> board.get_color_bitboard(rust_chess.WHITE)
-    // /// X X X X X X X X
-    // /// X X X X . X X X
-    // /// . . . . . . . .
-    // /// . . . . X . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// ```
-    // #[inline]
-    // fn get_color_bitboard(&self, color: PyColor) -> PyBitboard {
-    //     PyBitboard(*self.board.color_combined(color.0))
-    // }
+        for i in 0..count {
+            // Check if draw by fivefold
+            if PyBoard::_is_n_repetition(&self.board_histories[i], self.halfmove_clocks[i], 5) {
+                return Err(PyValueError::new_err(
+                    "Game over due to fivefold repetition",
+                ));
+            }
 
-    // /// Get the bitboard of all the pieces of a certain type.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.get_piece_type_bitboard(rust_chess.PAWN).popcnt()
-    // /// 16
-    // /// >>> board.get_piece_type_bitboard(rust_chess.PAWN)
-    // /// . . . . . . . .
-    // /// X X X X . X X X
-    // /// . . . . . . . .
-    // /// . . . . X . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// X X X X X X X X
-    // /// . . . . . . . .
-    // /// ```
-    // #[inline]
-    // fn get_piece_type_bitboard(&self, piece_type: PyPieceType) -> PyBitboard {
-    //     PyBitboard(*self.board.pieces(piece_type.0))
-    // }
+            // If we are checking legality, check if the move is legal
+            if check_legality && !PyBoard::_is_legal_move(&self.boards[i], chess_moves[i]) {
+                return Err(PyValueError::new_err("Illegal move"));
+            }
 
-    // /// Get the bitboard of all the pieces of a certain color and type.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.get_piece_bitboard(rust_chess.WHITE_PAWN).popcnt()
-    // /// 8
-    // /// >>> board.get_piece_bitboard(rust_chess.WHITE_PAWN)
-    // /// . . . . . . . .
-    // /// X X X X . X X X
-    // /// . . . . . . . .
-    // /// . . . . X . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// ```
-    // #[inline]
-    // fn get_piece_bitboard(&self, piece: PyPiece) -> PyBitboard {
-    //     PyBitboard(self.board.pieces(piece.piece_type.0) & self.board.color_combined(piece.color.0))
-    // }
+            // Make the move onto a new board using the chess crate
+            new_boards.push(self.boards[i].make_move_new(chess_moves[i].0));
 
-    // /// Get the bitboard of all the pieces.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.make_move(rust_chess.Move("e2e4"))
-    // /// >>> board.get_all_bitboard().popcnt()
-    // /// 32
-    // /// >>> board.get_all_bitboard()
-    // /// X X X X X X X X
-    // /// X X X X . X X X
-    // /// . . . . . . . .
-    // /// . . . . X . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// X X X X X X X X
-    // /// X X X X X X X X
-    // /// ```
-    // #[inline]
-    // fn get_all_bitboard(&self) -> PyBitboard {
-    //     PyBitboard(*self.board.combined())
-    // }
+            // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
+            let mut is_zeroing = false;
+            if PyBoard::_is_zeroing(&self.boards[i], chess_moves[i]) {
+                halfmove_clocks.push(0);
+                is_zeroing = true;
+            } else {
+                halfmove_clocks.push(self.halfmove_clocks[i] + 1); // Add one if not zeroing
+            }
+
+            // Increment fullmove number if black moves
+            fullmove_numbers
+                .push(self.fullmove_numbers[i] + self.boards[i].side_to_move().to_index() as u8); // White is 0, black is 1
+
+            board_histories.push(self.board_histories[i].as_ref().map(|history| {
+                let mut history = history.clone();
+                if is_zeroing {
+                    // Don't need previous history since it's a zeroing move (irreversible)
+                    history.clear();
+                }
+                history.push(new_boards[i].get_hash());
+                history
+            }));
+
+            move_gens.push(std::sync::OnceLock::new());
+        }
+
+        Ok(Self {
+            boards: new_boards,
+            move_gens,
+            halfmove_clocks,
+            fullmove_numbers,
+            repetition_detection_mode: self.repetition_detection_mode,
+            board_histories,
+        })
+    }
+
+    /// Get the bitboard of the side to move's pinned pieces for each board.
+    ///
+    #[inline]
+    fn get_pinned_bitboard(&self) -> Vec<PyBitboard> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_pinned_bitboard(board))
+            .collect()
+    }
+
+    /// Get the bitboard of the pieces putting the side to move in check for each board.
+    ///
+    #[inline]
+    fn get_checkers_bitboard(&self) -> Vec<PyBitboard> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_checkers_bitboard(board))
+            .collect()
+    }
+
+    /// Get the bitboard of all the pieces of a certain color for each board.
+    ///
+    #[inline]
+    fn get_color_bitboard(&self, color: PyColor) -> Vec<PyBitboard> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_color_bitboard(board, color))
+            .collect()
+    }
+
+    /// Get the bitboard of all the pieces of a certain type for each board.
+    ///
+    #[inline]
+    fn get_piece_type_bitboard(&self, piece_type: PyPieceType) -> Vec<PyBitboard> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_piece_type_bitboard(board, piece_type))
+            .collect()
+    }
+
+    /// Get the bitboard of all the pieces of a certain color and type for each board.
+    ///
+    #[inline]
+    fn get_piece_bitboard(&self, piece: PyPiece) -> Vec<PyBitboard> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_piece_bitboard(board, piece))
+            .collect()
+    }
+
+    /// Get the bitboard of all the pieces for each board.
+    ///
+    #[inline]
+    fn get_all_bitboard(&self) -> Vec<PyBitboard> {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_get_all_bitboard(board))
+            .collect()
+    }
 
     // /// Get the number of moves remaining in the move generator.
     // /// This is the number of remaining moves that can be generated.

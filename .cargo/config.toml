@@ -1,12 +1,11 @@
-# Not respected by maturin?
-[build]
+[target.x86_64-unknown-linux-gnu]
 rustflags = [
     "-C", "target-cpu=native", # Gain access to CPU popcnt and ctzl (recommended by chess crate)
+    # "-C", "link-arg=-fuse-ld=mold"
 ]
 
-# Maturin does respect this though
-[target.'cfg(target_os = "linux")']
+[target.x86_64-unknown-linux-musl]
 rustflags = [
     "-C", "target-cpu=native", # Gain access to CPU popcnt and ctzl (recommended by chess crate)
-    "-C", "link-arg=-fuse-ld=mold"
+    # "-C", "link-arg=-fuse-ld=mold"
 ]

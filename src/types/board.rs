@@ -1,5 +1,6 @@
 use std::fmt::Write;
 use std::str::FromStr;
+use std::sync::OnceLock;
 
 use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
@@ -74,7 +75,7 @@ pub struct PyBoard {
     pub(crate) board: chess::Board,
 
     // Use a OnceLock to lazily initialize the move generator when needed
-    pub(crate) move_gen: std::sync::OnceLock<Py<PyMoveGenerator>>, // Use a Py to be able to share between Python and Rust
+    pub(crate) move_gen: OnceLock<Py<PyMoveGenerator>>, // Use a Py to be able to share between Python and Rust
 
     /// Get the halfmove clock.
     ///
@@ -138,40 +139,6 @@ impl PyBoard {
             halfmove_clock,  // halfmove clock
             fullmove_number, // fullmove number
         )
-    }
-
-    #[inline]
-    pub(crate) fn _display(board: &chess::Board) -> String {
-        let mut s = String::new();
-        for rank in (0..8).rev() {
-            for file in 0..8 {
-                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-                if let Some(piece) = Self::_get_piece_on(board, square) {
-                    unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
-                } else {
-                    unsafe { write!(s, ". ").unwrap_unchecked() };
-                }
-            }
-            unsafe { writeln!(s).unwrap_unchecked() };
-        }
-        s
-    }
-
-    #[inline]
-    pub(crate) fn _display_unicode(board: &chess::Board, dark_mode: bool) -> String {
-        let mut s = String::new();
-        for rank in (0..8).rev() {
-            for file in 0..8 {
-                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-                if let Some(piece) = Self::_get_piece_on(board, square) {
-                    unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
-                } else {
-                    unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
-                }
-            }
-            unsafe { writeln!(s).unwrap_unchecked() };
-        }
-        s
     }
 
     #[inline]
@@ -572,7 +539,7 @@ impl PyBoard {
 
                 Ok(Self {
                     board,
-                    move_gen: std::sync::OnceLock::new(),
+                    move_gen: OnceLock::new(),
                     halfmove_clock: 0,
                     fullmove_number: 1,
                     repetition_detection_mode: mode,
@@ -625,7 +592,7 @@ impl PyBoard {
 
         Ok(Self {
             board,
-            move_gen: std::sync::OnceLock::new(),
+            move_gen: OnceLock::new(),
             halfmove_clock,
             fullmove_number,
             repetition_detection_mode: mode,
@@ -672,7 +639,19 @@ impl PyBoard {
     /// ```
     #[inline]
     fn display(&self) -> String {
-        Self::_display(&self.board)
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                if let Some(piece) = Self::_get_piece_on(&self.board, square) {
+                    unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
+                } else {
+                    unsafe { write!(s, ". ").unwrap_unchecked() };
+                }
+            }
+            unsafe { writeln!(s).unwrap_unchecked() };
+        }
+        s
     }
 
     /// Get the string representation of the board.
@@ -727,7 +706,19 @@ impl PyBoard {
     #[inline]
     #[pyo3(signature = (dark_mode = true))]
     fn display_unicode(&self, dark_mode: bool) -> String {
-        Self::_display_unicode(&self.board, dark_mode)
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                if let Some(piece) = Self::_get_piece_on(&self.board, square) {
+                    unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
+                } else {
+                    unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
+                }
+            }
+            unsafe { writeln!(s).unwrap_unchecked() };
+        }
+        s
     }
 
     /// Create a new move from a SAN string (e.g. "e4").
@@ -1174,7 +1165,7 @@ impl PyBoard {
             board: new_board,
 
             // Create a new uninitialized move generator using the chess crate
-            move_gen: std::sync::OnceLock::new(),
+            move_gen: OnceLock::new(),
 
             // Increment the halfmove clock
             halfmove_clock: self.halfmove_clock + 1, // Null moves aren't zeroing, so we can just add 1 here
@@ -1310,7 +1301,7 @@ impl PyBoard {
 
         Ok(Self {
             board: new_board,
-            move_gen: std::sync::OnceLock::new(),
+            move_gen: OnceLock::new(),
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
             halfmove_clock: if is_zeroing {
                 0

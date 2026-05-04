@@ -1937,8 +1937,6 @@ class BoardBatch:
     BoardBatch class.
     Represents a batch of chess boards.
     Uses the same method names as `Board`, however they operate on a batch now.
-    
-    TODO: docs
     """
     @property
     def halfmove_clocks(self) -> builtins.list[builtins.int]: ...
@@ -1955,7 +1953,7 @@ class BoardBatch:
         Store board Zobrist hashes for board history
         """
     @property
-    def zobrist_hash(self) -> builtins.list[builtins.int]: ...
+    def zobrist_hashes(self) -> builtins.list[builtins.int]: ...
     @property
     def turn(self) -> builtins.list[Color]:
         r"""
@@ -1977,6 +1975,35 @@ class BoardBatch:
         """
     @staticmethod
     def from_boards(boards: list, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch: ...
+    def get_fens(self) -> builtins.str:
+        r"""
+        Get the FEN string representation of each board on a newline.
+        """
+    def __repr__(self) -> builtins.str:
+        r"""
+        Get the FEN string representation of each board.
+        """
+    def display(self) -> builtins.str:
+        r"""
+        Get the string representation of each board separated by newlines.
+        """
+    def __str__(self) -> builtins.str:
+        r"""
+        Get the string representation of each board.
+        """
+    def display_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
+        r"""
+        Get the unicode string representation of each board separated by newlines.
+        
+        The dark mode parameter is enabled by default.
+        This inverts the color of the piece, which looks correct on a dark background.
+        Unicode assumes black text on white background, where in most terminals, it is the opposite.
+        Disable if you are a psychopath and use light mode in your terminal/IDE.
+        """
+    def get_move_from_san(self, sans: typing.Sequence[builtins.str]) -> builtins.list[Move]:
+        r"""
+        Create a new move from a respective SAN string (e.g. ["e4", "e2"]) for each board.
+        """
     def __hash__(self) -> builtins.int:
         r"""
         Get a hash of the board batch based on the sum of the Zobrist hashes.

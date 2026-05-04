@@ -76,7 +76,7 @@ def python_board_init():
 def rust_board_props():
     boards2 = rc.BoardBatch.from_fens(FENS)
     str(boards2)
-    # boards2.get_fen() # TODO
+    boards2.get_fens() # TODO
     boards2.halfmove_clocks
     boards2.fullmove_numbers
     boards2.turn
@@ -88,7 +88,7 @@ def python_board_props():
     boards2 = [chess.Board(fen) for fen in FENS]
     for board in boards2:
         str(board)
-        # board.fen()
+        board.fen()
         board.halfmove_clock
         board.fullmove_number
         board.turn
@@ -229,7 +229,7 @@ def python_king_square():
 
 def rust_zobrist():
     boards = rc.BoardBatch(25)
-    boards.zobrist_hash
+    boards.zobrist_hashes
 
 
 def python_zobrist():
@@ -336,30 +336,30 @@ def python_null_move():
 
 
 if __name__ == "__main__":
-    n = 10_000
+    n = 100_0000
     fen = "rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2"
 
     benchmarks = [
-        ("Board Init", rust_board_init, python_board_init),
-        ("Board Props", rust_board_props, python_board_props),
-        ("Board Ops", rust_board_ops, python_board_ops),
-        ("Board Ops 2", rust_board_ops2, python_board_ops2),
-        ("Make Move", rust_make_move, python_make_move),
-        ("Make Move (New)", rust_make_move_new, python_make_move_new),
-        ("Undo Move", rust_undo_move, python_undo_move),
-        ("Next Move", rust_next_move, python_next_move),
-        # ("Generate Moves", lambda: rust_generate(fen), lambda: python_generate(fen)), # TODO
-        # ("SAN Parse", rust_san_parse, python_san_parse),
-        ("King Square", rust_king_square, python_king_square),
-        ("Zobrist Hash", rust_zobrist, python_zobrist),
-        ("Checkmate", rust_checkmate, python_checkmate),
-        ("Insufficient Mat.", rust_insuff_mat, python_insuff_mat),
-        ("Board Bitboards", rust_board_bitboards, python_board_bitboards),
-        ("Castle Rights", rust_castle_rights, python_castle_rights),
-        ("Repetitions", rust_repetitions, python_repetitions),
-        ("Board Status", rust_board_status, python_board_status),
-        # ("Move Gen Ops", rust_move_gen_ops, python_move_gen_ops),
-        ("Null Move", rust_null_move, python_null_move),
+        ("Board Init", rust_board_init, rust_board_init),
+        # ("Board Props", rust_board_props, python_board_props),
+        # ("Board Ops", rust_board_ops, python_board_ops),
+        # ("Board Ops 2", rust_board_ops2, python_board_ops2),
+        # ("Make Move", rust_make_move, python_make_move),
+        # ("Make Move (New)", rust_make_move_new, python_make_move_new),
+        # ("Undo Move", rust_undo_move, python_undo_move),
+        # ("Next Move", rust_next_move, python_next_move),
+        # # ("Generate Moves", lambda: rust_generate(fen), lambda: python_generate(fen)), # TODO
+        # # ("SAN Parse", rust_san_parse, python_san_parse),
+        # ("King Square", rust_king_square, python_king_square),
+        # ("Zobrist Hash", rust_zobrist, python_zobrist),
+        # ("Checkmate", rust_checkmate, python_checkmate),
+        # ("Insufficient Mat.", rust_insuff_mat, python_insuff_mat),
+        # ("Board Bitboards", rust_board_bitboards, python_board_bitboards),
+        # ("Castle Rights", rust_castle_rights, python_castle_rights),
+        # ("Repetitions", rust_repetitions, python_repetitions),
+        # ("Board Status", rust_board_status, python_board_status),
+        # # ("Move Gen Ops", rust_move_gen_ops, python_move_gen_ops),
+        # ("Null Move", rust_null_move, python_null_move),
     ]
 
     print("Benchmark Results (n=100,000)")

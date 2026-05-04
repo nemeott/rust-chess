@@ -1,5 +1,6 @@
 use std::fmt::Write;
 use std::str::FromStr;
+use std::sync::OnceLock;
 
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyList};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
@@ -18,20 +19,14 @@ use crate::types::{
 /// Represents a batch of chess boards.
 /// Uses the same method names as `Board`, however they operate on a batch now.
 ///
-/// TODO: docs
-
-// Could remove lots of code duplication from `Board`, but might be less understandable/readable.
-// Would have to define Rust-only functions, then make Python wrappers in `Board` and `BoardBatch`.
-// Might end up doing this anyway though; would save potential problems of changing a method in one but not the other.
-
-// Uses SoA apprach to improve cache locality.
 #[gen_stub_pyclass]
 #[pyclass(name = "BoardBatch")]
 pub struct PyBoardBatch {
+    // Uses SoA apprach to improve cache locality.
     boards: Vec<chess::Board>,
 
     // Lazily initialized per board, reset to None when a move is applied
-    move_gens: Vec<std::sync::OnceLock<Py<PyMoveGenerator>>>, // Use a Py to be able to share between Python and Rust
+    move_gens: Vec<OnceLock<Py<PyMoveGenerator>>>, // Use a Py to be able to share between Python and Rust
 
     #[pyo3(get)]
     // FIXME: __repr__ returns raw bytes (u8 converted to bytes in PyO3)
@@ -82,8 +77,6 @@ impl PyBoardBatch {
     fn new(count: usize, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
         let boards = vec![chess::Board::default(); count];
 
-        // TODO: One loop?
-
         let board_histories = match mode {
             PyRepetitionDetectionMode::None => vec![None; boards.len()],
             PyRepetitionDetectionMode::Full => boards
@@ -96,7 +89,7 @@ impl PyBoardBatch {
                 .collect(),
         };
 
-        let move_gens = (0..count).map(|_| std::sync::OnceLock::new()).collect();
+        let move_gens = (0..count).map(|_| OnceLock::new()).collect();
 
         Ok(Self {
             boards,
@@ -121,7 +114,7 @@ impl PyBoardBatch {
         let mut fullmove_numbers = Vec::with_capacity(count);
         let mut board_histories = Vec::with_capacity(count);
 
-        for fen in fens {
+        for (i, fen) in fens.into_iter().enumerate() {
             // Extract the halfmove clock and fullmove number from the FEN string
             let parts: Vec<&str> = fen.split_whitespace().collect();
             if parts.len() != 6 {
@@ -143,21 +136,21 @@ impl PyBoardBatch {
             );
 
             // Parse the board using the chess crate
-            let board = chess::Board::from_str(&fen)
-                .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?;
+            boards.push(
+                chess::Board::from_str(&fen)
+                    .map_err(|e| PyValueError::new_err(format!("Invalid FEN: {e}")))?,
+            );
 
             board_histories.push(match mode {
                 PyRepetitionDetectionMode::None => None,
                 PyRepetitionDetectionMode::Full => {
                     let mut history = Vec::with_capacity(256);
-                    history.push(board.get_hash());
+                    history.push(boards[i].get_hash());
                     Some(history)
                 }
             });
 
-            boards.push(board);
-
-            move_gens.push(std::sync::OnceLock::new());
+            move_gens.push(OnceLock::new());
         }
 
         Ok(Self {
@@ -192,7 +185,7 @@ impl PyBoardBatch {
             let b = pyboard.borrow(py);
 
             boards.push(b.board.clone());
-            move_gens.push(std::sync::OnceLock::new());
+            move_gens.push(OnceLock::new());
             halfmove_clocks.push(b.halfmove_clock);
             fullmove_numbers.push(b.fullmove_number);
             board_histories.push(match mode {
@@ -215,162 +208,138 @@ impl PyBoardBatch {
         })
     }
 
-    // /// Get the FEN string representation of the board.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board().get_fen()
-    // /// 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-    // /// ```
-    // #[inline]
-    // fn get_fen(&self) -> String {
-    //     let base_fen = self.board.to_string();
+    // TODO: to_boards
 
-    //     // 0: board, 1: player, 2: castling, 3: en passant, 4: halfmove clock, 5: fullmove number
-    //     let base_parts: Vec<&str> = base_fen.split_whitespace().collect();
+    /// Get the FEN string representation of each board on a newline.
+    ///
+    #[inline]
+    fn get_fens(&self) -> String {
+        self.boards
+            .iter()
+            .zip(self.halfmove_clocks.iter())
+            .zip(self.fullmove_numbers.iter())
+            .map(|((board, halfmove_clock), fullmove_number)| {
+                let base_fen = board.to_string();
 
-    //     // The chess crate doesn't handle the halfmove and fullmove values so we need to do it ourselves
-    //     format!(
-    //         "{} {} {} {} {} {}",
-    //         base_parts[0],        // board
-    //         base_parts[1],        // player
-    //         base_parts[2],        // castling
-    //         base_parts[3],        // en passant
-    //         self.halfmove_clock,  // halfmove clock
-    //         self.fullmove_number, // fullmove number
-    //     )
-    // }
+                // 0: board, 1: player, 2: castling, 3: en passant, 4: halfmove clock, 5: fullmove number
+                let base_parts: Vec<&str> = base_fen.split_whitespace().collect();
 
-    // /// Get the FEN string representation of the board.
-    // ///
-    // /// ```python
-    // /// >>> rust_chess.Board()
-    // /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-    // /// ```
-    // #[inline]
-    // fn __repr__(&self) -> String {
-    //     self.get_fen()
-    // }
+                // The chess crate doesn't handle the halfmove and fullmove values so we need to do it ourselves
+                format!(
+                    "{} {} {} {} {} {}\n",
+                    base_parts[0],   // board
+                    base_parts[1],   // player
+                    base_parts[2],   // castling
+                    base_parts[3],   // en passant
+                    halfmove_clock,  // halfmove clock
+                    fullmove_number, // fullmove number
+                )
+            })
+            .collect::<String>()
+            .trim_end()
+            .to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
+    }
 
-    // /// Get the string representation of the board.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> print(board.display())
-    // /// r n b q k b n r
-    // /// p p p p p p p p
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// P P P P P P P P
-    // /// R N B Q K B N R
-    // ///
-    // /// ```
-    // #[inline]
-    // fn display(&self) -> String {
-    //     let mut s = String::new();
-    //     for rank in (0..8).rev() {
-    //         for file in 0..8 {
-    //             let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-    //             if let Some(piece) = self.get_piece_on(square) {
-    //                 unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
-    //             } else {
-    //                 unsafe { write!(s, ". ").unwrap_unchecked() };
-    //             }
-    //         }
-    //         unsafe { writeln!(s).unwrap_unchecked() };
-    //     }
-    //     s
-    // }
+    /// Get the FEN string representation of each board.
+    ///
+    #[inline]
+    fn __repr__(&self) -> String {
+        self.get_fens()
+    }
 
-    // /// Get the string representation of the board.
-    // ///
-    // /// ```python
-    // /// >>> print(rust_chess.Board())
-    // /// r n b q k b n r
-    // /// p p p p p p p p
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// . . . . . . . .
-    // /// P P P P P P P P
-    // /// R N B Q K B N R
-    // ///
-    // /// ```
-    // #[inline]
-    // fn __str__(&self) -> String {
-    //     self.display()
-    // }
+    /// Get the string representation of each board separated by newlines.
+    ///
+    #[inline]
+    fn display(&self) -> String {
+        self.boards
+            .iter()
+            .map(|board| {
+                let mut s = String::new();
+                for rank in (0..8).rev() {
+                    for file in 0..8 {
+                        let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                        if let Some(piece) = PyBoard::_get_piece_on(board, square) {
+                            unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
+                        } else {
+                            unsafe { write!(s, ". ").unwrap_unchecked() };
+                        }
+                    }
+                    unsafe { writeln!(s).unwrap_unchecked() };
+                }
+                unsafe { writeln!(s).unwrap_unchecked() };
+                s
+            })
+            .collect::<String>()
+            .strip_suffix('\n')
+            .unwrap_or_default()
+            .to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
+    }
 
-    // /// Get the unicode string representation of the board.
-    // ///
-    // /// The dark mode parameter is enabled by default.
-    // /// This inverts the color of the piece, which looks correct on a dark background.
-    // /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
-    // /// Disable if you are a psychopath and use light mode in your terminal/IDE.
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> print(board.display_unicode())
-    // /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
-    // /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
-    // /// · · · · · · · ·
-    // /// · · · · · · · ·
-    // /// · · · · · · · ·
-    // /// · · · · · · · ·
-    // /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-    // /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-    // ///
-    // /// >>> print(board.display_unicode(dark_mode=False))
-    // /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-    // /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-    // /// · · · · · · · ·
-    // /// · · · · · · · ·
-    // /// · · · · · · · ·
-    // /// · · · · · · · ·
-    // /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
-    // /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
-    // ///
-    // /// ```
-    // #[inline]
-    // #[pyo3(signature = (dark_mode = true))]
-    // fn display_unicode(&self, dark_mode: bool) -> String {
-    //     let mut s = String::new();
-    //     for rank in (0..8).rev() {
-    //         for file in 0..8 {
-    //             let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-    //             if let Some(piece) = self.get_piece_on(square) {
-    //                 unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
-    //             } else {
-    //                 unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
-    //             }
-    //         }
-    //         unsafe { writeln!(s).unwrap_unchecked() };
-    //     }
-    //     s
-    // }
+    /// Get the string representation of each board.
+    ///
+    #[inline]
+    fn __str__(&self) -> String {
+        self.display()
+    }
 
-    // /// Create a new move from a SAN string (e.g. "e4").
-    // ///
-    // /// ```python
-    // /// >>> board = rust_chess.Board()
-    // /// >>> board.get_move_from_san("e4")
-    // /// Move(e2, e4, None)
-    // /// ```
-    // #[inline]
-    // fn get_move_from_san(&self, san: &str) -> PyResult<PyMove> {
-    //     chess::ChessMove::from_san(&self.board, san)
-    //         .map(PyMove)
-    //         .map_err(|_| PyValueError::new_err("Invalid SAN move"))
-    // }
+    /// Get the unicode string representation of each board separated by newlines.
+    ///
+    /// The dark mode parameter is enabled by default.
+    /// This inverts the color of the piece, which looks correct on a dark background.
+    /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
+    /// Disable if you are a psychopath and use light mode in your terminal/IDE.
+    ///
+    #[inline]
+    #[pyo3(signature = (dark_mode = true))]
+    fn display_unicode(&self, dark_mode: bool) -> String {
+        self.boards
+            .iter()
+            .map(|board| {
+                let mut s = String::new();
+                for rank in (0..8).rev() {
+                    for file in 0..8 {
+                        let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                        if let Some(piece) = PyBoard::_get_piece_on(board, square) {
+                            unsafe {
+                                write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked()
+                            }; // Safe code is for weaklings
+                        } else {
+                            unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
+                        }
+                    }
+                    unsafe { writeln!(s).unwrap_unchecked() };
+                }
+                unsafe { writeln!(s).unwrap_unchecked() };
+                s
+            })
+            .collect::<String>()
+            .strip_suffix('\n')
+            .unwrap_or_default()
+            .to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
+    }
 
-    // // TODO: get_san_from_move
+    /// Create a new move from a respective SAN string (e.g. ["e4", "e2"]) for each board.
+    ///
+    #[inline]
+    fn get_move_from_san(&self, sans: Vec<String>) -> PyResult<Vec<PyMove>> {
+        self.boards
+            .iter()
+            .zip(sans.iter())
+            .map(|(board, san)| {
+                chess::ChessMove::from_san(board, san)
+                    .map(PyMove)
+                    .map_err(|_| PyValueError::new_err("Invalid SAN move"))
+            })
+            .collect()
+    }
 
-    // Get the Zobrist hashes of the boards.
+    // TODO: get_san_from_move
+
+    // Get the Zobrist hash of each board.
     //
     #[getter]
     #[inline]
-    fn get_zobrist_hash(&self) -> Vec<u64> {
+    fn get_zobrist_hashes(&self) -> Vec<u64> {
         self.boards
             .iter()
             .map(|board| PyBoard::_get_zobrist_hash(board))
@@ -672,7 +641,7 @@ impl PyBoardBatch {
             new_boards.push(self.boards[i].null_move()?);
 
             // Create a new uninitialized move generator using the chess crate
-            move_gens.push(std::sync::OnceLock::new());
+            move_gens.push(OnceLock::new());
 
             // // Increment the halfmove clock
             halfmove_clocks.push(self.halfmove_clocks[i] + 1); // Null moves aren't zeroing, so we can just add 1 here
@@ -811,7 +780,7 @@ impl PyBoardBatch {
                 history
             }));
 
-            move_gens.push(std::sync::OnceLock::new());
+            move_gens.push(OnceLock::new());
         }
 
         Ok(Self {

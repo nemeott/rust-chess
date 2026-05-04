@@ -14,6 +14,6 @@ unset _PYTHON_HOST_PLATFORM # Unset to generate PyPI compatiable version (manyli
 maturin publish \
     --compatibility pypi \
     --username __token__ \
-    --password pypi-$PYPI_TOKEN
+    --password pypi-"$PYPI_TOKEN"
 
 # --zig \

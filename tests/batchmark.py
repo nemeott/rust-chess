@@ -8,29 +8,31 @@ Notable differences between rust-chess and python-chess:
 
 Results from rust-chess v0.4.0
 
-Benchmark Results (n=100,000)
+Benchmark Results (n=10,000), (batch_size=25)
 ============================================================
-Category          | Rust Time | Python Time |    Speedup
+Category          | Rust Time | Python Time |     Speedup
 ------------------------------------------------------------
-Board Init        |  0.026836 |    1.796330 |  66.937239
-Board Props       |  0.023323 |    2.377874 | 101.954685
-Board Ops         |  0.081179 |    1.418494 |  17.473598
-Board Ops 2       |  0.034512 |    1.621122 |  46.972399
-Make Move         |  0.044887 |    1.068798 |  23.810677
-Make Move (New)   |  0.045701 |    1.435041 |  31.400808
-Undo Move         |  0.045475 |    1.118573 |  24.597654
-Next Move         |  0.063923 |    1.161658 |  18.172829
-King Square       |  0.019241 |    0.322392 |  16.755049
-Zobrist Hash      |  0.016278 |    4.448038 | 273.256906
-Checkmate         |  0.023832 |    0.509187 |  21.365683
-Insufficient Mat. |  0.014700 |    0.408878 |  27.815226
-Board Bitboards   |  0.057257 |    0.332265 |   5.803102
-Castle Rights     |  0.018641 |    0.838173 |  44.962934
-Repetitions       |  0.014739 |   33.940829 | 2302.800619
-Board Status      |  0.024530 |    1.627044 |  66.328612
-Null Move         |  0.017461 |    0.761773 |  43.628063
+Board Init        |  0.028494 |    0.028333 |    0.994337
+Board Props       |  0.127417 |    3.670269 |   28.805164
+Board Ops         |  0.084218 |    1.528579 |   18.150214
+Board Ops 2       |  0.035208 |    1.710838 |   48.592270
+Make Move         |  0.046525 |    1.126794 |   24.219008
+Make Move (New)   |  0.046996 |    1.506249 |   32.050450
+Undo Move         |  0.046307 |    1.155118 |   24.944634
+Next Move         |  0.063420 |    1.172726 |   18.491501
+Generate Moves    |  0.164534 |   13.247108 |   80.513124
+SAN Parse         |  0.061047 |    1.690472 |   27.691106
+King Square       |  0.019242 |    0.326893 |   16.988751
+Zobrist Hash      |  0.017036 |    4.458977 |  261.736400
+Checkmate         |  0.024211 |    0.517528 |   21.375914
+Insufficient Mat. |  0.014820 |    0.418335 |   28.226859
+Board Bitboards   |  0.055708 |    0.339233 |    6.089521
+Castle Rights     |  0.018760 |    0.851835 |   45.407465
+Repetitions       |  0.015187 |   34.786077 | 2290.488025
+Board Status      |  0.024841 |    1.692779 |   68.144579
+Null Move         |  0.019370 |    0.787410 |   40.652059
 ------------------------------------------------------------
-Total             |  0.572515 |   55.186469 |  96.393096
+Total             |  0.913341 |   71.015554 |   77.753579
 """
 
 import time
@@ -76,7 +78,7 @@ def python_board_init():
 def rust_board_props():
     boards2 = rc.BoardBatch.from_fens(FENS)
     str(boards2)
-    boards2.get_fens() # TODO
+    boards2.get_fens()
     boards2.halfmove_clocks
     boards2.fullmove_numbers
     boards2.turn
@@ -192,28 +194,28 @@ def python_next_move():
         next(iter(board.legal_moves))
 
 
-# def rust_generate(fen):
-#     boards = rc.BoardBatch.from_fens([fen] * 25)
-#     list(boards.generate_legal_captures())
-#     list(boards.generate_legal_moves())
+def rust_generate(fen):
+    boards = rc.BoardBatch.from_fens([fen] * 25)
+    list(boards.generate_legal_captures())
+    list(boards.generate_legal_moves())
 
 
-# def python_generate(fen):
-#     boards = [chess.Board(fen) * 25]
-#     for board in boards:
-#         list(board.generate_legal_captures())
-#         list(board.generate_legal_moves())
+def python_generate(fen):
+    boards = [chess.Board(fen)] * 25
+    for board in boards:
+        list(board.generate_legal_captures())
+        list(board.generate_legal_moves())
 
 
-# def rust_san_parse():
-#     boards = rc.BoardBatch(25)
-#     boards.get_move_from_san(["e4"] * 25)
+def rust_san_parse():
+    boards = rc.BoardBatch(25)
+    boards.get_move_from_san(["e4"] * 25)
 
 
-# def python_san_parse():
-#     boards = [chess.Board() for _ in range(25)]
-#     for board in boards:
-#         board.parse_san("e4")
+def python_san_parse():
+    boards = [chess.Board() for _ in range(25)]
+    for board in boards:
+        board.parse_san("e4")
 
 
 def rust_king_square():
@@ -336,45 +338,46 @@ def python_null_move():
 
 
 if __name__ == "__main__":
-    n = 100_0000
+    n = 10_000
     fen = "rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2"
 
     benchmarks = [
         ("Board Init", rust_board_init, rust_board_init),
-        # ("Board Props", rust_board_props, python_board_props),
-        # ("Board Ops", rust_board_ops, python_board_ops),
-        # ("Board Ops 2", rust_board_ops2, python_board_ops2),
-        # ("Make Move", rust_make_move, python_make_move),
-        # ("Make Move (New)", rust_make_move_new, python_make_move_new),
-        # ("Undo Move", rust_undo_move, python_undo_move),
-        # ("Next Move", rust_next_move, python_next_move),
-        # # ("Generate Moves", lambda: rust_generate(fen), lambda: python_generate(fen)), # TODO
-        # # ("SAN Parse", rust_san_parse, python_san_parse),
-        # ("King Square", rust_king_square, python_king_square),
-        # ("Zobrist Hash", rust_zobrist, python_zobrist),
-        # ("Checkmate", rust_checkmate, python_checkmate),
-        # ("Insufficient Mat.", rust_insuff_mat, python_insuff_mat),
-        # ("Board Bitboards", rust_board_bitboards, python_board_bitboards),
-        # ("Castle Rights", rust_castle_rights, python_castle_rights),
-        # ("Repetitions", rust_repetitions, python_repetitions),
-        # ("Board Status", rust_board_status, python_board_status),
-        # # ("Move Gen Ops", rust_move_gen_ops, python_move_gen_ops),
-        # ("Null Move", rust_null_move, python_null_move),
+        ("Board Props", rust_board_props, python_board_props),
+        ("Board Ops", rust_board_ops, python_board_ops),
+        ("Board Ops 2", rust_board_ops2, python_board_ops2),
+        ("Make Move", rust_make_move, python_make_move),
+        ("Make Move (New)", rust_make_move_new, python_make_move_new),
+        ("Undo Move", rust_undo_move, python_undo_move),
+        ("Next Move", rust_next_move, python_next_move),
+        ("Generate Moves", lambda: rust_generate(fen), lambda: python_generate(fen)),
+        ("SAN Parse", rust_san_parse, python_san_parse),
+        ("King Square", rust_king_square, python_king_square),
+        ("Zobrist Hash", rust_zobrist, python_zobrist),
+        ("Checkmate", rust_checkmate, python_checkmate),
+        ("Insufficient Mat.", rust_insuff_mat, python_insuff_mat),
+        ("Board Bitboards", rust_board_bitboards, python_board_bitboards),
+        ("Castle Rights", rust_castle_rights, python_castle_rights),
+        ("Repetitions", rust_repetitions, python_repetitions),
+        ("Board Status", rust_board_status, python_board_status),
+        ("Null Move", rust_null_move, python_null_move),
     ]
 
-    print("Benchmark Results (n=100,000)")
+    print("Benchmark Results (n=10,000), (batch_size=25)")
     print("=" * 60)
-    print(f"{'Category':<17} | {'Rust Time':>9} | {'Python Time':>11} | {'Speedup':>10}")
+    print(f"{'Category':<17} | {'Rust Time':>9} | {'Python Time':>11} | {'Speedup':>11}")
     print("-" * 60)
 
     times = []
     for name, rust_func, python_func in benchmarks:
         rust_time, python_time, speedup = batchmark(name, rust_func, python_func, n)
         times.append((rust_time, python_time, speedup))
-        print(f"{name:<17} | {rust_time:>9f} | {python_time:>11f} | {speedup:>10f}")
+        print(f"{name:<17} | {rust_time:>9f} | {python_time:>11f} | {speedup:>11f}")
 
     print("-" * 60)
     total_rust = sum(r for r, p, s in times)
     total_python = sum(p for r, p, s in times)
     total_speedup = total_python / total_rust if total_rust > 0 else float("inf")
-    print(f"{'Total':<17} | {total_rust:>9f} | {total_python:>11f} | {total_speedup:>10f}")
+    print(f"{'Total':<17} | {total_rust:>9f} | {total_python:>11f} | {total_speedup:>11f}")
+
+    print()

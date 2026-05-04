@@ -249,12 +249,12 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] Create a batch of boards from a count
     - [x] Create a batch of boards from a list of FEN strings.
     - [x] Create a batch of boards from a list of boards.
-  - [ ] FEN parsing and printing
-  - [ ] SAN move parsing
-  - [ ] Human readable printing
-    - [ ] Basic characters
+  - [x] FEN parsing and printing
+  - [x] SAN move parsing
+  - [x] Human readable printing
+    - [x] Basic characters
     - [ ] ASCII with colors?
-    - [ ] Unicode characters
+    - [x] Unicode characters
   - [x] Get the color, piece type, and piece on a respective square
   - [x] Get the king and en passant squares for each board
   - [x] Get castle rights for each board
@@ -276,11 +276,11 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [x] Move history
     - [x] Repetition detection for each board
   - [x] Generate the next move, legal move, and legal capture for a batch
-  - [ ] Generate moves, legal moves, and legal captures for a batch
-  - [ ] Support iterating over the generators of a bacth? (how would this work?)
-  - [ ] Set the retain generator masks
-  - [ ] Set the exclude generator masks
-  - [ ] Remove moves from the generators
+  - [x] Generate moves, legal moves, and legal captures for a batch
+  - [x] Return a list of the generators
+  - [x] Set the retain generator masks
+  - [x] Set the exclude generator masks
+  - [x] Remove moves from the generators
   - [x] Reset the generators
 - [ ] Miscellaneous
   - [ ] PGN support (parsing and writing)
@@ -305,57 +305,59 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
 
 Benchmark Results (n=100,000)
 
-| Category          |    Rust Time |   Python Time |       Speedup |
-| ----------------- | -----------: | ------------: | ------------: |
-| Colors            |     0.006386 |      0.005022 |      0.786379 |
-| Pieces            |     0.019039 |      0.009006 |      0.473018 |
-| Squares           |     0.098118 |      0.048066 |      0.489882 |
-| Moves             |     0.086400 |      0.216912 |      2.510554 |
-| Board Init        |     0.100258 |      5.018663 |     50.057617 |
-| Board Props       |     0.437592 |     11.718235 |     26.778905 |
-| Board Ops         |     0.102832 |      0.605381 |      5.887091 |
-| Board Ops 2       |     0.111255 |      5.544555 |     49.836327 |
-| Make Move         |     0.082378 |      0.582370 |      7.069442 |
-| Make Move (New)   |     0.095266 |      0.629599 |      6.608846 |
-| Undo Move         |     0.095382 |      0.502411 |      5.267335 |
-| Next Move         |     0.070281 |      0.490481 |      6.978907 |
-| Generate Moves    |     0.227567 |     11.174327 |     49.103443 |
-| SAN Parse         |     0.065765 |      0.693099 |     10.539040 |
-| King Square       |     0.047155 |      0.137995 |      2.926378 |
-| Zobrist Hash      |     0.047038 |      1.827242 |     38.846229 |
-| Checkmate         |     0.048880 |      0.215472 |      4.408168 |
-| Insufficient Mat. |     0.042502 |      0.181757 |      4.276465 |
-| Bitboard Ops      |     0.039632 |      0.071816 |      1.812098 |
-| Board Bitboards   |     0.074357 |      0.141309 |      1.900411 |
-| Castle Rights     |     0.060595 |      0.354572 |      5.851472 |
-| Repetitions       |     0.048764 |     14.049805 |    288.118484 |
-| Board Status      |     0.049658 |      0.689587 |     13.886646 |
-| Square/Piece Adv. |     0.033687 |      0.049919 |      1.481863 |
-| Null Move         |     0.049529 |      0.323132 |      6.524138 |
-| **Total**         | **2.140316** | **55.280731** | **25.828308** |
+| Category          | Rust Time | Python Time |    Speedup |
+| ----------------- | --------: | ----------: | ---------: |
+| Colors            |  0.005623 |    0.004736 |   0.842337 |
+| Pieces            |  0.018838 |    0.009041 |   0.479946 |
+| Squares           |  0.089639 |    0.045636 |   0.509110 |
+| Moves             |  0.086117 |    0.217042 |   2.520321 |
+| Board Init        |  0.091657 |    5.062907 |  55.237283 |
+| Board Props       |  0.426570 |   11.517537 |  27.000372 |
+| Board Ops         |  0.100331 |    0.578784 |   5.768751 |
+| Board Ops 2       |  0.105453 |    5.327600 |  50.521126 |
+| Make Move         |  0.079674 |    0.555655 |   6.974129 |
+| Make Move (New)   |  0.090940 |    0.605637 |   6.659730 |
+| Undo Move         |  0.091185 |    0.481893 |   5.284780 |
+| Next Move         |  0.067739 |    0.459672 |   6.785930 |
+| Generate Moves    |  0.208179 |   10.695765 |  51.377735 |
+| SAN Parse         |  0.063843 |    0.651645 |  10.207014 |
+| King Square       |  0.044894 |    0.131626 |   2.931930 |
+| Zobrist Hash      |  0.045252 |    1.741447 |  38.483714 |
+| Checkmate         |  0.048705 |    0.206944 |   4.248894 |
+| Insufficient Mat. |  0.040469 |    0.174750 |   4.318096 |
+| Bitboard Ops      |  0.036695 |    0.067098 |   1.828515 |
+| Board Bitboards   |  0.070030 |    0.136282 |   1.946055 |
+| Castle Rights     |  0.060880 |    0.333831 |   5.483449 |
+| Repetitions       |  0.046618 |   13.510689 | 289.813933 |
+| Board Status      |  0.049362 |    0.682978 |  13.836119 |
+| Square/Piece Adv. |  0.033849 |    0.048523 |   1.433507 |
+| Null Move         |  0.047808 |    0.322804 |   6.752067 |
+| **Total**             |  **2.050350** |   **53.570522** |  **26.127503** |
 
-Batchmark Results (n=10,000, batch_size=25)
+Benchmark Results (n=10,000), (batch_size=25)
 
-| Category          |    Rust Time |   Python Time |       Speedup |
-| ----------------- | -----------: | ------------: | ------------: |
-| Board Init        |     0.026836 |      1.796330 |     66.937239 |
-| Board Props       |     0.023323 |      2.377874 |    101.954685 |
-| Board Ops         |     0.081179 |      1.418494 |     17.473598 |
-| Board Ops 2       |     0.034512 |      1.621122 |     46.972399 |
-| Make Move         |     0.044887 |      1.068798 |     23.810677 |
-| Make Move (New)   |     0.045701 |      1.435041 |     31.400808 |
-| Undo Move         |     0.045475 |      1.118573 |     24.597654 |
-| Next Move         |     0.063923 |      1.161658 |     18.172829 |
-| King Square       |     0.019241 |      0.322392 |     16.755049 |
-| Zobrist Hash      |     0.016278 |      4.448038 |    273.256906 |
-| Checkmate         |     0.023832 |      0.509187 |     21.365683 |
-| Insufficient Mat. |     0.014700 |      0.408878 |     27.815226 |
-| Board Bitboards   |     0.057257 |      0.332265 |      5.803102 |
-| Castle Rights     |     0.018641 |      0.838173 |     44.962934 |
-| Repetitions       |     0.014739 |     33.940829 |   2302.800619 |
-| Board Status      |     0.024530 |      1.627044 |     66.328612 |
-| Null Move         |     0.017461 |      0.761773 |     43.628063 |
-| **Total**         | **0.572515** | **55.186469** | **96.393096** |
+| Category          | Rust Time | Python Time |     Speedup |
+| ----------------- | --------: | ----------: | ----------: |
+| Board Init        |  0.028494 |    0.028333 |    0.994337 |
+| Board Props       |  0.127417 |    3.670269 |   28.805164 |
+| Board Ops         |  0.084218 |    1.528579 |   18.150214 |
+| Board Ops 2       |  0.035208 |    1.710838 |   48.592270 |
+| Make Move         |  0.046525 |    1.126794 |   24.219008 |
+| Make Move (New)   |  0.046996 |    1.506249 |   32.050450 |
+| Undo Move         |  0.046307 |    1.155118 |   24.944634 |
+| Next Move         |  0.063420 |    1.172726 |   18.491501 |
+| Generate Moves    |  0.164534 |   13.247108 |   80.513124 |
+| SAN Parse         |  0.061047 |    1.690472 |   27.691106 |
+| King Square       |  0.019242 |    0.326893 |   16.988751 |
+| Zobrist Hash      |  0.017036 |    4.458977 |  261.736400 |
+| Checkmate         |  0.024211 |    0.517528 |   21.375914 |
+| Insufficient Mat. |  0.014820 |    0.418335 |   28.226859 |
+| Board Bitboards   |  0.055708 |    0.339233 |    6.089521 |
+| Castle Rights     |  0.018760 |    0.851835 |   45.407465 |
+| Repetitions       |  0.015187 |   34.786077 | 2290.488025 |
+| Board Status      |  0.024841 |    1.692779 |   68.144579 |
+| Null Move         |  0.019370 |    0.787410 |   40.652059 |
+| **Total**             |  **0.913341** |   **71.015554** |   **77.753579** |
 
 #### Analysis
 

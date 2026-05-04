@@ -12,33 +12,33 @@ Benchmark Results (n=100,000)
 ============================================================
 Category          | Rust Time | Python Time |    Speedup
 ------------------------------------------------------------
-Colors            |  0.006386 |    0.005022 |   0.786379
-Pieces            |  0.019039 |    0.009006 |   0.473018
-Squares           |  0.098118 |    0.048066 |   0.489882
-Moves             |  0.086400 |    0.216912 |   2.510554
-Board Init        |  0.100258 |    5.018663 |  50.057617
-Board Props       |  0.437592 |   11.718235 |  26.778905
-Board Ops         |  0.102832 |    0.605381 |   5.887091
-Board Ops 2       |  0.111255 |    5.544555 |  49.836327
-Make Move         |  0.082378 |    0.582370 |   7.069442
-Make Move (New)   |  0.095266 |    0.629599 |   6.608846
-Undo Move         |  0.095382 |    0.502411 |   5.267335
-Next Move         |  0.070281 |    0.490481 |   6.978907
-Generate Moves    |  0.227567 |   11.174327 |  49.103443
-SAN Parse         |  0.065765 |    0.693099 |  10.539040
-King Square       |  0.047155 |    0.137995 |   2.926378
-Zobrist Hash      |  0.047038 |    1.827242 |  38.846229
-Checkmate         |  0.048880 |    0.215472 |   4.408168
-Insufficient Mat. |  0.042502 |    0.181757 |   4.276465
-Bitboard Ops      |  0.039632 |    0.071816 |   1.812098
-Board Bitboards   |  0.074357 |    0.141309 |   1.900411
-Castle Rights     |  0.060595 |    0.354572 |   5.851472
-Repetitions       |  0.048764 |   14.049805 | 288.118484
-Board Status      |  0.049658 |    0.689587 |  13.886646
-Square/Piece Adv. |  0.033687 |    0.049919 |   1.481863
-Null Move         |  0.049529 |    0.323132 |   6.524138
+Colors            |  0.005623 |    0.004736 |   0.842337
+Pieces            |  0.018838 |    0.009041 |   0.479946
+Squares           |  0.089639 |    0.045636 |   0.509110
+Moves             |  0.086117 |    0.217042 |   2.520321
+Board Init        |  0.091657 |    5.062907 |  55.237283
+Board Props       |  0.426570 |   11.517537 |  27.000372
+Board Ops         |  0.100331 |    0.578784 |   5.768751
+Board Ops 2       |  0.105453 |    5.327600 |  50.521126
+Make Move         |  0.079674 |    0.555655 |   6.974129
+Make Move (New)   |  0.090940 |    0.605637 |   6.659730
+Undo Move         |  0.091185 |    0.481893 |   5.284780
+Next Move         |  0.067739 |    0.459672 |   6.785930
+Generate Moves    |  0.208179 |   10.695765 |  51.377735
+SAN Parse         |  0.063843 |    0.651645 |  10.207014
+King Square       |  0.044894 |    0.131626 |   2.931930
+Zobrist Hash      |  0.045252 |    1.741447 |  38.483714
+Checkmate         |  0.048705 |    0.206944 |   4.248894
+Insufficient Mat. |  0.040469 |    0.174750 |   4.318096
+Bitboard Ops      |  0.036695 |    0.067098 |   1.828515
+Board Bitboards   |  0.070030 |    0.136282 |   1.946055
+Castle Rights     |  0.060880 |    0.333831 |   5.483449
+Repetitions       |  0.046618 |   13.510689 | 289.813933
+Board Status      |  0.049362 |    0.682978 |  13.836119
+Square/Piece Adv. |  0.033849 |    0.048523 |   1.433507
+Null Move         |  0.047808 |    0.322804 |   6.752067
 ------------------------------------------------------------
-Total             |  2.140316 |   55.280731 |  25.828308
+Total             |  2.050350 |   53.570522 |  26.127503
 """
 
 import time
@@ -394,19 +394,6 @@ def python_board_status():
     board.outcome()
 
 
-# def rust_move_gen_ops():
-#     board = rc.Board()
-#     board.reset_move_generator()
-#     board.exclude_generator_mask(rc.BB_RANK_4)
-#     board.get_generator_num_remaining()
-#     board.exclude_generator_mask(rc.BB_RANK_5)
-
-# TODO: Find valid comparison?
-# def python_move_gen_ops():
-#     board = chess.Board()
-#     moves = list(board.legal_moves)
-
-
 def rust_square_piece_advanced():
     sq = rc.E4
     sq.get_color()
@@ -462,7 +449,6 @@ if __name__ == "__main__":
         ("Castle Rights", rust_castle_rights, python_castle_rights),
         ("Repetitions", rust_repetitions, python_repetitions),
         ("Board Status", rust_board_status, python_board_status),
-        # ("Move Gen Ops", rust_move_gen_ops, python_move_gen_ops),
         ("Square/Piece Adv.", rust_square_piece_advanced, python_square_piece_advanced),
         ("Null Move", rust_null_move, python_null_move),
     ]
@@ -483,3 +469,5 @@ if __name__ == "__main__":
     total_python = sum(p for r, p, s in times)
     total_speedup = total_python / total_rust if total_rust > 0 else float("inf")
     print(f"{'Total':<17} | {total_rust:>9f} | {total_python:>11f} | {total_speedup:>10f}")
+
+    print()

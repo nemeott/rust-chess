@@ -112,9 +112,13 @@ impl PyBoard {
 
     /// Helper to lazily initialize and return a reference to the generator
     #[inline]
-    pub(crate) fn ensure_move_gen(&self, py: Python<'_>) -> Py<PyMoveGenerator> {
-        self.move_gen
-            .get_or_init(|| Py::new(py, PyMoveGenerator::new(&self.board)).unwrap())
+    pub(crate) fn ensure_move_gen(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Py<PyMoveGenerator> {
+        move_gen
+            .get_or_init(|| Py::new(py, PyMoveGenerator::new(board)).unwrap())
             .clone_ref(py)
     }
 
@@ -361,7 +365,139 @@ impl PyBoard {
         PyBitboard(*board.combined())
     }
 
-    // TODO: Generator methods?
+    #[inline]
+    pub(crate) fn _get_generator_num_remaining(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> usize {
+        Self::ensure_move_gen(py, board, move_gen)
+            .borrow(py)
+            .__len__()
+    }
+
+    #[inline]
+    pub(crate) fn _remove_generator_move(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+        chess_move: PyMove,
+    ) {
+        Self::ensure_move_gen(py, board, move_gen)
+            .borrow_mut(py)
+            .remove_move(chess_move.0);
+    }
+
+    #[inline]
+    pub(crate) fn _retain_generator_mask(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+        mask: PyBitboard,
+    ) {
+        Self::ensure_move_gen(py, board, move_gen)
+            .borrow_mut(py)
+            .retain_mask(mask.0);
+    }
+
+    #[inline]
+    pub(crate) fn _exclude_generator_mask(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+        mask: PyBitboard,
+    ) {
+        Self::ensure_move_gen(py, board, move_gen)
+            .borrow_mut(py)
+            .exclude_mask(mask.0);
+    }
+
+    #[inline]
+    pub(crate) fn _generate_next_move(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Option<PyMove> {
+        Self::ensure_move_gen(py, board, move_gen)
+            .borrow_mut(py)
+            .__next__()
+    }
+
+    #[inline]
+    pub(crate) fn _generate_next_legal_move(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Option<PyMove> {
+        let gen_ref = Self::ensure_move_gen(py, board, move_gen);
+
+        // Allow all destination squares again for iteration
+        gen_ref.borrow_mut(py).retain_mask(!chess::EMPTY);
+
+        gen_ref.borrow_mut(py).__next__()
+    }
+
+    #[inline]
+    pub(crate) fn _generate_next_legal_capture(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Option<PyMove> {
+        // Get the mask of enemy‐occupied squares
+        let targets_mask = board.color_combined(!board.side_to_move());
+
+        let gen_ref = Self::ensure_move_gen(py, board, move_gen);
+
+        // Allow only capture destination squares for iteration
+        gen_ref.borrow_mut(py).retain_mask(*targets_mask);
+
+        gen_ref.borrow_mut(py).__next__()
+    }
+
+    // TODO: Generate moves_list (Vec<PyMove>)
+
+    #[inline]
+    pub(crate) fn _generate_moves(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Py<PyMoveGenerator> {
+        // Share ownership with Python
+        Self::ensure_move_gen(py, board, move_gen)
+    }
+
+    #[inline]
+    pub(crate) fn _generate_legal_moves(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Py<PyMoveGenerator> {
+        let gen_ref = Self::ensure_move_gen(py, board, move_gen);
+
+        // Allow all destination squares again for iteration
+        gen_ref.borrow_mut(py).retain_mask(!chess::EMPTY);
+
+        // Share ownership with Python
+        gen_ref
+    }
+
+    #[inline]
+    pub(crate) fn _generate_legal_captures(
+        py: Python<'_>,
+        board: &chess::Board,
+        move_gen: &OnceLock<Py<PyMoveGenerator>>,
+    ) -> Py<PyMoveGenerator> {
+        // Get the mask of enemy‐occupied squares
+        let targets_mask = board.color_combined(!board.side_to_move());
+
+        let gen_ref = Self::ensure_move_gen(py, board, move_gen);
+
+        // Allow only capture destination squares for iteration
+        gen_ref.borrow_mut(py).retain_mask(*targets_mask);
+
+        // Share ownership with Python
+        gen_ref
+    }
 
     #[inline]
     pub(crate) fn _is_fifty_moves(board: &chess::Board, halfmove_clock: u8) -> bool {
@@ -1484,7 +1620,7 @@ impl PyBoard {
     fn get_generator_num_remaining(&self) -> usize {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py).borrow(py).__len__()
+        Self::_get_generator_num_remaining(py, &self.board, &self.move_gen)
     }
 
     /// Reset the move generator for the current board.
@@ -1512,10 +1648,6 @@ impl PyBoard {
     /// Updates the generator mask to exclude the move.
     /// Useful if you already have a certain move and don't need to generate it again.
     ///
-    /// **WARNING**: using any form of `legal_move` or `legal_capture` generation
-    /// will set the generator mask, invalidating any previous removals by this function.
-    /// This also applies to setting the generator mask manually.
-    ///
     /// ```python
     /// >>> board = rust_chess.Board()
     /// >>> len(board.generate_moves())  # Legal moves by default
@@ -1533,9 +1665,7 @@ impl PyBoard {
     fn remove_generator_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py)
-            .borrow_mut(py)
-            .remove_move(chess_move.0);
+        Self::_remove_generator_move(py, &self.board, &self.move_gen, chess_move)
     }
 
     /// Retains only moves whose destination squares are in the given mask.
@@ -1560,7 +1690,7 @@ impl PyBoard {
     fn retain_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py).borrow_mut(py).retain_mask(mask.0);
+        Self::_retain_generator_mask(py, &self.board, &self.move_gen, mask)
     }
 
     /// Excludes moves whose destination squares are in the given mask.
@@ -1569,7 +1699,7 @@ impl PyBoard {
     /// Only moves landing on squares not in the mask will be generated.
     /// See `retain_generator_mask` for the inverse.
     ///
-    /// Removed moves stay removed even if you later generate over all legal moves.
+    /// Removed moves stay removed even if you change the mask.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -1587,7 +1717,7 @@ impl PyBoard {
     fn exclude_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py).borrow_mut(py).exclude_mask(mask.0);
+        Self::_exclude_generator_mask(py, &self.board, &self.move_gen, mask)
     }
 
     /// Get the next remaining move in the generator.
@@ -1611,7 +1741,7 @@ impl PyBoard {
     fn generate_next_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        self.ensure_move_gen(py).borrow_mut(py).__next__()
+        Self::_generate_next_move(py, &self.board, &self.move_gen)
     }
 
     /// Get the next remaining legal move in the generator.
@@ -1632,13 +1762,7 @@ impl PyBoard {
     fn generate_next_legal_move(&mut self) -> Option<PyMove> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-
-        let gen_ref = self.ensure_move_gen(py);
-
-        // Allow all destination squares again for iteration
-        gen_ref.borrow_mut(py).retain_mask(!chess::EMPTY);
-
-        gen_ref.borrow_mut(py).__next__()
+        Self::_generate_next_legal_move(py, &self.board, &self.move_gen)
     }
 
     /// Get the next remaining legal capture in the generator.
@@ -1661,21 +1785,12 @@ impl PyBoard {
     /// ```
     #[inline]
     fn generate_next_legal_capture(&mut self) -> Option<PyMove> {
-        // Get the mask of enemy‐occupied squares
-        let targets_mask = self.board.color_combined(!self.board.side_to_move());
-
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-
-        let gen_ref = self.ensure_move_gen(py);
-
-        // Allow only capture destination squares for iteration
-        gen_ref.borrow_mut(py).retain_mask(*targets_mask);
-
-        gen_ref.borrow_mut(py).__next__()
+        Self::_generate_next_legal_capture(py, &self.board, &self.move_gen)
     }
 
-    // TODO: Generate moves_list (PyList<PyMove>)
+    // TODO: Generate moves_list (Vec<PyMove>)
 
     /// Generate the next remaining moves for the current board.
     /// Exhausts the move generator if fully iterated over.
@@ -1699,16 +1814,14 @@ impl PyBoard {
     fn generate_moves(&mut self) -> Py<PyMoveGenerator> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-
-        // Share ownership with Python
-        self.ensure_move_gen(py)
+        Self::_generate_moves(py, &self.board, &self.move_gen)
     }
 
     /// Generate the next remaining legal moves for the current board.
     /// Exhausts the move generator if fully iterated over.
     /// Updates the move generator.
     ///
-    /// Will not iterate over the same moves already generated by `generate_legal_captures`.
+    /// Will not iterate over moves already generated.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -1726,14 +1839,7 @@ impl PyBoard {
     fn generate_legal_moves(&mut self) -> Py<PyMoveGenerator> {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-
-        let gen_ref = self.ensure_move_gen(py);
-
-        // Allow all destination squares again for iteration
-        gen_ref.borrow_mut(py).retain_mask(!chess::EMPTY);
-
-        // Share ownership with Python
-        gen_ref
+        Self::_generate_legal_moves(py, &self.board, &self.move_gen)
     }
 
     /// Generate the next remaining legal captures for the current board.
@@ -1760,19 +1866,9 @@ impl PyBoard {
     /// ```
     #[inline]
     fn generate_legal_captures(&mut self) -> Py<PyMoveGenerator> {
-        // Get the mask of enemy‐occupied squares
-        let targets_mask = self.board.color_combined(!self.board.side_to_move());
-
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-
-        let gen_ref = self.ensure_move_gen(py);
-
-        // Allow only capture destination squares for iteration
-        gen_ref.borrow_mut(py).retain_mask(*targets_mask);
-
-        // Share ownership with Python
-        gen_ref
+        Self::_generate_legal_captures(py, &self.board, &self.move_gen)
     }
 
     /// Checks if the halfmoves since the last pawn move or capture is >= 100

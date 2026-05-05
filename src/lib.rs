@@ -4,7 +4,7 @@
 #![allow(clippy::unused_self)]
 
 // Use mimalloc as the global allocator for improved performance
-#[cfg(not(all(target_arch = "aarch64", target_os = "linux")))]
+#[cfg(not(all(target_arch = "aarch64", target_os = "linux")))] // MiMalloc not working on aarch64 linux CI
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 

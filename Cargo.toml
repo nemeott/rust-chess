@@ -14,6 +14,7 @@ pyo3 = "0.28.3"
 pyo3-stub-gen = "0.22.2" # Enable auto generating pyo3 stub files
 terminal_size = "0.4.4" # Minimal binary to detect terminal size for dynamic tiled board display
 
+# Doesn't work on aarch64 linux in the github action
 [target.'cfg(not(all(target_arch = "aarch64", target_os = "linux")))'.dependencies]
 mimalloc = "0.1.50" # Faster allocater than the default system allocator
 

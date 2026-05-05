@@ -7,11 +7,8 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - master
-    tags:
-      - '*'
+    tags: # Only run on tag push
+      - "*"
   pull_request:
   workflow_dispatch:
 
@@ -41,6 +38,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
+      - name: Use CI cargo config
+        run: cp .cargo/ci-config.toml .cargo/config.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -55,7 +54,7 @@ jobs:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist
 
-# Can't figure out how to get this to work
+  # Can't figure out how to get this to work
   # musllinux:
   #   runs-on: ${{ matrix.platform.runner }}
   #   strategy:
@@ -107,6 +106,8 @@ jobs:
         with:
           python-version: 3.13
           architecture: ${{ matrix.platform.python_arch }}
+      - name: Use CI cargo config
+        run: cp .cargo/ci-config.toml .cargo/config.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -133,6 +134,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
+      - name: Use CI cargo config
+        run: cp .cargo/ci-config.toml .cargo/config.toml
       - name: Build wheels
         uses: PyO3/maturin-action@v1
         with:
@@ -181,7 +184,7 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v3
         with:
-          subject-path: 'wheels-*/*'
+          subject-path: "wheels-*/*"
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Publish to PyPI

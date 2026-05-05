@@ -272,8 +272,8 @@ impl PyBoardBatch {
     /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
     /// Disable if you are a psychopath and use light mode in your terminal/IDE.
     ///
-    #[inline]
     #[pyo3(signature = (dark_mode = true))]
+    #[inline]
     fn display_unicode(&self, dark_mode: bool) -> String {
         self.boards
             .iter()

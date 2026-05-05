@@ -65,6 +65,22 @@ pub mod pieces{
 #[derive(PartialEq, Eq, Ord, PartialOrd, Copy, Clone, Hash)]
 pub struct PyPieceType(pub(crate) chess::Piece);
 
+impl PyPieceType {
+    /// Convert the piece to a solid unicode string.
+    #[inline]
+    pub(crate) fn get_solid_unicode(&self) -> &'static str {
+        match self.0.to_index() {
+            0 => "♟",
+            1 => "♞",
+            2 => "♝",
+            3 => "♜",
+            4 => "♛",
+            5 => "♚",
+            _ => "",
+        }
+    }
+}
+
 #[gen_stub_pymethods]
 #[pymethods]
 impl PyPieceType {
@@ -104,8 +120,8 @@ impl PyPieceType {
     /// >>> rust_chess.PAWN.get_string(rust_chess.BLACK)
     /// 'p'
     /// ```
-    #[inline]
     #[pyo3(signature = (color = WHITE))] // Default piece color is white (capital letter)
+    #[inline]
     pub(crate) fn get_string(&self, color: PyColor) -> String {
         self.0.to_string(color.0)
     }
@@ -151,9 +167,9 @@ impl PyPieceType {
     /// '♟'
     /// ```
     #[rustfmt::skip]
-    #[inline]
     #[pyo3(signature = (color = WHITE, dark_mode = true))] // Default piece color is white, and dark mode enabled
-    fn get_unicode(&self, color: PyColor, dark_mode: bool) -> &'static str {
+    #[inline]
+    pub(crate) fn get_unicode(&self, color: PyColor, dark_mode: bool) -> &'static str {
         // Flip the color if it is dark mode (looks more correct)
         let actual_color = if dark_mode {
             if color == WHITE { BLACK } else { WHITE }

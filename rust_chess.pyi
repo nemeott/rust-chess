@@ -4,7 +4,6 @@
 import builtins
 import enum
 import typing
-
 __all__ = [
     "A1",
     "A2",
@@ -236,7 +235,6 @@ WHITE_KNIGHT: Piece
 WHITE_PAWN: Piece
 WHITE_QUEEN: Piece
 WHITE_ROOK: Piece
-
 @typing.final
 class Bitboard:
     r"""
@@ -255,7 +253,7 @@ class Bitboard:
     def from_square(square: Square) -> Bitboard:
         r"""
         Create a new Bitboard from a square.
-
+        
         ```python
         >>> rust_chess.Bitboard.from_square(rust_chess.E4)
         . . . . . . . .
@@ -272,7 +270,7 @@ class Bitboard:
     def from_uint(bitboard: builtins.int) -> Bitboard:
         r"""
         Create a new Bitboard from an unsigned 64-bit integer.
-
+        
         ```python
         >>> rust_chess.Bitboard.from_uint(7)
         X X X . . . . .
@@ -289,7 +287,7 @@ class Bitboard:
         r"""
         Convert the Bitboard to a square.
         This grabs the least-significant square.
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb.to_square()
@@ -301,7 +299,7 @@ class Bitboard:
     def to_uint(self) -> builtins.int:
         r"""
         Convert the Bitboard to an unsigned 64-bit integer.
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb.to_uint()
@@ -311,7 +309,7 @@ class Bitboard:
     def __int__(self) -> builtins.int:
         r"""
         Convert the Bitboard to an integer.
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> int(bb)
@@ -325,7 +323,7 @@ class Bitboard:
         a1 is the top-left corner, h8 is the bottom-right corner.
         To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
         Very useful for debugging purposes.
-
+        
         ```python```
         >>> bb = rust_chess.Bitboard(16961066976411648)
         >>> print(bb.get_string())
@@ -345,7 +343,7 @@ class Bitboard:
         a1 is the top-left corner, h8 is the bottom-right corner.
         To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
         Very useful for debugging purposes.
-
+        
         ```python```
         >>> bb = rust_chess.Bitboard(18643319766908928)
         >>> print(bb)
@@ -365,7 +363,7 @@ class Bitboard:
         a1 is the top-left corner, h8 is the bottom-right corner.
         To make a1 the bottom-left corner and h8 the top-right corner, call `flip_vertical()` on the bitboard.
         Very useful for debugging purposes.
-
+        
         ```python```
         >>> bb = rust_chess.Bitboard(35465847671881728)
         >>> bb
@@ -381,7 +379,7 @@ class Bitboard:
     def popcnt(self) -> builtins.int:
         r"""
         Count the number of squares in the Bitboard
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb.popcnt()
@@ -397,7 +395,7 @@ class Bitboard:
         Flip a bitboard vertically.
         View it from the opponent's perspective.
         Useful for operations that rely on symmetry, like piece-square tables.
-
+        
         ```python
         >>> bb = rust_chess.Bitboard(6781892917204992)
         >>> bb
@@ -423,7 +421,7 @@ class Bitboard:
     def __iter__(self) -> Bitboard:
         r"""
         Return an iterator of the bitboard.
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> list(bb)
@@ -436,7 +434,7 @@ class Bitboard:
         r"""
         Get the next square in the Bitboard.
         Removes the square from the Bitboard.
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> next(bb)
@@ -451,7 +449,7 @@ class Bitboard:
     def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
         r"""
         Rich comparison operations for the Bitboard type.
-
+        
         ```python
         >>> bb_e4 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb_e4_2 = rust_chess.Bitboard.from_square(rust_chess.E4)
@@ -507,7 +505,7 @@ class Bitboard:
     def __invert__(self) -> Bitboard:
         r"""
         Bitwise NOT operation (~self).
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> ~bb
@@ -524,7 +522,7 @@ class Bitboard:
     def __and__(self, other: typing.Any) -> Bitboard:
         r"""
         Bitwise AND operation (self & other).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
@@ -548,7 +546,7 @@ class Bitboard:
     def __rand__(self, other: typing.Any) -> Bitboard:
         r"""
         Reflected bitwise AND operation (other & self).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
@@ -573,7 +571,7 @@ class Bitboard:
         r"""
         In-place bitwise AND operation (self &= other).
         Can't do self &= self.
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
@@ -597,7 +595,7 @@ class Bitboard:
     def __or__(self, other: typing.Any) -> Bitboard:
         r"""
         Bitwise OR operation (self | other).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
@@ -617,7 +615,7 @@ class Bitboard:
     def __ror__(self, other: typing.Any) -> Bitboard:
         r"""
         Reflected bitwise OR operation (other | self).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
@@ -637,7 +635,7 @@ class Bitboard:
     def __ior__(self, other: typing.Any) -> None:
         r"""
         In-place bitwise OR operation (self |= other).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.D4)
@@ -666,7 +664,7 @@ class Bitboard:
     def __xor__(self, other: typing.Any) -> Bitboard:
         r"""
         Bitwise XOR operation (self ^ other).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
@@ -686,7 +684,7 @@ class Bitboard:
     def __rxor__(self, other: typing.Any) -> Bitboard:
         r"""
         Reflected bitwise XOR operation (other ^ self).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
@@ -706,7 +704,7 @@ class Bitboard:
     def __ixor__(self, other: typing.Any) -> None:
         r"""
         In-place bitwise XOR operation (self ^= other).
-
+        
         ```python
         >>> bb1 = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb2 = rust_chess.Bitboard.from_square(rust_chess.B2)
@@ -735,7 +733,7 @@ class Bitboard:
     def __lshift__(self, shift: builtins.int) -> Bitboard:
         r"""
         Left shift operation (self << shift).
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb
@@ -761,7 +759,7 @@ class Bitboard:
     def __ilshift__(self, shift: builtins.int) -> None:
         r"""
         In-place left shift operation (self <<= shift).
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb
@@ -788,7 +786,7 @@ class Bitboard:
     def __rshift__(self, shift: builtins.int) -> Bitboard:
         r"""
         Right shift operation (self >> shift).
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb
@@ -814,7 +812,7 @@ class Bitboard:
     def __irshift__(self, shift: builtins.int) -> None:
         r"""
         In-place right shift operation (self >>= shift).
-
+        
         ```python
         >>> bb = rust_chess.Bitboard.from_square(rust_chess.E4)
         >>> bb
@@ -844,14 +842,14 @@ class Board:
     r"""
     Board class.
     Represents the state of a chess board.
-
+    
     TODO: docs
     """
     @property
     def halfmove_clock(self) -> builtins.int:
         r"""
         Get the halfmove clock.
-
+        
         ```python
         >>> rust_chess.Board().halfmove_clock
         0
@@ -861,7 +859,7 @@ class Board:
     def fullmove_number(self) -> builtins.int:
         r"""
         Get the fullmove number.
-
+        
         ```python
         >>> rust_chess.Board().fullmove_number
         1
@@ -893,14 +891,14 @@ class Board:
     def turn(self) -> Color:
         r"""
         Get the current player to move.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.turn
         True
         >>> print(board.turn)
         WHITE
-
+        
         >>> board.make_move(rust_chess.Move("e2e4"))
         >>> board.turn
         False
@@ -912,24 +910,22 @@ class Board:
     def en_passant(self) -> typing.Optional[Square]:
         r"""
         Get the en passant square, otherwise None.
-
+        
         ```python
         >>> rust_chess.Board().en_passant
-
+        
         >>> rust_chess.Board().en_passant == None
         True
-
+        
         >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> board.en_passant
         f6
         ```
         """
-    def __new__(
-        cls, fen: typing.Optional[builtins.str] = None, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL
-    ) -> Board:
+    def __new__(cls, fen: typing.Optional[builtins.str] = None, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> Board:
         r"""
         Create a new board from a FEN string, otherwise default to the starting position.
-
+        
         ```python
         >>> rust_chess.Board()
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -941,7 +937,7 @@ class Board:
     def from_fen(fen: builtins.str, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> Board:
         r"""
         Create a new board from a FEN string.
-
+        
         ```python
         >>> rust_chess.Board.from_fen("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
@@ -950,7 +946,7 @@ class Board:
     def get_fen(self) -> builtins.str:
         r"""
         Get the FEN string representation of the board.
-
+        
         ```python
         >>> rust_chess.Board().get_fen()
         'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -959,7 +955,7 @@ class Board:
     def __repr__(self) -> builtins.str:
         r"""
         Get the FEN string representation of the board.
-
+        
         ```python
         >>> rust_chess.Board()
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -968,7 +964,7 @@ class Board:
     def display(self) -> builtins.str:
         r"""
         Get the string representation of the board.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> print(board.display())
@@ -980,13 +976,13 @@ class Board:
         . . . . . . . .
         P P P P P P P P
         R N B Q K B N R
-
+        
         ```
         """
     def __str__(self) -> builtins.str:
         r"""
         Get the string representation of the board.
-
+        
         ```python
         >>> print(rust_chess.Board())
         r n b q k b n r
@@ -997,18 +993,18 @@ class Board:
         . . . . . . . .
         P P P P P P P P
         R N B Q K B N R
-
+        
         ```
         """
     def display_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
         r"""
         Get the unicode string representation of the board.
-
+        
         The dark mode parameter is enabled by default.
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> print(board.display_unicode())
@@ -1020,7 +1016,7 @@ class Board:
         · · · · · · · ·
         ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
         ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-
+        
         >>> print(board.display_unicode(dark_mode=False))
         ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
         ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
@@ -1030,13 +1026,21 @@ class Board:
         · · · · · · · ·
         ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
         ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
-
+        
         ```
+        """
+    def display_color(self, green_mode: builtins.bool = False) -> builtins.str:
+        r"""
+        Get the unicode string representation of the board with ANSI color codes.
+        The board is a little tiny, but it looks pretty good.
+        
+        The default board color is tan/brown.
+        Enable the `green_mode` parameter to change the color to olive/sand.
         """
     def get_move_from_san(self, san: builtins.str) -> Move:
         r"""
         Create a new move from a SAN string (e.g. "e4").
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.get_move_from_san("e4")
@@ -1048,7 +1052,7 @@ class Board:
         Get a hash of the board based on its Zobrist hash.
         **This is not the same as the `zobrist_hash` field since Python doesn't support unsigned 64-bit integers for this function.**
         Use `zobrist_hash` directly for the actual Zobrist hash value.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> hash(board)
@@ -1065,7 +1069,7 @@ class Board:
     def __eq__(self, other: Board) -> builtins.bool:
         r"""
         Check if two boards are equal based on their Zobrist hash.
-
+        
         ```python
         >>> board1 = rust_chess.Board()
         >>> board2 = rust_chess.Board()
@@ -1079,7 +1083,7 @@ class Board:
     def __ne__(self, other: Board) -> builtins.bool:
         r"""
         Check if two boards are not equal based on their Zobrist hash.
-
+        
         ```python
         >>> board1 = rust_chess.Board()
         >>> board2 = rust_chess.Board()
@@ -1093,7 +1097,7 @@ class Board:
     def get_king_square(self, color: Color) -> Square:
         r"""
         Get the king square for a color.
-
+        
         ```python
         >>> rust_chess.Board().get_king_square(rust_chess.WHITE)
         e1
@@ -1105,7 +1109,7 @@ class Board:
         r"""
         Get the castle rights for a color.
         Returns a `CastleRights` enum type, which has the values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.get_castle_rights(board.turn)
@@ -1120,7 +1124,7 @@ class Board:
     def get_my_castle_rights(self) -> CastleRights:
         r"""
         Get the castle rights of the current player to move.
-
+        
         ```python
         >>> rust_chess.Board().get_my_castle_rights()
         CastleRights.BOTH
@@ -1132,7 +1136,7 @@ class Board:
     def get_their_castle_rights(self) -> CastleRights:
         r"""
         Get the castle rights of the opponent.
-
+        
         ```python
         >>> rust_chess.Board().get_their_castle_rights()
         CastleRights.BOTH
@@ -1144,7 +1148,7 @@ class Board:
     def can_castle(self, color: Color) -> builtins.bool:
         r"""
         Check if a color can castle (either side).
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.can_castle(board.turn)
@@ -1159,7 +1163,7 @@ class Board:
     def can_castle_queenside(self, color: Color) -> builtins.bool:
         r"""
         Check if a color can castle queenside.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.can_castle_queenside(board.turn)
@@ -1174,7 +1178,7 @@ class Board:
     def can_castle_kingside(self, color: Color) -> builtins.bool:
         r"""
         Check if a color can castle kingside.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.can_castle_kingside(board.turn)
@@ -1188,7 +1192,7 @@ class Board:
         r"""
         Check if a move is castling.
         Assumes the move is pseudo-legal.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_castling(rust_chess.Move("e1g1"))
@@ -1200,8 +1204,8 @@ class Board:
     def is_castling_queenside(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is queenside castling.
-        Assumes the move is pseudo-legal.
-
+        Assumes the move is pseudo-legal.    
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_castling_queenside(rust_chess.Move("e1c1"))
@@ -1214,7 +1218,7 @@ class Board:
         r"""
         Check if a move is kingside castling.
         Assumes the move is pseudo-legal.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_castling_kingside(rust_chess.Move("e1g1"))
@@ -1226,7 +1230,7 @@ class Board:
     def get_color_on(self, square: Square) -> typing.Optional[Color]:
         r"""
         Get the color of the piece on a square, otherwise None.
-
+        
         ```python
         >>> rust_chess.Board().get_color_on(rust_chess.A1)
         True
@@ -1242,7 +1246,7 @@ class Board:
         r"""
         Get the piece type on a square, otherwise None.
         Different than `get_piece_on` because it returns the piece type, which does not include color.
-
+        
         ```python
         >>> rust_chess.Board().get_piece_type_on(rust_chess.A1)
         R
@@ -1254,7 +1258,7 @@ class Board:
         r"""
         Get the piece on a square, otherwise None.
         Different than `get_piece_on` because it returns the piece, which includes color.
-
+        
         ```python
         >>> rust_chess.Board().get_piece_on(rust_chess.A1)
         R
@@ -1265,13 +1269,13 @@ class Board:
     def is_en_passant(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is en passant.
-
+        
         Assumes the move is legal.
-
+        
         ```python
         >>> rust_chess.Board().is_en_passant(rust_chess.Move("e2e4"))
         False
-
+        
         >>> board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> board.is_en_passant(rust_chess.Move("e5f6"))
         True
@@ -1280,19 +1284,19 @@ class Board:
     def is_capture(self, chess_move: Move) -> builtins.bool:
         r"""
         Check if a move is a capture.
-
+        
         Assumes the move is legal.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_capture(rust_chess.Move("e2e4"))
         False
         >>> board.make_move(rust_chess.Move("e2e4"))
-
+        
         >>> board.make_move(rust_chess.Move("d7d5"))
         >>> board.is_capture(rust_chess.Move("e4d5"))
         True
-
+        
         >>> ep_board = rust_chess.Board("rnbqkbnr/pp2p1pp/2p5/3pPp2/5P2/8/PPPP2PP/RNBQKBNR w KQkq f6 0 4")
         >>> ep_board.is_capture(rust_chess.Move("e5f6"))
         True
@@ -1302,19 +1306,19 @@ class Board:
         r"""
         Check if a move is a capture or a pawn move.
         This type of move "zeros" the halfmove clock (sets it to 0).
-
+        
         Assumes the move is legal.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_zeroing(rust_chess.Move("e2e4"))
         True
         >>> board.make_move(rust_chess.Move("e2e4"))
-
+        
         >>> board.is_zeroing(rust_chess.Move("g8f6"))
         False
         >>> board.make_move(rust_chess.Move("d7d5"))
-
+        
         >>> board.is_zeroing(rust_chess.Move("e4d5"))
         True
         ```
@@ -1324,7 +1328,7 @@ class Board:
         Check if the move is legal (supposedly very slow according to the chess crate).
         Use this function for moves not generated by the move generator.
         `is_legal_quick` is faster for moves generated by the move generator.
-
+        
         ```python
         >>> move = rust_chess.Move("e2e4")
         >>> rust_chess.Board().is_legal_move(move)
@@ -1340,7 +1344,7 @@ class Board:
         Only use this function for moves generated by the move generator.
         You would want to use this when you have a psuedo-legal move (guarenteed by the generator).
         Slightly faster than using `is_legal_move` since it doesn't have to check as much stuff.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>>
@@ -1350,7 +1354,7 @@ class Board:
         r"""
         Make a null move onto a new board.
         Returns None if the current player is in check.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board
@@ -1358,7 +1362,7 @@ class Board:
         >>> new_board = board.make_null_move_new()
         >>> new_board
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1
-
+        
         >>> board = rust_chess.Board("rnbqkbnr/ppppp1pp/5p2/7Q/8/4P3/PPPP1PPP/RNB1KBNR b KQkq - 1 2")
         >>> new_board = board.make_null_move_new()
         >>> print(new_board)
@@ -1368,11 +1372,11 @@ class Board:
     def make_move(self, chess_move: Move, check_legality: builtins.bool = True) -> None:
         r"""
         Make a move onto the current board.
-
+        
         Defaults to checking move legality, unless the optional legality parameter is `False`.
         Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
         Checking legality will return an error if the move is illegal.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1385,17 +1389,17 @@ class Board:
         . . . . . . . .
         P P P P . P P P
         R N B Q K B N R
-
+        
         ```
         """
     def make_move_new(self, chess_move: Move, check_legality: builtins.bool = True) -> Board:
         r"""
         Make a move onto a new board.
-
+        
         Defaults to checking move legality, unless the optional legality parameter is `False`.
         Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
         Checking legality will return an error if the move is illegal.
-
+        
         ```python
         >>> old_board = rust_chess.Board()
         >>> new_board = old_board.make_move_new(rust_chess.Move("e2e4"))
@@ -1408,7 +1412,7 @@ class Board:
         . . . . . . . .
         P P P P . P P P
         R N B Q K B N R
-
+        
         >>> print(old_board)
         r n b q k b n r
         p p p p p p p p
@@ -1418,18 +1422,18 @@ class Board:
         . . . . . . . .
         P P P P P P P P
         R N B Q K B N R
-
+        
         ```
         """
     def get_pinned_bitboard(self) -> Bitboard:
         r"""
         Get the bitboard of the side to move's pinned pieces.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.get_pinned_bitboard().popcnt()
         0
-
+        
         >>> board.make_move(rust_chess.Move("e2e4"))
         >>> board.make_move(rust_chess.Move("d7d5"))
         >>> board.make_move(rust_chess.Move("d1h5"))
@@ -1449,12 +1453,12 @@ class Board:
     def get_checkers_bitboard(self) -> Bitboard:
         r"""
         Get the bitboard of the pieces putting the side to move in check.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.get_checkers_bitboard().popcnt()
         0
-
+        
         >>> board.make_move(rust_chess.Move("e2e4"))
         >>> board.make_move(rust_chess.Move("f7f6"))
         >>> board.make_move(rust_chess.Move("d1h5"))
@@ -1474,7 +1478,7 @@ class Board:
     def get_color_bitboard(self, color: Color) -> Bitboard:
         r"""
         Get the bitboard of all the pieces of a certain color.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1494,7 +1498,7 @@ class Board:
     def get_piece_type_bitboard(self, piece_type: PieceType) -> Bitboard:
         r"""
         Get the bitboard of all the pieces of a certain type.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1514,7 +1518,7 @@ class Board:
     def get_piece_bitboard(self, piece: Piece) -> Bitboard:
         r"""
         Get the bitboard of all the pieces of a certain color and type.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1534,7 +1538,7 @@ class Board:
     def get_all_bitboard(self) -> Bitboard:
         r"""
         Get the bitboard of all the pieces.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1556,7 +1560,7 @@ class Board:
         Get the number of moves remaining in the move generator.
         This is the number of remaining moves that can be generated.
         Does not consume any iterations.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.get_generator_num_remaining()
@@ -1570,7 +1574,7 @@ class Board:
     def reset_move_generator(self) -> None:
         r"""
         Reset the move generator for the current board.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_legal_moves())
@@ -1590,7 +1594,7 @@ class Board:
         Prevents the move from being generated.
         Updates the generator mask to exclude the move.
         Useful if you already have a certain move and don't need to generate it again.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())  # Legal moves by default
@@ -1608,13 +1612,13 @@ class Board:
     def retain_generator_mask(self, mask: Bitboard) -> None:
         r"""
         Retains only moves whose destination squares are in the given mask.
-
+        
         The mask is a bitboard of allowed landing squares.
         Only moves landing on squares in the mask will be generated.
         See `exclude_generator_mask` for the inverse.
-
+        
         Moves that have already been iterated over will not be generated again, regardless of the mask value.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
@@ -1629,13 +1633,13 @@ class Board:
     def exclude_generator_mask(self, mask: Bitboard) -> None:
         r"""
         Excludes moves whose destination squares are in the given mask.
-
+        
         The mask is a bitboard of forbidden landing squares.
         Only moves landing on squares not in the mask will be generated.
         See `retain_generator_mask` for the inverse.
-
+        
         Removed moves stay removed even if you change the mask.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
@@ -1653,9 +1657,9 @@ class Board:
         r"""
         Get the next remaining move in the generator.
         Updates the move generator to the next move.
-
+        
         Unless a mask has been set, this will return the next legal move by default.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
@@ -1673,9 +1677,9 @@ class Board:
         r"""
         Get the next remaining legal move in the generator.
         Updates the move generator to the next legal move.
-
+        
         Allows all legal destination squares for the generator.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_legal_moves())
@@ -1690,9 +1694,9 @@ class Board:
         r"""
         Get the next remaining legal capture in the generator.
         Updates the move generator to the next move.
-
+        
         Allows only enemy-occupied destination squares for the generator.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1712,9 +1716,9 @@ class Board:
         Generate the next remaining moves for the current board.
         Exhausts the move generator if fully iterated over.
         Updates the move generator.
-
+        
         Unless a mask has been set, this will generate the next legal moves by default.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_moves())
@@ -1733,9 +1737,9 @@ class Board:
         Generate the next remaining legal moves for the current board.
         Exhausts the move generator if fully iterated over.
         Updates the move generator.
-
+        
         Will not iterate over moves already generated.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> len(board.generate_legal_moves())
@@ -1754,10 +1758,10 @@ class Board:
         Generate the next remaining legal captures for the current board.
         Exhausts the move generator if fully iterated over.
         Updates the move generator.
-
+        
         Can iterate over legal captures first and then legal moves without any duplicated moves.
         Useful for move ordering, in case you want to check captures first before generating other moves.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.make_move(rust_chess.Move("e2e4"))
@@ -1778,9 +1782,9 @@ class Board:
         r"""
         Checks if the halfmoves since the last pawn move or capture is >= 100
         and the game is ongoing (not checkmate or stalemate).
-
+        
         This is a claimable draw according to FIDE rules.
-
+        
         ```python
         >>> rust_chess.Board().is_fifty_moves()
         False
@@ -1792,9 +1796,9 @@ class Board:
         r"""
         Checks if the halfmoves since the last pawn move or capture is >= 150
         and the game is ongoing (not checkmate or stalemate).
-
+        
         This is an automatic draw according to FIDE rules.
-
+        
         ```python
         >>> rust_chess.Board().is_seventy_five_moves()
         False
@@ -1810,7 +1814,7 @@ class Board:
             2. K vs K + N
             3. K vs K + B
             4. K + B vs K + B with the bishops on the same color.
-
+        
         ```python
         >>> rust_chess.Board().is_insufficient_material()
         False
@@ -1829,7 +1833,7 @@ class Board:
     def is_n_repetition(self, n: builtins.int) -> builtins.bool:
         r"""
         Checks if the current position is a n-fold repetition.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_n_repetition(4)  # Check for fourfold repetition
@@ -1844,7 +1848,7 @@ class Board:
         >>> board.board_history.count(board.zobrist_hash)  # Position appears 4 times
         4
         ```
-
+        
         TODO: Quick check (only check last few moves since that is common error for engines)
         TODO: Add option to use full, or no repetition checks
         """
@@ -1852,7 +1856,7 @@ class Board:
         r"""
         Checks if the current position is a threefold repetition.
         This is a claimable draw according to FIDE rules.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_threefold_repetition()
@@ -1872,7 +1876,7 @@ class Board:
         r"""
         Checks if the current position is a fivefold repetition.
         This is an automatic draw according to FIDE rules.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.is_fivefold_repetition()
@@ -1891,7 +1895,7 @@ class Board:
     def is_check(self) -> builtins.bool:
         r"""
         Checks if the side to move is in check.
-
+        
         ```python
         >>> rust_chess.Board().is_check()
         False
@@ -1902,7 +1906,7 @@ class Board:
     def is_stalemate(self) -> builtins.bool:
         r"""
         Checks if the side to move is in stalemate.
-
+        
         ```python
         >>> rust_chess.Board().is_stalemate()
         False
@@ -1912,7 +1916,7 @@ class Board:
     def is_checkmate(self) -> builtins.bool:
         r"""
         Checks if the side to move is in checkmate.
-
+        
         ```python
         >>> rust_chess.Board().is_checkmate()
         False
@@ -1922,7 +1926,7 @@ class Board:
     def get_status(self) -> BoardStatus:
         r"""
         Get the status of the board (ongoing, draw, or game-ending).
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.get_status()
@@ -1969,9 +1973,7 @@ class BoardBatch:
         Create a new batch of boards.
         """
     @staticmethod
-    def from_fens(
-        fens: typing.Sequence[builtins.str], mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL
-    ) -> BoardBatch:
+    def from_fens(fens: typing.Sequence[builtins.str], mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
         r"""
         Create a new batch of boards from a list of FEN strings.
         """
@@ -1996,7 +1998,7 @@ class BoardBatch:
     def display_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
         r"""
         Get the unicode string representation of each board separated by newlines.
-
+        
         The dark mode parameter is enabled by default.
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
@@ -2092,20 +2094,20 @@ class BoardBatch:
     def is_en_passant(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if a respective move is en passant for each board.
-
+        
         Assumes the moves are legal.
         """
     def is_capture(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if a respective move is a capture for each board.
-
+        
         Assumes the moves are legal.
         """
     def is_zeroing(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if a respective move is a capture or a pawn move for each board.
         This type of move "zeros" the halfmove clock (sets it to 0).
-
+        
         Assumes the moves are legal.
         """
     def is_legal_move(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
@@ -2129,7 +2131,7 @@ class BoardBatch:
     def make_move(self, chess_moves: typing.Sequence[Move], check_legality: builtins.bool = True) -> None:
         r"""
         Make a respective move onto each board.
-
+        
         Defaults to checking move legality, unless the optional legality parameter is `False`.
         Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
         Checking legality will return an error if the move is illegal.
@@ -2137,7 +2139,7 @@ class BoardBatch:
     def make_move_new(self, chess_moves: typing.Sequence[Move], check_legality: builtins.bool = True) -> BoardBatch:
         r"""
         Make a respective move onto a new board for each board.
-
+        
         Defaults to checking move legality, unless the optional legality parameter is `False`.
         Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
         Checking legality will return an error if the move is illegal.
@@ -2196,32 +2198,32 @@ class BoardBatch:
     def exclude_generator_mask(self, masks: typing.Sequence[Bitboard]) -> None:
         r"""
         Excludes moves whose destination squares are in the given mask respectively.
-
+        
         The mask is a bitboard of forbidden landing squares.
         Only moves landing on squares not in the mask will be generated.
         See `retain_generator_mask` for the inverse.
-
+        
         Removed moves stay removed even if you change the mask.
         """
     def generate_next_move(self) -> builtins.list[typing.Optional[Move]]:
         r"""
         Get the next remaining move in each generator.
         Updates each move generator to the next move.
-
+        
         Unless a mask has been set, this will return the next legal move by default for each board.
         """
     def generate_next_legal_move(self) -> builtins.list[typing.Optional[Move]]:
         r"""
         Get the next remaining legal move in each generator.
         Updates each move generator to the next legal move.
-
+        
         Allows all legal destination squares for each generator.
         """
     def generate_next_legal_capture(self) -> builtins.list[typing.Optional[Move]]:
         r"""
         Get the next remaining legal capture in each generator.
         Updates each move generator to the next move.
-
+        
         Allows only enemy-occupied destination squares for each generator.
         """
     def generate_moves(self) -> builtins.list[MoveGenerator]:
@@ -2229,7 +2231,7 @@ class BoardBatch:
         Generate the next remaining moves for each board.
         Exhausts each move generator if fully iterated over.
         Updates each move generator.
-
+        
         Unless a mask has been set, this will generate the next legal moves by default for each board.
         """
     def generate_legal_moves(self) -> builtins.list[MoveGenerator]:
@@ -2237,7 +2239,7 @@ class BoardBatch:
         Generate the next remaining legal moves for each board.
         Exhausts each move generator if fully iterated over.
         Updates each move generator.
-
+        
         Will not iterate over moves already generated.
         """
     def generate_legal_captures(self) -> builtins.list[MoveGenerator]:
@@ -2245,7 +2247,7 @@ class BoardBatch:
         Generate the next remaining legal captures for each current board.
         Exhausts each move generator if fully iterated over.
         Updates each move generator.
-
+        
         Can iterate over legal captures first and then legal moves without any duplicated moves.
         Useful for move ordering, in case you want to check captures first before generating other moves.
         """
@@ -2253,14 +2255,14 @@ class BoardBatch:
         r"""
         Checks if the halfmoves since the last pawn move or capture is >= 100
         and the game is ongoing (not checkmate or stalemate) for each board.
-
+        
         This is a claimable draw according to FIDE rules.
         """
     def is_seventy_five_moves(self) -> builtins.list[builtins.bool]:
         r"""
         Checks if the halfmoves since the last pawn move or capture is >= 150
         and the game is ongoing (not checkmate or stalemate) for each board.
-
+        
         This is an automatic draw according to FIDE rules.
         """
     def is_insufficient_material(self) -> builtins.list[builtins.bool]:
@@ -2275,7 +2277,7 @@ class BoardBatch:
     def is_n_repetition(self, n: builtins.int) -> builtins.list[builtins.bool]:
         r"""
         Checks if the current position is a n-fold repetition for each board.
-
+        
         TODO: Quick check (only check last few moves since that is common error for engines)
         TODO: Add option to use full, or no repetition checks
         """
@@ -2311,10 +2313,10 @@ class Color:
     r"""
     Color enum class.
     White is True, Black is False.
-
+    
     ```python
     >>> color = rust_chess.WHITE
-
+    
     >>> color
     True
     >>> print(color)
@@ -2328,7 +2330,7 @@ class Color:
     def get_string(self) -> builtins.str:
         r"""
         Get the color as a string.
-
+        
         ```python
         >>> rust_chess.WHITE.get_string()
         'WHITE'
@@ -2339,7 +2341,7 @@ class Color:
     def __str__(self) -> builtins.str:
         r"""
         Get the color as a string.
-
+        
         ```python
         >>> print(rust_chess.WHITE)
         WHITE
@@ -2350,7 +2352,7 @@ class Color:
     def __bool__(self) -> builtins.bool:
         r"""
         Get the color as a boolean.
-
+        
         ```python
         >>> bool(rust_chess.WHITE)
         True
@@ -2362,7 +2364,7 @@ class Color:
     def __repr__(self) -> builtins.str:
         r"""
         Get the color as a boolean string.
-
+        
         ```python
         >>> rust_chess.WHITE
         True
@@ -2373,7 +2375,7 @@ class Color:
     def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
         r"""
         Rich comparison operations for Color.
-
+        
         Equality (==):
         ```python
         >>> rust_chess.WHITE == rust_chess.WHITE
@@ -2383,7 +2385,7 @@ class Color:
         >>> True == rust_chess.WHITE
         True
         ```
-
+        
         Inequality (!=):
         ```python
         >>> rust_chess.WHITE != rust_chess.BLACK
@@ -2405,7 +2407,7 @@ class Move:
     Move class.
     Represents a chess move.
     The move is represented as a source square, destination square, and optional promotion piece.
-
+    
     ```python
     >>> move = rust_chess.Move(rust_chess.A4, rust_chess.B1)
     >>> move
@@ -2421,7 +2423,7 @@ class Move:
     >>> move.dest
     b1
     >>> move.promotion
-
+    
     >>> move.promotion == None
     True
     ```
@@ -2430,7 +2432,7 @@ class Move:
     def source(self) -> Square:
         r"""
         Get the source square of the move.
-
+        
         ```python
         >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
         >>> move.source
@@ -2441,8 +2443,8 @@ class Move:
     def dest(self) -> Square:
         r"""
         Get the destination square of the move.
-
-
+        
+        
         ```python
         >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
         >>> move.dest
@@ -2453,11 +2455,11 @@ class Move:
     def promotion(self) -> typing.Optional[PieceType]:
         r"""
         Get the promotion piece of the move, otherwise None.
-
+        
         ```python
         >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
         >>> move.promotion
-
+        
         >>> move.promotion == None
         True
         >>> move = rust_chess.Move("g2g1q")
@@ -2466,15 +2468,10 @@ class Move:
         ```
         """
     def __eq__(self, other: builtins.object) -> builtins.bool: ...
-    def __new__(
-        cls,
-        source_or_uci: typing.Any,
-        dest: typing.Optional[Square] = None,
-        promotion: typing.Optional[PieceType] = None,
-    ) -> Move:
+    def __new__(cls, source_or_uci: typing.Any, dest: typing.Optional[Square] = None, promotion: typing.Optional[PieceType] = None) -> Move:
         r"""
         Create a new move from a source, destination, and optional promotion piece or UCI string.
-
+        
         ```python
         >>> rust_chess.Move(rust_chess.A2, rust_chess.A4)
         Move(a2, a4, None)
@@ -2486,7 +2483,7 @@ class Move:
     def from_uci(uci: builtins.str) -> Move:
         r"""
         Create a new move from a UCI string (e.g. "e2e4").
-
+        
         ```python
         >>> rust_chess.Move.from_uci("e2e4")
         Move(e2, e4, None)
@@ -2495,7 +2492,7 @@ class Move:
     def get_uci(self) -> builtins.str:
         r"""
         Get the UCI string representation of the move (e.g. "e2e4").
-
+        
         ```python
         >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
         >>> move.get_uci()
@@ -2505,7 +2502,7 @@ class Move:
     def __str__(self) -> builtins.str:
         r"""
         Get the UCI string representation of the move (e.g. "e2e4").
-
+        
         ```python
         >>> move = rust_chess.Move(rust_chess.A2, rust_chess.A4)
         >>> print(move)
@@ -2515,7 +2512,7 @@ class Move:
     def __repr__(self) -> builtins.str:
         r"""
         Get the internal representation of the move (e.g. "Move(e2, e4, None)").
-
+        
         ```python
         >>> move = rust_chess.Move(rust_chess.E2, rust_chess.E4)
         >>> move
@@ -2529,7 +2526,7 @@ class MoveGenerator:
     Move iterator class for generating legal moves.
     Not intended for direct use.
     Use the `Board` class methods for generating moves.
-
+    
     The generator stores all currently available legal moves in a buffer.
     `retain_mask` narrows which destination squares are returned next.
     `exclude_mask` permanently removes buffered moves whose destination squares match the mask.
@@ -2537,9 +2534,9 @@ class MoveGenerator:
     def __iter__(self) -> MoveGenerator:
         r"""
         Return an iterator of the generator.
-
+        
         The generator for a board saves state, regardless of how it is called.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> list(board.generate_legal_moves())
@@ -2551,9 +2548,9 @@ class MoveGenerator:
     def __next__(self) -> typing.Optional[Move]:
         r"""
         Get the next move in the generator.
-
+        
         The generator for a board saves state, regardless of how it is called.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> moves = board.generate_legal_moves()
@@ -2566,9 +2563,9 @@ class MoveGenerator:
     def __len__(self) -> builtins.int:
         r"""
         Get the length of the generator.
-
+        
         Does not consume any iterations.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> moves = board.generate_legal_moves()
@@ -2583,7 +2580,7 @@ class MoveGenerator:
     def __repr__(self) -> builtins.str:
         r"""
         Get the type of the move generator.
-
+        
         ```python
         >>> board = rust_chess.Board()
         >>> board.generate_legal_moves()
@@ -2599,7 +2596,7 @@ class Piece:
     Uses the `PieceType` and `Color` classes.
     Supports comparison and equality.
     A white piece is considered less than a black piece of the same type.
-
+    
     ```python
     >>> piece = rust_chess.WHITE_PAWN
     >>> piece
@@ -2640,7 +2637,7 @@ class Piece:
         r"""
         Convert the piece to a string.
         White is uppercase and black is lowercase.
-
+        
         ```python
         >>> rust_chess.WHITE_PAWN.get_string()
         'P'
@@ -2652,7 +2649,7 @@ class Piece:
         r"""
         Convert the piece to a string.
         White is uppercase and black is lowercase.
-
+        
         ```python
         >>> print(rust_chess.WHITE_PAWN)
         P
@@ -2664,7 +2661,7 @@ class Piece:
         r"""
         Convert the piece to a string.
         White is uppercase and black is lowercase.
-
+        
         ```python
         >>> rust_chess.WHITE_PAWN
         P
@@ -2675,12 +2672,12 @@ class Piece:
     def get_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
         r"""
         Convert the piece to a unicode string.
-
+        
         The dark mode parameter is enabled by default.
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
-
+        
         ```python
         >>> rust_chess.PAWN.get_unicode()
         '♟'
@@ -2699,12 +2696,12 @@ class PieceType:
     Indexing starts at 0 (`PAWN`) and ends at 5 (`KING`).
     Supports comparison and equality.
     Does not include color.
-
+    
     `rust_chess` has constants for each piece type (e.g. `PAWN`, `KNIGHT`, etc.).
-
+    
     ```python
     >>> piece = rust_chess.PAWN
-
+    
     >>> print(piece)
     P
     >>> piece == rust_chess.PAWN
@@ -2726,7 +2723,7 @@ class PieceType:
         r"""
         Get the index of the piece.
         Ranges from 0 (`PAWN`) to 5 (`KING`).
-
+        
         ```python
         >>> rust_chess.BISHOP.get_index()
         2
@@ -2736,7 +2733,7 @@ class PieceType:
         r"""
         Allow the piece type to be used as an index.
         Returns the index of the piece.
-
+        
         ```python
         >>> arr = [1, 2, 3, 4, 5, 6]
         >>> arr[rust_chess.BISHOP]
@@ -2748,7 +2745,7 @@ class PieceType:
         Convert the piece to a string.
         Returns the capital piece type letter by default.
         If using the optional color parameter, white is uppercase and black is lowercase.
-
+        
         ```python
         >>> rust_chess.PAWN.get_string()
         'P'
@@ -2760,7 +2757,7 @@ class PieceType:
         r"""
         Convert the piece to a string.
         Returns the capital piece type letter.
-
+        
         ```python
         >>> print(rust_chess.PAWN)
         P
@@ -2770,7 +2767,7 @@ class PieceType:
         r"""
         Convert the piece to a string.
         Returns the capital piece type letter.
-
+        
         ```python
         >>> rust_chess.PAWN
         P
@@ -2780,12 +2777,12 @@ class PieceType:
         r"""
         Convert the piece to a unicode string.
         Returns the white unicode piece by default.
-
+        
         The dark mode parameter is enabled by default.
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
-
+        
         ```python
         >>> rust_chess.PAWN.get_unicode()
         '♟'
@@ -2803,9 +2800,9 @@ class Square:
     Represents a square on the chessboard.
     The square is represented as an integer (0-63) or a string (e.g. "e4").
     Supports comparison and equality.
-
+    
     rust-chess has constants for each square (e.g. A1, B2, etc.).
-
+    
     ```python
     >>> square = rust_chess.Square(0)
     >>> square
@@ -2830,7 +2827,7 @@ class Square:
     def __new__(cls, square_index_or_name: typing.Any) -> Square:
         r"""
         Creates a new square from an integer (0-63) or a string (e.g. "e4").
-
+        
         ```python
         >>> rust_chess.Square(0)
         a1
@@ -2842,7 +2839,7 @@ class Square:
         r"""
         Get the index of the square (0-63).
         Indexing starts at 0 (a1) and ends at 63 (h8).
-
+        
         ```python
         >>> rust_chess.Square("e4").get_index()
         28
@@ -2851,7 +2848,7 @@ class Square:
     def __index__(self) -> builtins.int:
         r"""
         Get the index of the square as an integer for indexing.
-
+        
         ```python
         >>> arr = [1, 2, 3, 4, 5, 6]
         >>> arr[rust_chess.Square("a1")]
@@ -2861,7 +2858,7 @@ class Square:
     def __int__(self) -> builtins.int:
         r"""
         Get the index of the square as an integer.
-
+        
         ```python
         >>> int(rust_chess.Square("e4"))
         28
@@ -2870,7 +2867,7 @@ class Square:
     def __hash__(self) -> builtins.int:
         r"""
         Hash the square based on its index.
-
+        
         ```python
         >>> hash(rust_chess.E4)
         28
@@ -2879,7 +2876,7 @@ class Square:
     def flip(self) -> Square:
         r"""
         Flips a square (eg. A1 -> A8).
-
+        
         ```python
         >>> rust_chess.A1.flip()
         a8
@@ -2890,7 +2887,7 @@ class Square:
     def to_bitboard(self) -> Bitboard:
         r"""
         Convert a square to a bitboard.
-
+        
         ```python
         >>> bitboard = rust_chess.E4.to_bitboard()
         >>> bitboard.popcnt()
@@ -2911,7 +2908,7 @@ class Square:
         r"""
         Create a new square from an index.
         Indexing starts at 0 (a1) and ends at 63 (h8).
-
+        
         ```python
         >>> rust_chess.Square.from_index(0)
         a1
@@ -2922,7 +2919,7 @@ class Square:
         r"""
         Create a new square from rank and file.
         Rank and file are 0-indexed (0-7).
-
+        
         ```python
         >>> rust_chess.Square.from_rank_file(0, 3)
         d1
@@ -2933,7 +2930,7 @@ class Square:
         r"""
         Create a new square from file and rank.
         File and rank are 0-indexed (0-7).
-
+        
         ```python
         >>> rust_chess.Square.from_file_rank(3, 0)
         d1
@@ -2942,7 +2939,7 @@ class Square:
     def get_name(self) -> builtins.str:
         r"""
         Get the name of the square (e.g. "e4").
-
+        
         ```python
         >>> rust_chess.E4.get_name()
         'e4'
@@ -2951,7 +2948,7 @@ class Square:
     def __str__(self) -> builtins.str:
         r"""
         Get the name of the square (e.g. "e4"),
-
+        
         ```python
         >>> print(rust_chess.E4)
         e4
@@ -2960,7 +2957,7 @@ class Square:
     def __repr__(self) -> builtins.str:
         r"""
         Get the name of the square (e.g. "e4").
-
+        
         ```python
         >>> rust_chess.E4
         e4
@@ -2969,7 +2966,7 @@ class Square:
     def get_color(self) -> Color:
         r"""
         Get the color of the square on the chessboard.
-
+        
         ```python
         >>> rust_chess.A1.get_color() == rust_chess.BLACK
         True
@@ -2983,7 +2980,7 @@ class Square:
         Create a new square from a name (e.g. "e4").
         Not really needed since you can use the square constants.
         Could also just call the constructor with the name string.
-
+        
         ```python
         >>> rust_chess.Square.from_name("d2")
         d2
@@ -2992,7 +2989,7 @@ class Square:
     def __richcmp__(self, other: typing.Any, op: int) -> builtins.bool:
         r"""
         Compare the square to another square or integer.
-
+        
         ```python
         >>> rust_chess.Square("d2") == rust_chess.D2
         True
@@ -3007,7 +3004,7 @@ class Square:
     def get_rank(self) -> builtins.int:
         r"""
         Get the rank of the square as an integer (0-7).
-
+        
         ```python
         >>> rust_chess.E4.get_rank()
         3
@@ -3016,7 +3013,7 @@ class Square:
     def get_file(self) -> builtins.int:
         r"""
         Get the file of the square as an integer (0-7).
-
+        
         ```python
         >>> rust_chess.E4.get_file()
         4
@@ -3025,7 +3022,7 @@ class Square:
     def up(self) -> typing.Optional[Square]:
         r"""
         Returns the square above, otherwise None.
-
+        
         ```python
         >>> rust_chess.H5.up()
         h6
@@ -3034,7 +3031,7 @@ class Square:
     def down(self) -> typing.Optional[Square]:
         r"""
         Returns the square below, otherwise None.
-
+        
         ```python
         >>> rust_chess.H5.down()
         h4
@@ -3043,7 +3040,7 @@ class Square:
     def left(self) -> typing.Optional[Square]:
         r"""
         Returns the square to the left, otherwise None.
-
+        
         ```python
         >>> rust_chess.H5.left()
         g5
@@ -3052,10 +3049,10 @@ class Square:
     def right(self) -> typing.Optional[Square]:
         r"""
         Returns the square to the right, otherwise None.
-
+        
         ```python
         >>> rust_chess.H5.right()
-
+        
         >>> rust_chess.H5.right() == None
         True
         ```
@@ -3063,7 +3060,7 @@ class Square:
     def forward(self, color: Color) -> typing.Optional[Square]:
         r"""
         Returns the square forward in the given color's perspective, otherwise None.
-
+        
         ```python
         >>> rust_chess.E4.forward(rust_chess.WHITE)
         e5
@@ -3074,7 +3071,7 @@ class Square:
     def backward(self, color: Color) -> typing.Optional[Square]:
         r"""
         Returns the square backward in the given color's perspective, otherwise None.
-
+        
         ```python
         >>> rust_chess.E4.backward(rust_chess.WHITE)
         e3
@@ -3093,7 +3090,6 @@ class BoardStatus(enum.Enum):
     Supports comparison and equality.
     TODO: docs
     """
-
     ONGOING = ...
     SEVENTY_FIVE_MOVES = ...
     FIVE_FOLD_REPETITION = ...
@@ -3109,7 +3105,6 @@ class CastleRights(enum.Enum):
         No rights, king-side, queen-side, both.
     TODO: docs
     """
-
     NO_RIGHTS = ...
     QUEEN_SIDE = ...
     KING_SIDE = ...
@@ -3119,3 +3114,4 @@ class CastleRights(enum.Enum):
 class RepetitionDetectionMode(enum.Enum):
     NONE = ...
     FULL = ...
+

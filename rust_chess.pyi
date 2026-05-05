@@ -873,7 +873,7 @@ class Board:
     @property
     def board_history(self) -> typing.Optional[builtins.list[builtins.int]]:
         r"""
-        Store board Zobrist hashes for board history
+        Stores board Zobrist hashes for board history.
         """
     @property
     def zobrist_hash(self) -> builtins.int:
@@ -1998,44 +1998,142 @@ class BoardBatch:
         Store board Zobrist hashes for board history
         """
     @property
-    def zobrist_hashes(self) -> builtins.list[builtins.int]: ...
+    def zobrist_hashes(self) -> builtins.list[builtins.int]:
+        r"""
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.zobrist_hashes
+        [9023329949471135578, 9023329949471135578]
+        ```
+        """
     @property
     def turn(self) -> builtins.list[Color]:
         r"""
         Get the current player to move for each board.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.turn
+        [True, True]
+        >>> batch.make_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        >>> batch.turn
+        [False, False]
+        ```
         """
     @property
     def en_passant(self) -> builtins.list[typing.Optional[Square]]:
         r"""
         Get the en passant square of each board, otherwise None.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.en_passant
+        [None, None]
+        ```
         """
     def __new__(cls, count: builtins.int, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
         r"""
         Create a new batch of boards.
+        
+        ```python
+        >>> rust_chess.BoardBatch(2)
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        ```
         """
     @staticmethod
     def from_fens(fens: typing.Sequence[builtins.str], mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
         r"""
         Create a new batch of boards from a list of FEN strings.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch.from_fens([
+        ...     "rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2",
+        ...     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        ... ])
+        >>> batch
+        rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        ```
         """
     @staticmethod
     def from_boards(boards: list, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch: ...
     def get_fens(self) -> builtins.str:
         r"""
         Get the FEN string representation of each board on a newline.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> print(batch.get_fens())
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        ```
         """
     def __repr__(self) -> builtins.str:
         r"""
         Get the FEN string representation of each board.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        ```
         """
     def display(self, show_labels: builtins.bool = False) -> None:
         r"""
         Print the string representation of each board separated by newlines.
         Labels are hidden by default.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.display()
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        
+        ```
         """
     def __str__(self) -> builtins.str:
         r"""
         Get the string representation of each board.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> print(batch)
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        <BLANKLINE>
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        . . . . . . . .
+        P P P P P P P P
+        R N B Q K B N R
+        
+        ```
         """
     def display_unicode(self, show_labels: builtins.bool = False, dark_mode: builtins.bool = True) -> None:
         r"""
@@ -2046,6 +2144,29 @@ class BoardBatch:
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.display_unicode() # This looks fine printed to terminal
+        ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+        ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        
+        ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+        ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        · · · · · · · ·
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        
+        ```
         """
     def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> None:
         r"""
@@ -2055,12 +2176,51 @@ class BoardBatch:
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.display_color(show_labels=True, green_mode=True)
+        8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        6
+        5
+        4
+        3
+        2 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        1 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+          a b c d e f g h
+        
+        8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        6
+        5
+        4
+        3
+        2 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        1 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+          a b c d e f g h
+        
+        ```
         """
     def display_tiled(self, show_labels: builtins.bool = False) -> None:
         r"""
         Print the string representation of each board separated by newlines.
         Detects the terminal's width and tiles the boards accordingly.
         Labels are hidden by default.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.display_tiled()
+        r n b q k b n r  r n b q k b n r
+        p p p p p p p p  p p p p p p p p
+        . . . . . . . .  . . . . . . . .
+        . . . . . . . .  . . . . . . . .
+        . . . . . . . .  . . . . . . . .
+        . . . . . . . .  . . . . . . . .
+        P P P P P P P P  P P P P P P P P
+        R N B Q K B N R  R N B Q K B N R
+        
+        ```
         """
     def display_unicode_tiled(self, show_labels: builtins.bool = False, dark_mode: builtins.bool = True) -> None:
         r"""
@@ -2072,6 +2232,20 @@ class BoardBatch:
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.display_unicode_tiled() # Looks fine printed to terminal
+        ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖  ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+        ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙  ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+        · · · · · · · ·  · · · · · · · ·
+        · · · · · · · ·  · · · · · · · ·
+        · · · · · · · ·  · · · · · · · ·
+        · · · · · · · ·  · · · · · · · ·
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟  ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜  ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        
+        ```
         """
     def display_color_tiled(self, show_labels: builtins.bool = False, green_mode: builtins.bool = False) -> None:
         r"""
@@ -2082,105 +2256,268 @@ class BoardBatch:
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.display_color_tiled()
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜  ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟  ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        
+        
+        
+        
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟  ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜  ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        
+        ```
         """
     def get_move_from_san(self, sans: typing.Sequence[builtins.str]) -> builtins.list[Move]:
         r"""
         Create new moves from SAN strings (e.g. "e4") for each board.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_move_from_san(["e4", "d4"])
+        [Move(e2, e4, None), Move(d2, d4, None)]
+        ```
         """
     def __len__(self) -> builtins.int:
         r"""
         Get the number of boards in the batch.
+        
+        ```python
+        >>> len(rust_chess.BoardBatch(2))
+        2
+        >>> len(rust_chess.BoardBatch(312))
+        312
+        ```
         """
     def __hash__(self) -> builtins.int:
         r"""
         Get a hash of the board batch based on the sum of the Zobrist hashes.
         Will likely overflow which is fine since this is a fast hash.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> hash(batch)
+        -400084174767280460
+        ```
         """
     def __eq__(self, other: BoardBatch) -> builtins.bool:
         r"""
         Check if two board batches are equal based on the Zobrist hashes of their boards.
+        
+        ```python
+        >>> batch1 = rust_chess.BoardBatch(2)
+        >>> batch2 = rust_chess.BoardBatch(2)
+        >>> batch1 == batch2
+        True
+        >>> batch1.make_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        >>> batch1 == batch2
+        False
+        ```
         """
     def __ne__(self, other: BoardBatch) -> builtins.bool:
         r"""
         Check if two board batches are not equal based on the Zobrist hashes of their boards.
+        
+        ```python
+        >>> batch1 = rust_chess.BoardBatch(2)
+        >>> batch2 = rust_chess.BoardBatch(2)
+        >>> batch1 != batch2
+        False
+        >>> batch1.make_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        >>> batch1 != batch2
+        True
+        ```
         """
     def compare(self, other: BoardBatch) -> builtins.list[builtins.bool]:
         r"""
         Compare two board batches based on the Zobrist hashes of their boards.
         Returns a list of booleans where `True` indicates the respective boards match.
+        
+        ```python
+        >>> batch1 = rust_chess.BoardBatch(2)
+        >>> batch2 = rust_chess.BoardBatch(2)
+        >>> batch1.compare(batch2)
+        [True, True]
+        >>> batch1.make_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        >>> batch2.make_move([rust_chess.Move("e2e4"), rust_chess.Move("a2a3")])
+        >>> batch1.compare(batch2)
+        [True, False]
+        ```
         """
     def get_king_square(self, color: Color) -> builtins.list[Square]:
         r"""
         Get the king square of each board for a color.
+        
+        ```python
+        >>> rust_chess.BoardBatch(2).get_king_square(rust_chess.WHITE)
+        [e1, e1]
+        >>> rust_chess.BoardBatch(2).get_king_square(rust_chess.BLACK)
+        [e8, e8]
+        ```
         """
     def get_castle_rights(self, color: Color) -> builtins.list[CastleRights]:
         r"""
         Get the castle rights of each board for a color.
         Returns a list `CastleRights` enum types, which has the values: `NO_RIGHTS`, `KING_SIDE`, `QUEEN_SIDE`, `BOTH`.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_castle_rights(rust_chess.WHITE)
+        [CastleRights.BOTH, CastleRights.BOTH]
+        >>> batch.get_castle_rights(rust_chess.BLACK)
+        [CastleRights.BOTH, CastleRights.BOTH]
+        ```
         """
     def get_my_castle_rights(self) -> builtins.list[CastleRights]:
         r"""
         Get the castle rights of the current player to move for each board.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_my_castle_rights()
+        [CastleRights.BOTH, CastleRights.BOTH]
+        ```
         """
     def get_their_castle_rights(self) -> builtins.list[CastleRights]:
         r"""
         Get the castle rights of the opponent for each board.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_their_castle_rights()
+        [CastleRights.BOTH, CastleRights.BOTH]
+        ```
         """
     def can_castle(self, color: Color) -> builtins.list[builtins.bool]:
         r"""
         Check if a color can castle (either side) for each board.
         Returns a list of booleans.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.can_castle(rust_chess.WHITE)
+        [True, True]
+        >>> batch.can_castle(rust_chess.BLACK)
+        [True, True]
+        ```
         """
     def can_castle_queenside(self, color: Color) -> builtins.list[builtins.bool]:
         r"""
         Check if a color can castle queenside for each board.
         Returns a list of booleans.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.can_castle_queenside(rust_chess.WHITE)
+        [True, True]
+        >>> batch.can_castle_queenside(rust_chess.BLACK)
+        [True, True]
+        ```
         """
     def can_castle_kingside(self, color: Color) -> builtins.list[builtins.bool]:
         r"""
         Check if a color can castle kingside for each board.
         Returns a list of booleans.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.can_castle_kingside(rust_chess.WHITE)
+        [True, True]
+        >>> batch.can_castle_kingside(rust_chess.BLACK)
+        [True, True]
+        ```
         """
     def is_castling(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if the respective move is castling for each board.
         Assumes the moves are pseudo-legal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_castling([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [False, False]
+        ```
         """
     def is_castling_queenside(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if the respective move is queenside castling for each board.
         Assumes the move is pseudo-legal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_castling_queenside([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [False, False]
+        ```
         """
     def is_castling_kingside(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if the respective move is kingside castling for each board.
         Assumes the move is pseudo-legal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_castling_kingside([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [False, False]
+        ```
         """
     def get_color_on(self, squares: typing.Sequence[Square]) -> builtins.list[typing.Optional[Color]]:
         r"""
         Get the color of the piece on a respective square for each board, otherwise None.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_color_on([rust_chess.Square("e1"), rust_chess.Square("e8")])
+        [True, False]
+        ```
         """
     def get_piece_type_on(self, squares: typing.Sequence[Square]) -> builtins.list[typing.Optional[PieceType]]:
         r"""
         Get the piece type on a respective square for each board, otherwise None.
         Different than `get_piece_on` because it returns the piece type, which does not include color.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_piece_type_on([rust_chess.Square("e1"), rust_chess.Square("e7")])
+        [K, P]
+        ```
         """
     def get_piece_on(self, squares: typing.Sequence[Square]) -> builtins.list[typing.Optional[Piece]]:
         r"""
         Get the piece on a respective square, otherwise None.
         Different than `get_piece_on` because it returns the piece, which includes color.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.get_piece_on([rust_chess.Square("e1"), rust_chess.Square("e7")])
+        [K, p]
+        ```
         """
     def is_en_passant(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if a respective move is en passant for each board.
         
         Assumes the moves are legal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_en_passant([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [False, False]
+        ```
         """
     def is_capture(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if a respective move is a capture for each board.
         
         Assumes the moves are legal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_capture([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [False, False]
+        ```
         """
     def is_zeroing(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
@@ -2188,12 +2525,25 @@ class BoardBatch:
         This type of move "zeros" the halfmove clock (sets it to 0).
         
         Assumes the moves are legal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_zeroing([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [True, True]
+        ```
         """
     def is_legal_move(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
         Check if the move is legal (supposedly very slow according to the chess crate).
         Use this function for moves not generated by the move generator.
         `is_legal_quick` is faster for moves generated by the move generator.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> move_list = [rust_chess.Move("e2e4"), rust_chess.Move("e2e5")]
+        >>> batch.is_legal_move(move_list)
+        [True, False]
+        ```
         """
     def is_legal_generator_move(self, chess_moves: typing.Sequence[Move]) -> builtins.list[builtins.bool]:
         r"""
@@ -2201,6 +2551,12 @@ class BoardBatch:
         Only use this function for moves generated by the move generator.
         You would want to use this when you have a psuedo-legal move (guarenteed by the generator).
         Slightly faster than using `is_legal_move` since it doesn't have to check as much stuff.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.is_legal_generator_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        [True, True]
+        ```
         """
     def make_null_move_new(self) -> typing.Optional[BoardBatch]:
         r"""
@@ -2214,6 +2570,30 @@ class BoardBatch:
         Defaults to checking move legality, unless the optional legality parameter is `False`.
         Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
         Checking legality will return an error if the move is illegal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.make_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        >>> print(batch)
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . P . . .
+        . . . . . . . .
+        P P P P . P P P
+        R N B Q K B N R
+        <BLANKLINE>
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . P . . . .
+        . . . . . . . .
+        P P P . P P P P
+        R N B Q K B N R
+        
+        ```
         """
     def make_move_new(self, chess_moves: typing.Sequence[Move], check_legality: builtins.bool = True) -> BoardBatch:
         r"""
@@ -2222,6 +2602,30 @@ class BoardBatch:
         Defaults to checking move legality, unless the optional legality parameter is `False`.
         Not checking move legality will provide a slight performance boost, but crash if the move is invalid.
         Checking legality will return an error if the move is illegal.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> new_batch = batch.make_move_new([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
+        >>> print(new_batch)
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . . P . . .
+        . . . . . . . .
+        P P P P . P P P
+        R N B Q K B N R
+        <BLANKLINE>
+        r n b q k b n r
+        p p p p p p p p
+        . . . . . . . .
+        . . . . . . . .
+        . . . P . . . .
+        . . . . . . . .
+        P P P . P P P P
+        R N B Q K B N R
+        
+        ```
         """
     def get_pinned_bitboard(self) -> builtins.list[Bitboard]:
         r"""
@@ -2546,7 +2950,7 @@ class Move:
         Q
         ```
         """
-    def __eq__(self, other: builtins.object) -> builtins.bool: ...
+    def __eq__(self, other: builtins.object, /) -> builtins.bool: ...
     def __new__(cls, source_or_uci: typing.Any, dest: typing.Optional[Square] = None, promotion: typing.Optional[PieceType] = None) -> Move:
         r"""
         Create a new move from a source, destination, and optional promotion piece or UCI string.
@@ -2699,11 +3103,11 @@ class Piece:
         Get the color of the piece
         TODO
         """
-    def __eq__(self, other: builtins.object) -> builtins.bool: ...
-    def __lt__(self, other: builtins.object) -> builtins.bool: ...
-    def __le__(self, other: builtins.object) -> builtins.bool: ...
-    def __gt__(self, other: builtins.object) -> builtins.bool: ...
-    def __ge__(self, other: builtins.object) -> builtins.bool: ...
+    def __eq__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __lt__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __le__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __gt__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __ge__(self, other: builtins.object, /) -> builtins.bool: ...
     def __new__(cls, piece_type: PieceType, color_or_bool: typing.Any) -> Piece:
         r"""
         Create a new piece from a piece type and color
@@ -2793,11 +3197,11 @@ class PieceType:
     True
     ```
     """
-    def __eq__(self, other: builtins.object) -> builtins.bool: ...
-    def __lt__(self, other: builtins.object) -> builtins.bool: ...
-    def __le__(self, other: builtins.object) -> builtins.bool: ...
-    def __gt__(self, other: builtins.object) -> builtins.bool: ...
-    def __ge__(self, other: builtins.object) -> builtins.bool: ...
+    def __eq__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __lt__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __le__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __gt__(self, other: builtins.object, /) -> builtins.bool: ...
+    def __ge__(self, other: builtins.object, /) -> builtins.bool: ...
     def get_index(self) -> builtins.int:
         r"""
         Get the index of the piece.

@@ -99,7 +99,7 @@ pub struct PyBoard {
     #[pyo3(get)]
     pub(crate) repetition_detection_mode: PyRepetitionDetectionMode,
 
-    /// Store board Zobrist hashes for board history
+    /// Stores board Zobrist hashes for board history.
     #[pyo3(get)]
     pub(crate) board_history: Option<Vec<u64>>,
 }

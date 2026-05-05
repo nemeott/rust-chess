@@ -21,6 +21,9 @@ IGNORED_DOCTESTS = {
     "BoardBatch.display",
     "BoardBatch.display_unicode",
     "BoardBatch.display_color",
+    "BoardBatch.display_tiled",
+    "BoardBatch.display_unicode_tiled",
+    "BoardBatch.display_color_tiled",
 }
 
 

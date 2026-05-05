@@ -34,6 +34,7 @@ use crate::types::{
 };
 
 // TODO: No .extract::?
+// TODO: Remove <BLANKLINE> from stubs automatically
 
 // TODO: Remove inline for Python-called only?
 // TODO: Add PSQT table support?

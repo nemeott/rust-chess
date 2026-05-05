@@ -1,6 +1,6 @@
 [package]
 name = "rust-chess"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,9 +11,11 @@ crate-type = ["cdylib", "rlib"] # For PyO3 stub gen
 [dependencies]
 chess = "3.2.0"
 pyo3 = "0.28.3"
-pyo3-stub-gen = "0.22.1" # Enable auto generating pyo3 stub files
-mimalloc = "0.1.50" # Faster allocater than the default system allocator
+pyo3-stub-gen = "0.22.2" # Enable auto generating pyo3 stub files
 terminal_size = "0.4.4" # Minimal binary to detect terminal size for dynamic tiled board display
+
+[target.'cfg(not(all(target_arch = "aarch64", target_os = "linux")))'.dependencies]
+mimalloc = "0.1.50" # Faster allocater than the default system allocator
 
 [lints.clippy]
 correctness = "warn"

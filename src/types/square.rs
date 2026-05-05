@@ -411,6 +411,6 @@ impl PySquare {
             BLACK => self.up(),
         }
     }
-    
+
     // TODO: Unsigned directions
 }

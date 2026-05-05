@@ -236,26 +236,9 @@ impl PyBoardBatch {
     fn display(&self) -> String {
         self.boards
             .iter()
-            .map(|board| {
-                let mut s = String::new();
-                for rank in (0..8).rev() {
-                    for file in 0..8 {
-                        let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-                        if let Some(piece) = PyBoard::_get_piece_on(board, square) {
-                            unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
-                        } else {
-                            unsafe { write!(s, ". ").unwrap_unchecked() };
-                        }
-                    }
-                    unsafe { writeln!(s).unwrap_unchecked() };
-                }
-                unsafe { writeln!(s).unwrap_unchecked() };
-                s
-            })
-            .collect::<String>()
-            .strip_suffix('\n')
-            .unwrap_or_default()
-            .to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
+            .map(|board| PyBoard::_display(board))
+            .collect::<Vec<String>>()
+            .join("\n")
     }
 
     /// Get the string representation of each board.
@@ -277,29 +260,29 @@ impl PyBoardBatch {
     fn display_unicode(&self, dark_mode: bool) -> String {
         self.boards
             .iter()
-            .map(|board| {
-                let mut s = String::new();
-                for rank in (0..8).rev() {
-                    for file in 0..8 {
-                        let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-                        if let Some(piece) = PyBoard::_get_piece_on(board, square) {
-                            unsafe {
-                                write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked()
-                            }; // Safe code is for weaklings
-                        } else {
-                            unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
-                        }
-                    }
-                    unsafe { writeln!(s).unwrap_unchecked() };
-                }
-                unsafe { writeln!(s).unwrap_unchecked() };
-                s
-            })
-            .collect::<String>()
-            .strip_suffix('\n')
-            .unwrap_or_default()
-            .to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
+            .map(|board| PyBoard::_display_unicode(board, dark_mode))
+            .collect::<Vec<String>>()
+            .join("\n")
     }
+
+    /// Get the unicode string representation of each board with ANSI color codes.
+    /// The boards are a bit tiny, but it looks pretty good.
+    /// Prints with labels by default.
+    ///
+    /// The default board color is tan/brown.
+    /// Enable the `green_mode` parameter to change the color to olive/sand.
+    ///
+    #[pyo3(signature = (show_labels = true, green_mode = false))]
+    #[inline]
+    fn display_color(&self, show_labels: bool, green_mode: bool) -> String {
+        self.boards
+            .iter()
+            .map(|board| PyBoard::_display_color(board, show_labels, green_mode))
+            .collect::<Vec<String>>()
+            .join("\n")
+    }
+
+    // TODO: Tiled display
 
     /// Create a new move from a respective SAN string (e.g. ["e4", "e2"]) for each board.
     ///
@@ -308,11 +291,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .zip(sans.iter())
-            .map(|(board, san)| {
-                chess::ChessMove::from_san(board, san)
-                    .map(PyMove)
-                    .map_err(|_| PyValueError::new_err("Invalid SAN move"))
-            })
+            .map(|(board, san)| PyBoard::_get_move_from_san(board, san))
             .collect()
     }
 

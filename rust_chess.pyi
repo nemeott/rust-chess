@@ -1029,10 +1029,11 @@ class Board:
         
         ```
         """
-    def display_color(self, green_mode: builtins.bool = False) -> builtins.str:
+    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> builtins.str:
         r"""
         Get the unicode string representation of the board with ANSI color codes.
-        The board is a little tiny, but it looks pretty good.
+        The board is a bit tiny, but it looks pretty good.
+        Prints with labels by default.
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
@@ -2003,6 +2004,15 @@ class BoardBatch:
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
+        """
+    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> builtins.str:
+        r"""
+        Get the unicode string representation of each board with ANSI color codes.
+        The boards are a bit tiny, but it looks pretty good.
+        Prints with labels by default.
+        
+        The default board color is tan/brown.
+        Enable the `green_mode` parameter to change the color to olive/sand.
         """
     def get_move_from_san(self, sans: typing.Sequence[builtins.str]) -> builtins.list[Move]:
         r"""

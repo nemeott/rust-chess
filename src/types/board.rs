@@ -146,6 +146,109 @@ impl PyBoard {
     }
 
     #[inline]
+    pub(crate) fn _display(board: &chess::Board) -> String {
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                if let Some(piece) = Self::_get_piece_on(board, square) {
+                    unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
+                } else {
+                    unsafe { write!(s, ". ").unwrap_unchecked() };
+                }
+            }
+            unsafe { writeln!(s).unwrap_unchecked() };
+        }
+        s
+    }
+
+    #[inline]
+    pub(crate) fn _display_unicode(board: &chess::Board, dark_mode: bool) -> String {
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+                if let Some(piece) = Self::_get_piece_on(board, square) {
+                    unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
+                } else {
+                    unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
+                }
+            }
+            unsafe { writeln!(s).unwrap_unchecked() };
+        }
+        s
+    }
+
+    // TODO: Make this look less ugly?
+    #[inline]
+    pub(crate) fn _display_color(
+        board: &chess::Board,
+        show_labels: bool,
+        green_mode: bool,
+    ) -> String {
+        // TODO: Make these constants?
+        let white_code = "255;255;255";
+        let black_code = "0;0;0";
+
+        let (light_square_code, dark_square_code) = match green_mode {
+            // Tan/Brown
+            false => ("230;207;171", "181;136;99"),
+            // Olive/Sand
+            true => ("215;220;200", "118;150;86"),
+        };
+
+        let mut s = String::new();
+        for rank in (0..8).rev() {
+            if show_labels {
+                // Print rank number on the left
+                unsafe { write!(s, "{} ", rank + 1).unwrap_unchecked() }; // Safe code is for weaklings
+            }
+
+            for file in 0..8 {
+                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
+
+                let (symbol_color, symbol) = if let Some(piece) = Self::_get_piece_on(board, square)
+                {
+                    (
+                        match piece.color.0 {
+                            chess::Color::White => white_code,
+                            chess::Color::Black => black_code,
+                        },
+                        piece.piece_type.get_solid_unicode(),
+                    )
+                } else {
+                    (white_code, " ") // Color doesn't matter, empty square
+                };
+
+                let square_color = match square.get_color() {
+                    WHITE => light_square_code,
+                    BLACK => dark_square_code,
+                };
+
+                // Print the symbol with foreground and background color
+                unsafe {
+                    write!(
+                        s,
+                        "\x1b[38;2;{};48;2;{}m{} \x1b[0m",
+                        symbol_color, square_color, symbol
+                    )
+                    .unwrap_unchecked()
+                }
+            }
+            unsafe { writeln!(s).unwrap_unchecked() };
+        }
+
+        if show_labels {
+            // Print file letters on the bottom
+            unsafe {
+                write!(s, "  a b c d e f g h\n").unwrap_unchecked();
+            }
+        }
+
+        s
+    }
+
+    #[inline]
     pub(crate) fn _get_move_from_san(board: &chess::Board, san: &str) -> PyResult<PyMove> {
         chess::ChessMove::from_san(board, san)
             .map(PyMove)
@@ -775,19 +878,7 @@ impl PyBoard {
     /// ```
     #[inline]
     fn display(&self) -> String {
-        let mut s = String::new();
-        for rank in (0..8).rev() {
-            for file in 0..8 {
-                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-                if let Some(piece) = Self::_get_piece_on(&self.board, square) {
-                    unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
-                } else {
-                    unsafe { write!(s, ". ").unwrap_unchecked() };
-                }
-            }
-            unsafe { writeln!(s).unwrap_unchecked() };
-        }
-        s
+        Self::_display(&self.board)
     }
 
     /// Get the string representation of the board.
@@ -842,86 +933,20 @@ impl PyBoard {
     #[pyo3(signature = (dark_mode = true))]
     #[inline]
     fn display_unicode(&self, dark_mode: bool) -> String {
-        let mut s = String::new();
-        for rank in (0..8).rev() {
-            for file in 0..8 {
-                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-                if let Some(piece) = Self::_get_piece_on(&self.board, square) {
-                    unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
-                } else {
-                    unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
-                }
-            }
-            unsafe { writeln!(s).unwrap_unchecked() };
-        }
-        s
+        Self::_display_unicode(&self.board, dark_mode)
     }
 
     /// Get the unicode string representation of the board with ANSI color codes.
-    /// The board is a little tiny, but it looks pretty good.
+    /// The board is a bit tiny, but it looks pretty good.
+    /// Prints with labels by default.
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.
     ///
-    // TODO: Make this look less ugly?
-    #[pyo3(signature = (green_mode = false))]
+    #[pyo3(signature = (show_labels = true, green_mode = false))]
     #[inline]
-    fn display_color(&self, green_mode: bool) -> String {
-        let white_code = "255;255;255";
-        let black_code = "0;0;0";
-
-        let (light_square_code, dark_square_code) = match green_mode {
-            // Tan/Brown
-            false => ("230;207;171", "181;136;99"),
-            // Olive/Sand
-            true => ("215;220;200", "118;150;86"),
-        };
-
-        let mut s = String::new();
-        for rank in (0..8).rev() {
-            // Print rank number on the left
-            unsafe { write!(s, "{} ", rank + 1).unwrap_unchecked() }; // Safe code is for weaklings
-
-            for file in 0..8 {
-                let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
-
-                let (symbol_color, symbol) =
-                    if let Some(piece) = Self::_get_piece_on(&self.board, square) {
-                        (
-                            match piece.color.0 {
-                                chess::Color::White => white_code,
-                                chess::Color::Black => black_code,
-                            },
-                            piece.piece_type.get_solid_unicode(),
-                        )
-                    } else {
-                        (white_code, " ") // Color doesn't matter, empty square
-                    };
-
-                let square_color = match square.get_color() {
-                    WHITE => light_square_code,
-                    BLACK => dark_square_code,
-                };
-
-                // Print the symbol with foreground and background color
-                unsafe {
-                    write!(
-                        s,
-                        "\x1b[38;2;{};48;2;{}m{} \x1b[0m",
-                        symbol_color, square_color, symbol
-                    )
-                    .unwrap_unchecked()
-                }
-            }
-            unsafe { writeln!(s).unwrap_unchecked() };
-        }
-
-        // Print file letters on the bottom
-        unsafe {
-            write!(s, "  a b c d e f g h\n").unwrap_unchecked();
-        }
-
-        s
+    fn display_color(&self, show_labels: bool, green_mode: bool) -> String {
+        Self::_display_color(&self.board, show_labels, green_mode)
     }
 
     /// Create a new move from a SAN string (e.g. "e4").

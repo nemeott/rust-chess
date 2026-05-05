@@ -282,7 +282,16 @@ impl PyBoardBatch {
         })
     }
 
-    // TODO: Tiled display
+    /// Create new moves from SAN strings (e.g. "e4") for each board.
+    ///
+    #[inline]
+    fn get_move_from_san(&self, sans: Vec<String>) -> PyResult<Vec<PyMove>> {
+        self.boards
+            .iter()
+            .zip(sans.iter())
+            .map(|(board, san)| PyBoard::_get_move_from_san(board, san))
+            .collect()
+    }
 
     // TODO: get_san_from_move
 

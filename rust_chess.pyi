@@ -2040,6 +2040,10 @@ class BoardBatch:
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
         """
+    def get_move_from_san(self, sans: typing.Sequence[builtins.str]) -> builtins.list[Move]:
+        r"""
+        Create new moves from SAN strings (e.g. "e4") for each board.
+        """
     def __len__(self) -> builtins.int:
         r"""
         Get the number of boards in the batch.

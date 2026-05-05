@@ -230,12 +230,14 @@ impl PyBoardBatch {
     }
 
     /// Print the string representation of each board separated by newlines.
+    /// Labels are hidden by default.
     ///
+    #[pyo3(signature = (show_labels = false))]
     #[inline]
-    fn display(&self) {
+    fn display(&self, show_labels: bool) {
         self.boards
             .iter()
-            .for_each(|board| println!("{}", PyBoard::_display(board)))
+            .for_each(|board| println!("{}", PyBoard::_display(board, show_labels, false))) // 3rd parameter unused
     }
 
     /// Get the string representation of each board.
@@ -244,29 +246,33 @@ impl PyBoardBatch {
     fn __str__(&self) -> String {
         self.boards
             .iter()
-            .map(|board| PyBoard::_display(board))
+            .map(|board| PyBoard::_display(board, false, false)) // 3rd parameter unused
             .collect::<Vec<String>>()
             .join("\n")
     }
 
     /// Print the unicode string representation of each board separated by newlines.
+    /// Labels are hidden by default.
     ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
     /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
     /// Disable if you are a psychopath and use light mode in your terminal/IDE.
     ///
-    #[pyo3(signature = (dark_mode = true))]
+    #[pyo3(signature = (show_labels = false, dark_mode = true))]
     #[inline]
-    fn display_unicode(&self, dark_mode: bool) {
-        self.boards
-            .iter()
-            .for_each(|board| println!("{}", PyBoard::_display_unicode(board, dark_mode)))
+    fn display_unicode(&self, show_labels: bool, dark_mode: bool) {
+        self.boards.iter().for_each(|board| {
+            println!(
+                "{}",
+                PyBoard::_display_unicode(board, show_labels, dark_mode)
+            )
+        })
     }
 
     /// Print the unicode string representation of each board with ANSI color codes.
     /// The boards are a bit tiny, but it looks pretty good.
-    /// Prints with labels by default.
+    /// Labels are shown by default.
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.
@@ -274,12 +280,65 @@ impl PyBoardBatch {
     #[pyo3(signature = (show_labels = true, green_mode = false))]
     #[inline]
     fn display_color(&self, show_labels: bool, green_mode: bool) {
+        // TODO: One println?
         self.boards.iter().for_each(|board| {
             println!(
                 "{}",
                 PyBoard::_display_color(board, show_labels, green_mode)
             )
         })
+    }
+
+    /// Print the string representation of each board separated by newlines.
+    /// Detects the terminal's width and tiles the boards accordingly.
+    /// Labels are hidden by default.
+    ///
+    #[pyo3(signature = (show_labels = false))]
+    #[inline]
+    fn display_tiled(&self, show_labels: bool) {
+        // TODO: Make constant for 136 default board size
+        PyBoard::_display_tiled(PyBoard::_display, 136, &self.boards, show_labels, false); // 3rd parameter unused
+    }
+
+    /// Print the unicode string representation of each board separated by newlines.
+    /// Detects the terminal's width and tiles the boards accordingly.
+    /// Labels are hidden by default.
+    ///
+    /// The dark mode parameter is enabled by default.
+    /// This inverts the color of the piece, which looks correct on a dark background.
+    /// Unicode assumes black text on white background, where in most terminals, it is the opposite.
+    /// Disable if you are a psychopath and use light mode in your terminal/IDE.
+    ///
+    #[pyo3(signature = (show_labels = false, dark_mode = true))]
+    #[inline]
+    fn display_unicode_tiled(&self, show_labels: bool, dark_mode: bool) {
+        PyBoard::_display_tiled(
+            PyBoard::_display_unicode,
+            232,
+            &self.boards,
+            show_labels,
+            dark_mode,
+        );
+    }
+
+    /// Print the unicode string representation of each board with ANSI color codes.
+    /// Detects the terminal's width and tiles the boards accordingly.
+    /// The boards are a bit tiny, but it looks pretty good.
+    /// Labels are hidden by default.
+    ///
+    /// The default board color is tan/brown.
+    /// Enable the `green_mode` parameter to change the color to olive/sand.
+    ///
+    #[pyo3(signature = (show_labels = false, green_mode = false))]
+    #[inline]
+    fn display_color_tiled(&self, show_labels: bool, green_mode: bool) {
+        PyBoard::_display_tiled(
+            PyBoard::_display_color,
+            2666, // Isn't exactly correct but it's pretty close
+            &self.boards,
+            show_labels,
+            green_mode,
+        );
     }
 
     /// Create new moves from SAN strings (e.g. "e4") for each board.

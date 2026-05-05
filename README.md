@@ -258,10 +258,10 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] Basic characters
     - [x] Unicode characters
     - [x] Unicode with colors (ANSI)
-  - [ ] Dynamic tiled display
-    - [ ] Basic characters
-    - [ ] Unicode characters
-    - [ ] Unicode with colors (ANSI)
+  - [x] Dynamic tiled display
+    - [x] Basic characters
+    - [x] Unicode characters
+    - [x] Unicode with colors (ANSI)
   - [ ] Dynamic tiled display for previous moves
     - [ ] Basic characters
     - [ ] Unicode characters

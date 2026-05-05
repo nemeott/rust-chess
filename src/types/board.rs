@@ -145,37 +145,66 @@ impl PyBoard {
         )
     }
 
+    // Third argument included so we can reuse this function in `_display_tiled`
     #[inline]
-    pub(crate) fn _display(board: &chess::Board) -> String {
-        let mut s = String::new();
+    pub(crate) fn _display(board: &chess::Board, show_labels: bool, _: bool) -> String {
+        let mut s = String::with_capacity(136); // (64 squares * 2 chars per square) + 8 newlines
         for rank in (0..8).rev() {
+            if show_labels {
+                // Print rank number on the left
+                unsafe { write!(s, "{} ", rank + 1).unwrap_unchecked() }; // Safe code is for weaklings
+            }
+
             for file in 0..8 {
                 let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
                 if let Some(piece) = Self::_get_piece_on(board, square) {
-                    unsafe { write!(s, "{} ", &piece.get_string()).unwrap_unchecked() }; // Safe code is for weaklings
+                    s.push_str(&piece.get_string()); // TODO: as_str()?
+                    s.push(' ');
                 } else {
-                    unsafe { write!(s, ". ").unwrap_unchecked() };
+                    s.push_str(". ")
                 }
             }
-            unsafe { writeln!(s).unwrap_unchecked() };
+            s.push('\n');
         }
+
+        if show_labels {
+            // Print file letters on the bottom
+            s.push_str("  a b c d e f g h \n");
+        }
+
         s
     }
 
     #[inline]
-    pub(crate) fn _display_unicode(board: &chess::Board, dark_mode: bool) -> String {
-        let mut s = String::new();
+    pub(crate) fn _display_unicode(
+        board: &chess::Board,
+        show_labels: bool,
+        dark_mode: bool,
+    ) -> String {
+        let mut s = String::with_capacity(232); // Default board string size
         for rank in (0..8).rev() {
+            if show_labels {
+                // Print rank number on the left
+                unsafe { write!(s, "{} ", rank + 1).unwrap_unchecked() }; // Safe code is for weaklings
+            }
+
             for file in 0..8 {
                 let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
                 if let Some(piece) = Self::_get_piece_on(board, square) {
-                    unsafe { write!(s, "{} ", &piece.get_unicode(dark_mode)).unwrap_unchecked() }; // Safe code is for weaklings
+                    s.push_str(piece.get_unicode(dark_mode));
+                    s.push(' ');
                 } else {
-                    unsafe { write!(s, "· ").unwrap_unchecked() }; // This is a unicode middle dot, not a period
+                    s.push_str("· ") // This is a unicode middle dot, not a period
                 }
             }
-            unsafe { writeln!(s).unwrap_unchecked() };
+            s.push('\n');
         }
+
+        if show_labels {
+            // Print file letters on the bottom
+            s.push_str("  a b c d e f g h \n");
+        }
+
         s
     }
 
@@ -198,7 +227,7 @@ impl PyBoard {
             true => ("215;220;200", "118;150;86"),
         };
 
-        let mut s = String::new();
+        let mut s = String::with_capacity(2666); // Default board string size with labels
         for rank in (0..8).rev() {
             if show_labels {
                 // Print rank number on the left
@@ -236,17 +265,68 @@ impl PyBoard {
                     .unwrap_unchecked()
                 }
             }
-            unsafe { writeln!(s).unwrap_unchecked() };
+            s.push('\n');
         }
 
         if show_labels {
             // Print file letters on the bottom
-            unsafe {
-                write!(s, "  a b c d e f g h\n").unwrap_unchecked();
-            }
+            s.push_str("  a b c d e f g h \n");
         }
 
         s
+    }
+
+    #[inline]
+    pub(crate) fn _display_tiled<F>(
+        display_fn: F,
+        board_string_size: usize,
+        boards: &Vec<chess::Board>,
+        show_labels: bool,
+        color_mode: bool,
+    ) where
+        F: Fn(&chess::Board, bool, bool) -> String,
+    {
+        let num_boards: usize = boards.len();
+
+        let terminal_width: usize = terminal_size::terminal_size()
+            .map(|(terminal_size::Width(w), _)| w)
+            .unwrap_or(80) as usize; // Default to 80 if we can't get the terminal size
+
+        let tile_width: usize = if show_labels { 18 } else { 16 }; // (8 squares * 2 chars per square) + (2 chars for labels)
+        let tile_height: usize = if show_labels { 9 } else { 8 }; // Bottom labels add an extra line
+
+        let num_tiles_wide: usize = std::cmp::max(1, terminal_width / (tile_width + 1)); // + 1 for spacing; ensure at least 1 wide
+        let num_tiles_high: usize = num_boards.div_ceil(num_tiles_wide); // Ceiling division
+
+        // Iterate over each row
+        let mut final_string =
+            String::with_capacity((num_boards * board_string_size) + num_tiles_high); // + num tiles high for new lines
+        let mut displays: Vec<String> = Vec::with_capacity(num_tiles_wide); // Stores each board's string
+        for chunk in boards.chunks(num_tiles_wide) {
+            // Clear the vector and add the new display strings
+            displays.clear();
+            displays.extend(chunk.iter().map(|b| display_fn(b, show_labels, color_mode)));
+
+            // Iterate over each line
+            for line_idx in 0..tile_height {
+                // Iterate over each board (column)
+                for (board_idx, display_str) in displays.iter().enumerate() {
+                    // Add spacing between boards
+                    if board_idx > 0 {
+                        final_string.push(' ');
+                    }
+                    final_string
+                        .push_str(unsafe { display_str.lines().nth(line_idx).unwrap_unchecked() }); // nth always succeeds since tile_height == line count
+                }
+                final_string.push('\n'); // Newline between rows
+            }
+            final_string.push('\n'); // Newline between board rows
+        }
+
+        // dbg!(final_string.len()); // Actual num bytes
+        // dbg!((num_boards * board_string_size) + num_tiles_high); // Predicted num bytes
+
+        print!("{}", final_string);
     }
 
     #[inline]
@@ -863,6 +943,7 @@ impl PyBoard {
     }
 
     /// Print the string representation of the board.
+    /// Labels are hidden by default.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
@@ -876,10 +957,22 @@ impl PyBoard {
     /// P P P P P P P P
     /// R N B Q K B N R
     ///
+    /// >>> board.display(show_labels=True)
+    /// 8 r n b q k b n r
+    /// 7 p p p p p p p p
+    /// 6 . . . . . . . .
+    /// 5 . . . . . . . .
+    /// 4 . . . . . . . .
+    /// 3 . . . . . . . .
+    /// 2 P P P P P P P P
+    /// 1 R N B Q K B N R
+    ///   a b c d e f g h
+    ///
     /// ```
+    #[pyo3(signature = (show_labels = false))]
     #[inline]
-    fn display(&self) {
-        println!("{}", Self::_display(&self.board))
+    fn display(&self, show_labels: bool) {
+        println!("{}", Self::_display(&self.board, show_labels, false)) // 3rd paramater doesn't do anything
     }
 
     /// Get the string representation of the board.
@@ -899,10 +992,11 @@ impl PyBoard {
     /// ```
     #[inline]
     fn __str__(&self) -> String {
-        Self::_display(&self.board)
+        Self::_display(&self.board, false, false) // 3rd parameter unused
     }
 
     /// Print the unicode string representation of the board.
+    /// Labels are hidden by default.
     ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
@@ -911,7 +1005,7 @@ impl PyBoard {
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
-    /// >>> board.display_unicode()
+    /// >>> board.display_unicode() # This looks fine printed to terminal
     /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
     /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
     /// · · · · · · · ·
@@ -921,26 +1015,30 @@ impl PyBoard {
     /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
     /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
     ///
-    /// >>> board.display_unicode(dark_mode=False)
-    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-    /// · · · · · · · ·
-    /// · · · · · · · ·
-    /// · · · · · · · ·
-    /// · · · · · · · ·
-    /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
-    /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+    /// >>> board.display_unicode(show_labels=True, dark_mode=False)
+    /// 8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    /// 7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// 6 · · · · · · · ·
+    /// 5 · · · · · · · ·
+    /// 4 · · · · · · · ·
+    /// 3 · · · · · · · ·
+    /// 2 ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
+    /// 1 ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
+    ///   a b c d e f g h
     ///
     /// ```
-    #[pyo3(signature = (dark_mode = true))]
+    #[pyo3(signature = (show_labels = false, dark_mode = true))]
     #[inline]
-    fn display_unicode(&self, dark_mode: bool) {
-        println!("{}", Self::_display_unicode(&self.board, dark_mode))
+    fn display_unicode(&self, show_labels: bool, dark_mode: bool) {
+        println!(
+            "{}",
+            Self::_display_unicode(&self.board, show_labels, dark_mode)
+        )
     }
 
     /// Print the unicode string representation of the board with ANSI color codes.
     /// The board is a bit tiny, but it looks pretty good.
-    /// Prints with labels by default.
+    /// Labels are hidden default.
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.
@@ -948,6 +1046,16 @@ impl PyBoard {
     /// ```python
     /// >>> board = rust_chess.Board()
     /// >>> board.display_color()
+    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    ///
+    ///
+    ///
+    ///
+    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    ///
+    /// >>> board.display_color(show_labels=True, green_mode=True)
     /// 8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
     /// 7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
     /// 6
@@ -958,25 +1066,15 @@ impl PyBoard {
     /// 1 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
     ///   a b c d e f g h
     ///
-    /// >>> board.display_color(show_labels=False, green_mode=True)
-    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-    /// 
-    /// 
-    /// 
-    /// 
-    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
-    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
-    ///
     /// ```
-    #[pyo3(signature = (show_labels = true, green_mode = false))]
+    #[pyo3(signature = (show_labels = false, green_mode = false))]
     #[inline]
     fn display_color(&self, show_labels: bool, green_mode: bool) {
         println!(
             "{}",
             Self::_display_color(&self.board, show_labels, green_mode)
         )
-    }
+    } // TODO: Make colors better
 
     /// Create a new move from a SAN string (e.g. "e4").
     ///

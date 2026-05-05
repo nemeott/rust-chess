@@ -13,6 +13,7 @@ chess = "3.2.0"
 pyo3 = "0.28.3"
 pyo3-stub-gen = "0.22.1" # Enable auto generating pyo3 stub files
 mimalloc = "0.1.50" # Faster allocater than the default system allocator
+terminal_size = "0.4.4" # Minimal binary to detect terminal size for dynamic tiled board display
 
 [lints.clippy]
 correctness = "warn"

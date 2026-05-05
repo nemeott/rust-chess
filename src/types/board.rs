@@ -180,6 +180,7 @@ impl PyBoard {
     }
 
     // TODO: Make this look less ugly?
+    // TODO: Add picture of this to demo
     #[inline]
     pub(crate) fn _display_color(
         board: &chess::Board,
@@ -861,11 +862,11 @@ impl PyBoard {
         self.get_fen()
     }
 
-    /// Get the string representation of the board.
+    /// Print the string representation of the board.
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
-    /// >>> print(board.display())
+    /// >>> board.display()
     /// r n b q k b n r
     /// p p p p p p p p
     /// . . . . . . . .
@@ -877,14 +878,15 @@ impl PyBoard {
     ///
     /// ```
     #[inline]
-    fn display(&self) -> String {
-        Self::_display(&self.board)
+    fn display(&self) {
+        println!("{}", Self::_display(&self.board))
     }
 
     /// Get the string representation of the board.
     ///
     /// ```python
-    /// >>> print(rust_chess.Board())
+    /// >>> board = rust_chess.Board()
+    /// >>> print(board)
     /// r n b q k b n r
     /// p p p p p p p p
     /// . . . . . . . .
@@ -897,10 +899,10 @@ impl PyBoard {
     /// ```
     #[inline]
     fn __str__(&self) -> String {
-        self.display()
+        Self::_display(&self.board)
     }
 
-    /// Get the unicode string representation of the board.
+    /// Print the unicode string representation of the board.
     ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
@@ -909,7 +911,7 @@ impl PyBoard {
     ///
     /// ```python
     /// >>> board = rust_chess.Board()
-    /// >>> print(board.display_unicode())
+    /// >>> board.display_unicode()
     /// ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
     /// ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
     /// · · · · · · · ·
@@ -919,7 +921,7 @@ impl PyBoard {
     /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
     /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
     ///
-    /// >>> print(board.display_unicode(dark_mode=False))
+    /// >>> board.display_unicode(dark_mode=False)
     /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
     /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
     /// · · · · · · · ·
@@ -932,21 +934,48 @@ impl PyBoard {
     /// ```
     #[pyo3(signature = (dark_mode = true))]
     #[inline]
-    fn display_unicode(&self, dark_mode: bool) -> String {
-        Self::_display_unicode(&self.board, dark_mode)
+    fn display_unicode(&self, dark_mode: bool) {
+        println!("{}", Self::_display_unicode(&self.board, dark_mode))
     }
 
-    /// Get the unicode string representation of the board with ANSI color codes.
+    /// Print the unicode string representation of the board with ANSI color codes.
     /// The board is a bit tiny, but it looks pretty good.
     /// Prints with labels by default.
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.
     ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.display_color()
+    /// 8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    /// 7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// 6
+    /// 5
+    /// 4
+    /// 3
+    /// 2 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// 1 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    ///   a b c d e f g h
+    ///
+    /// >>> board.display_color(show_labels=False, green_mode=True)
+    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// 
+    /// 
+    /// 
+    /// 
+    /// ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+    /// ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+    ///
+    /// ```
     #[pyo3(signature = (show_labels = true, green_mode = false))]
     #[inline]
-    fn display_color(&self, show_labels: bool, green_mode: bool) -> String {
-        Self::_display_color(&self.board, show_labels, green_mode)
+    fn display_color(&self, show_labels: bool, green_mode: bool) {
+        println!(
+            "{}",
+            Self::_display_color(&self.board, show_labels, green_mode)
+        )
     }
 
     /// Create a new move from a SAN string (e.g. "e4").

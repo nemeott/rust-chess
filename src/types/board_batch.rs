@@ -1,4 +1,3 @@
-use std::fmt::Write;
 use std::str::FromStr;
 use std::sync::OnceLock;
 
@@ -230,10 +229,19 @@ impl PyBoardBatch {
         self.get_fens()
     }
 
-    /// Get the string representation of each board separated by newlines.
+    /// Print the string representation of each board separated by newlines.
     ///
     #[inline]
-    fn display(&self) -> String {
+    fn display(&self) {
+        self.boards
+            .iter()
+            .for_each(|board| println!("{}", PyBoard::_display(board)))
+    }
+
+    /// Get the string representation of each board.
+    ///
+    #[inline]
+    fn __str__(&self) -> String {
         self.boards
             .iter()
             .map(|board| PyBoard::_display(board))
@@ -241,14 +249,7 @@ impl PyBoardBatch {
             .join("\n")
     }
 
-    /// Get the string representation of each board.
-    ///
-    #[inline]
-    fn __str__(&self) -> String {
-        self.display()
-    }
-
-    /// Get the unicode string representation of each board separated by newlines.
+    /// Print the unicode string representation of each board separated by newlines.
     ///
     /// The dark mode parameter is enabled by default.
     /// This inverts the color of the piece, which looks correct on a dark background.
@@ -257,15 +258,13 @@ impl PyBoardBatch {
     ///
     #[pyo3(signature = (dark_mode = true))]
     #[inline]
-    fn display_unicode(&self, dark_mode: bool) -> String {
+    fn display_unicode(&self, dark_mode: bool) {
         self.boards
             .iter()
-            .map(|board| PyBoard::_display_unicode(board, dark_mode))
-            .collect::<Vec<String>>()
-            .join("\n")
+            .for_each(|board| println!("{}", PyBoard::_display_unicode(board, dark_mode)))
     }
 
-    /// Get the unicode string representation of each board with ANSI color codes.
+    /// Print the unicode string representation of each board with ANSI color codes.
     /// The boards are a bit tiny, but it looks pretty good.
     /// Prints with labels by default.
     ///
@@ -274,26 +273,16 @@ impl PyBoardBatch {
     ///
     #[pyo3(signature = (show_labels = true, green_mode = false))]
     #[inline]
-    fn display_color(&self, show_labels: bool, green_mode: bool) -> String {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_display_color(board, show_labels, green_mode))
-            .collect::<Vec<String>>()
-            .join("\n")
+    fn display_color(&self, show_labels: bool, green_mode: bool) {
+        self.boards.iter().for_each(|board| {
+            println!(
+                "{}",
+                PyBoard::_display_color(board, show_labels, green_mode)
+            )
+        })
     }
 
     // TODO: Tiled display
-
-    /// Create a new move from a respective SAN string (e.g. ["e4", "e2"]) for each board.
-    ///
-    #[inline]
-    fn get_move_from_san(&self, sans: Vec<String>) -> PyResult<Vec<PyMove>> {
-        self.boards
-            .iter()
-            .zip(sans.iter())
-            .map(|(board, san)| PyBoard::_get_move_from_san(board, san))
-            .collect()
-    }
 
     // TODO: get_san_from_move
 

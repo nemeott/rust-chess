@@ -961,13 +961,13 @@ class Board:
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
         ```
         """
-    def display(self) -> builtins.str:
+    def display(self) -> None:
         r"""
-        Get the string representation of the board.
+        Print the string representation of the board.
         
         ```python
         >>> board = rust_chess.Board()
-        >>> print(board.display())
+        >>> board.display()
         r n b q k b n r
         p p p p p p p p
         . . . . . . . .
@@ -984,7 +984,8 @@ class Board:
         Get the string representation of the board.
         
         ```python
-        >>> print(rust_chess.Board())
+        >>> board = rust_chess.Board()
+        >>> print(board)
         r n b q k b n r
         p p p p p p p p
         . . . . . . . .
@@ -996,9 +997,9 @@ class Board:
         
         ```
         """
-    def display_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
+    def display_unicode(self, dark_mode: builtins.bool = True) -> None:
         r"""
-        Get the unicode string representation of the board.
+        Print the unicode string representation of the board.
         
         The dark mode parameter is enabled by default.
         This inverts the color of the piece, which looks correct on a dark background.
@@ -1007,7 +1008,7 @@ class Board:
         
         ```python
         >>> board = rust_chess.Board()
-        >>> print(board.display_unicode())
+        >>> board.display_unicode()
         ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
         ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙
         · · · · · · · ·
@@ -1017,7 +1018,7 @@ class Board:
         ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
         ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
         
-        >>> print(board.display_unicode(dark_mode=False))
+        >>> board.display_unicode(dark_mode=False)
         ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
         ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
         · · · · · · · ·
@@ -1029,14 +1030,39 @@ class Board:
         
         ```
         """
-    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> builtins.str:
+    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> None:
         r"""
-        Get the unicode string representation of the board with ANSI color codes.
+        Print the unicode string representation of the board with ANSI color codes.
         The board is a bit tiny, but it looks pretty good.
         Prints with labels by default.
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.display_color()
+        8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        6
+        5
+        4
+        3
+        2 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        1 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+          a b c d e f g h
+        
+        >>> board.display_color(show_labels=False, green_mode=True)
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        
+        
+        
+        
+        ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
+        ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
+        
+        ```
         """
     def get_move_from_san(self, san: builtins.str) -> Move:
         r"""
@@ -1988,35 +2014,31 @@ class BoardBatch:
         r"""
         Get the FEN string representation of each board.
         """
-    def display(self) -> builtins.str:
+    def display(self) -> None:
         r"""
-        Get the string representation of each board separated by newlines.
+        Print the string representation of each board separated by newlines.
         """
     def __str__(self) -> builtins.str:
         r"""
         Get the string representation of each board.
         """
-    def display_unicode(self, dark_mode: builtins.bool = True) -> builtins.str:
+    def display_unicode(self, dark_mode: builtins.bool = True) -> None:
         r"""
-        Get the unicode string representation of each board separated by newlines.
+        Print the unicode string representation of each board separated by newlines.
         
         The dark mode parameter is enabled by default.
         This inverts the color of the piece, which looks correct on a dark background.
         Unicode assumes black text on white background, where in most terminals, it is the opposite.
         Disable if you are a psychopath and use light mode in your terminal/IDE.
         """
-    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> builtins.str:
+    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> None:
         r"""
-        Get the unicode string representation of each board with ANSI color codes.
+        Print the unicode string representation of each board with ANSI color codes.
         The boards are a bit tiny, but it looks pretty good.
         Prints with labels by default.
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
-        """
-    def get_move_from_san(self, sans: typing.Sequence[builtins.str]) -> builtins.list[Move]:
-        r"""
-        Create a new move from a respective SAN string (e.g. ["e4", "e2"]) for each board.
         """
     def __len__(self) -> builtins.int:
         r"""

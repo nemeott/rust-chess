@@ -65,8 +65,8 @@ impl PyBoardBatch {
         let boards = vec![DEFAULT_BOARD.board; count];
 
         let board_histories = match mode {
-            PyRepetitionDetectionMode::None => vec![None; boards.len()],
-            PyRepetitionDetectionMode::Full => vec![DEFAULT_BOARD.board_history.clone(); boards.len()]
+            PyRepetitionDetectionMode::None => vec![None; count],
+            PyRepetitionDetectionMode::Full => vec![DEFAULT_BOARD.board_history.clone(); count],
         };
 
         let move_gens = (0..count).map(|_| OnceLock::new()).collect();
@@ -276,9 +276,13 @@ impl PyBoardBatch {
     #[pyo3(signature = (show_labels = false))]
     #[inline]
     fn display(&self, show_labels: bool) {
-        self.boards
-            .iter()
-            .for_each(|board| println!("{}", PyBoard::_display(board, show_labels, false))) // 3rd parameter unused
+        print!(
+            "{}",
+            self.boards
+                .iter()
+                .map(|board| PyBoard::_display(board, show_labels, false)) // 3rd parameter unused
+                .collect::<String>()
+        )
     }
 
     /// Get the string representation of each board.
@@ -310,8 +314,7 @@ impl PyBoardBatch {
         self.boards
             .iter()
             .map(|board| PyBoard::_display(board, false, false)) // 3rd parameter unused
-            .collect::<Vec<String>>()
-            .join("\n")
+            .collect()
     }
 
     /// Print the unicode string representation of each board separated by newlines.
@@ -347,17 +350,18 @@ impl PyBoardBatch {
     #[pyo3(signature = (show_labels = false, dark_mode = true))]
     #[inline]
     fn display_unicode(&self, show_labels: bool, dark_mode: bool) {
-        self.boards.iter().for_each(|board| {
-            println!(
-                "{}",
-                PyBoard::_display_unicode(board, show_labels, dark_mode)
-            )
-        })
+        print!(
+            "{}",
+            self.boards
+                .iter()
+                .map(|board| PyBoard::_display_unicode(board, show_labels, dark_mode)) // 3rd parameter unused
+                .collect::<String>()
+        )
     }
 
     /// Print the unicode string representation of each board with ANSI color codes.
     /// The boards are a bit tiny, but it looks pretty good.
-    /// Labels are shown by default (different than the other display functions).
+    /// Labels are hidden by default.
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.
@@ -386,16 +390,15 @@ impl PyBoardBatch {
     ///   a b c d e f g h
     ///
     /// ```
-    #[pyo3(signature = (show_labels = true, green_mode = false))]
     #[inline]
     fn display_color(&self, show_labels: bool, green_mode: bool) {
-        // TODO: One println?
-        self.boards.iter().for_each(|board| {
-            println!(
-                "{}",
-                PyBoard::_display_color(board, show_labels, green_mode)
-            )
-        })
+        print!(
+            "{}",
+            self.boards
+                .iter()
+                .map(|board| PyBoard::_display_color(board, show_labels, green_mode)) // 3rd parameter unused
+                .collect::<String>()
+        )
     }
 
     /// Print the string representation of each board separated by newlines.

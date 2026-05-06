@@ -342,7 +342,7 @@ if __name__ == "__main__":
     fen = "rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2"
 
     benchmarks = [
-        ("Board Init", rust_board_init, rust_board_init),
+        ("Board Init", rust_board_init, python_board_init),
         ("Board Props", rust_board_props, python_board_props),
         ("Board Ops", rust_board_ops, python_board_ops),
         ("Board Ops 2", rust_board_ops2, python_board_ops2),

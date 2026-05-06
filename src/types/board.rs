@@ -186,6 +186,7 @@ impl PyBoard {
             s.push_str("  a b c d e f g h \n");
         }
 
+        s.push('\n');
         s
     }
 
@@ -219,6 +220,7 @@ impl PyBoard {
             s.push_str("  a b c d e f g h \n");
         }
 
+        s.push('\n');
         s
     }
 
@@ -287,6 +289,7 @@ impl PyBoard {
             s.push_str("  a b c d e f g h \n");
         }
 
+        s.push('\n');
         s
     }
 
@@ -991,7 +994,7 @@ impl PyBoard {
     #[pyo3(signature = (show_labels = false))]
     #[inline]
     fn display(&self, show_labels: bool) {
-        println!("{}", Self::_display(&self.board, show_labels, false)) // 3rd paramater doesn't do anything
+        print!("{}", Self::_display(&self.board, show_labels, false)) // 3rd paramater doesn't do anything
     }
 
     /// Get the string representation of the board.
@@ -1049,7 +1052,7 @@ impl PyBoard {
     #[pyo3(signature = (show_labels = false, dark_mode = true))]
     #[inline]
     fn display_unicode(&self, show_labels: bool, dark_mode: bool) {
-        println!(
+        print!(
             "{}",
             Self::_display_unicode(&self.board, show_labels, dark_mode)
         )
@@ -1057,7 +1060,7 @@ impl PyBoard {
 
     /// Print the unicode string representation of the board with ANSI color codes.
     /// The board is a bit tiny, but it looks pretty good.
-    /// Labels are hidden default.
+    /// Labels are shown by default (different than the other display functions).
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.
@@ -1086,10 +1089,10 @@ impl PyBoard {
     ///   a b c d e f g h
     ///
     /// ```
-    #[pyo3(signature = (show_labels = false, green_mode = false))]
+    #[pyo3(signature = (show_labels = true, green_mode = false))]
     #[inline]
     fn display_color(&self, show_labels: bool, green_mode: bool) {
-        println!(
+        print!(
             "{}",
             Self::_display_color(&self.board, show_labels, green_mode)
         )
@@ -1653,6 +1656,7 @@ impl PyBoard {
     /// R N B Q K B N R
     ///
     /// ```
+    //TODO: Make move new quick legal?
     #[pyo3(signature = (chess_move, check_legality = true))]
     #[inline]
     fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {

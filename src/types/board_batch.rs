@@ -364,7 +364,7 @@ impl PyBoardBatch {
 
     /// Print the unicode string representation of each board with ANSI color codes.
     /// The boards are a bit tiny, but it looks pretty good.
-    /// Labels are shown by default.
+    /// Labels are shown by default (different than the other display functions).
     ///
     /// The default board color is tan/brown.
     /// Enable the `green_mode` parameter to change the color to olive/sand.

@@ -1,5 +1,7 @@
 # rust-chess
 
+![Demo Image](demo.png)
+
 `rust-chess` is a Python package that acts as a bridge between the `chess` crate and Python. It aims to provide a high-performance chess library that is largely compatible with `python-chess` syntax.
 
 This repository provides:

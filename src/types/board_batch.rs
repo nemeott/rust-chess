@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyList};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
-use crate::types::board::{PyBoard, PyBoardStatus, PyCastleRights};
+use crate::types::board::{DEFAULT_BOARD, PyBoard, PyBoardStatus, PyCastleRights};
 use crate::types::{
     bitboard::PyBitboard,
     board::PyRepetitionDetectionMode,
@@ -62,18 +62,11 @@ impl PyBoardBatch {
     #[new]
     #[pyo3(signature = (count, mode = PyRepetitionDetectionMode::Full))] // Default to full repetition detection
     fn new(count: usize, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
-        let boards = vec![chess::Board::default(); count];
+        let boards = vec![DEFAULT_BOARD.board; count];
 
         let board_histories = match mode {
             PyRepetitionDetectionMode::None => vec![None; boards.len()],
-            PyRepetitionDetectionMode::Full => boards
-                .iter()
-                .map(|board| {
-                    let mut history = Vec::with_capacity(256);
-                    history.push(board.get_hash());
-                    Some(history)
-                })
-                .collect(),
+            PyRepetitionDetectionMode::Full => vec![DEFAULT_BOARD.board_history.clone(); boards.len()]
         };
 
         let move_gens = (0..count).map(|_| OnceLock::new()).collect();

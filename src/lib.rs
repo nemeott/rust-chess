@@ -22,7 +22,10 @@ use crate::types::{
     board::{PyBoard, PyBoardStatus, PyCastleRights, PyRepetitionDetectionMode},
     board_batch::PyBoardBatch,
     color::{BLACK, COLORS, PyColor, WHITE},
-    r#move::{PyMove, PyMoveGenerator},
+    r#move::{
+        BLACK_KINGSIDE_CASTLE, BLACK_QUEENSIDE_CASTLE, PyMove, PyMoveGenerator,
+        WHITE_KINGSIDE_CASTLE, WHITE_QUEENSIDE_CASTLE,
+    },
     piece::{
         BISHOP, KING, KNIGHT, PAWN, PIECE_TYPES, PyPiece, PyPieceType, QUEEN, ROOK,
         pieces::{
@@ -122,6 +125,11 @@ fn rust_chess(module: &Bound<'_, PyModule>) -> PyResult<()> {
     add_constant!("BB_RANK_8", BB_RANK_8, PyBitboard);
 
     add_constant!("BB_RANKS", BB_RANKS.to_vec(), Vec<PyBitboard>);
+
+    add_constant!("WHITE_QUEENSIDE_CASTLE", *WHITE_QUEENSIDE_CASTLE, PyMove);
+    add_constant!("WHITE_KINGSIDE_CASTLE", *WHITE_KINGSIDE_CASTLE, PyMove);
+    add_constant!("BLACK_QUEENSIDE_CASTLE", *BLACK_QUEENSIDE_CASTLE, PyMove);
+    add_constant!("BLACK_KINGSIDE_CASTLE", *BLACK_KINGSIDE_CASTLE, PyMove);
 
     // Define a macro to add square constants and stubs directly to the module (e.g. A1, A2, etc.)
     macro_rules! add_square_constants {

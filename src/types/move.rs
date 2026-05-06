@@ -1,9 +1,18 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::LazyLock};
 
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyAny};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::types::{color::WHITE, piece::PyPieceType, square::PySquare};
+
+pub static WHITE_QUEENSIDE_CASTLE: LazyLock<PyMove> =
+    LazyLock::new(|| PyMove(chess::ChessMove::from_str("e1c1").unwrap()));
+pub static WHITE_KINGSIDE_CASTLE: LazyLock<PyMove> =
+    LazyLock::new(|| PyMove(chess::ChessMove::from_str("e1g1").unwrap()));
+pub static BLACK_QUEENSIDE_CASTLE: LazyLock<PyMove> =
+    LazyLock::new(|| PyMove(chess::ChessMove::from_str("e8c8").unwrap()));
+pub static BLACK_KINGSIDE_CASTLE: LazyLock<PyMove> =
+    LazyLock::new(|| PyMove(chess::ChessMove::from_str("e8g8").unwrap()));
 
 /// Move class.
 /// Represents a chess move.

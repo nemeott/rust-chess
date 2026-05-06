@@ -45,9 +45,11 @@ __all__ = [
     "BLACK",
     "BLACK_BISHOP",
     "BLACK_KING",
+    "BLACK_KINGSIDE_CASTLE",
     "BLACK_KNIGHT",
     "BLACK_PAWN",
     "BLACK_QUEEN",
+    "BLACK_QUEENSIDE_CASTLE",
     "BLACK_ROOK",
     "Bitboard",
     "Board",
@@ -121,9 +123,11 @@ __all__ = [
     "WHITE",
     "WHITE_BISHOP",
     "WHITE_KING",
+    "WHITE_KINGSIDE_CASTLE",
     "WHITE_KNIGHT",
     "WHITE_PAWN",
     "WHITE_QUEEN",
+    "WHITE_QUEENSIDE_CASTLE",
     "WHITE_ROOK",
 ]
 
@@ -167,9 +171,11 @@ BISHOP: PieceType
 BLACK: Color
 BLACK_BISHOP: Piece
 BLACK_KING: Piece
+BLACK_KINGSIDE_CASTLE: Move
 BLACK_KNIGHT: Piece
 BLACK_PAWN: Piece
 BLACK_QUEEN: Piece
+BLACK_QUEENSIDE_CASTLE: Move
 BLACK_ROOK: Piece
 C1: Square
 C2: Square
@@ -231,9 +237,11 @@ SQUARES: builtins.list[Square]
 WHITE: Color
 WHITE_BISHOP: Piece
 WHITE_KING: Piece
+WHITE_KINGSIDE_CASTLE: Move
 WHITE_KNIGHT: Piece
 WHITE_PAWN: Piece
 WHITE_QUEEN: Piece
+WHITE_QUEENSIDE_CASTLE: Move
 WHITE_ROOK: Piece
 @typing.final
 class Bitboard:
@@ -2172,7 +2180,7 @@ class BoardBatch:
         r"""
         Print the unicode string representation of each board with ANSI color codes.
         The boards are a bit tiny, but it looks pretty good.
-        Labels are shown by default.
+        Labels are shown by default (different than the other display functions).
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.

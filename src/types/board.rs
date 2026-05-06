@@ -1,6 +1,6 @@
-use std::fmt::Write;
 use std::str::FromStr;
 use std::sync::OnceLock;
+use std::{fmt::Write, sync::LazyLock};
 
 use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
@@ -12,6 +12,20 @@ use crate::types::{
     piece::{PyPiece, PyPieceType},
     square::PySquare,
 };
+
+pub static DEFAULT_BOARD: LazyLock<PyBoard> = LazyLock::new(|| {
+    let board = chess::Board::default();
+    let mut history = Vec::with_capacity(256);
+    history.push(board.get_hash());
+    PyBoard {
+        board,
+        move_gen: OnceLock::new(),
+        halfmove_clock: 0,
+        fullmove_number: 1,
+        repetition_detection_mode: PyRepetitionDetectionMode::Full,
+        board_history: Some(history),
+    }
+});
 
 /// Board status enum class.
 /// Represents the status of a chess board.
@@ -70,7 +84,7 @@ pub enum PyRepetitionDetectionMode {
 ///
 /// TODO: docs
 #[gen_stub_pyclass]
-#[pyclass(name = "Board")]
+#[pyclass(name = "Board", from_py_object)]
 pub struct PyBoard {
     pub(crate) board: chess::Board,
 
@@ -825,6 +839,21 @@ impl PyBoard {
     }
 }
 
+/// Implement clone for PyBoard manually since OnceLock doesn't implement clone
+/// Allows us to use a default board constant
+impl Clone for PyBoard {
+    fn clone(&self) -> Self {
+        Self {
+            board: self.board,
+            move_gen: OnceLock::new(), // Reset move generator when cloned
+            halfmove_clock: self.halfmove_clock,
+            fullmove_number: self.fullmove_number,
+            repetition_detection_mode: self.repetition_detection_mode,
+            board_history: self.board_history.clone(),
+        }
+    }
+}
+
 /// Python methods for `PyBoard`.
 /// Calls the Rust helpers defined above.
 #[gen_stub_pymethods]
@@ -844,28 +873,18 @@ impl PyBoard {
         #[allow(clippy::option_if_let_else)]
         match fen {
             // If no FEN string is provided, use the default starting position
-            None => {
-                let board = chess::Board::default();
-
-                // Create move history vector and add the initial board hash
-                let board_history = match mode {
-                    PyRepetitionDetectionMode::None => None,
-                    PyRepetitionDetectionMode::Full => {
-                        let mut history = Vec::with_capacity(256);
-                        history.push(board.get_hash());
-                        Some(history)
-                    }
-                };
-
-                Ok(Self {
-                    board,
+            None => match mode {
+                // Used cached board if full repetition detection
+                PyRepetitionDetectionMode::Full => Ok(DEFAULT_BOARD.clone()),
+                PyRepetitionDetectionMode::None => Ok(Self {
+                    board: DEFAULT_BOARD.board,
                     move_gen: OnceLock::new(),
                     halfmove_clock: 0,
                     fullmove_number: 1,
-                    repetition_detection_mode: mode,
-                    board_history,
-                })
-            }
+                    repetition_detection_mode: PyRepetitionDetectionMode::None,
+                    board_history: None,
+                }),
+            },
             // Otherwise, parse the FEN string using the chess crate
             Some(fen_str) => Self::from_fen(fen_str, mode),
         }

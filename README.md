@@ -98,7 +98,7 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 
 Requires Python 3.10+.
 
-A pip package is available at: (https://pypi.org/project/rust-chess)[https://pypi.org/project/rust-chess]
+A pip package is available at: [https://pypi.org/project/rust-chess](https://pypi.org/project/rust-chess)
 
 1. Set up a virtual environment:
 
@@ -191,21 +191,19 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [x] Iterate over the squares in a bitboard
   - [x] Printing
     - [ ] Flip printing direction by default?
-- [ ] `Move`
+- [x] `Move`
   - [x] Move creation from data types or UCI
-  - [ ] Castling move constants
-  - [ ] Null move constant?
+  - [x] Castling move constants
 - [x] `MoveGenerator`
   - [x] Generate the next move, legal move, and legal capture
   - [x] Generate moves, legal moves, and legal captures
-  - [x] Support iterating over the generator
+  - [x] Support lazily iterating over the generator
   - [x] Set a retain generator mask (bitboard of squares the generator will generate for)
   - [x] Set an exclude generator mask (bitboard of squares the generator will avoid)
   - [x] Remove a move from the generator
   - [x] Reset the generator
 - [x] `CastleRights`
   - [x] Get castle rights (No rights, queenside, kingside, both)
-  - [ ] Set castle rights? (use cases?)
   - [x] Rich comparison operators
 - [x] `BoardStatus`
   - [x] Game-ending conditions
@@ -219,7 +217,9 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [x] Rich comparison operators
 - [ ] `Board`
   - [x] FEN parsing and printing
-  - [x] SAN move parsing
+  - [x] UCI parsing and printing
+  - [x] SAN parsing
+  - [ ] SAN printing
   - [x] Human readable display
     - [x] Basic characters
     - [x] Unicode characters
@@ -237,7 +237,6 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
   - [x] Make moves on the current or new board
   - [ ] Make null moves (make_null_move)
   - [x] Make null moves on new board
-  - [ ] Undo moves
   - [x] Get bitboards
     - [x] Pinned pieces
     - [x] Checking pieces
@@ -247,7 +246,7 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] All pieces
   - [x] Zobrist hashing
   - [x] Comparison operators (using Zobrist hash)
-  - [x] Move history
+  - [x] Board history
     - [x] Repetition detection
 - [ ] `BoardBatch`
   - [x] Initialization
@@ -255,7 +254,9 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] Create a batch of boards from a list of FEN strings.
     - [x] Create a batch of boards from a list of boards.
   - [x] FEN parsing and printing
-  - [x] SAN move parsing
+  - [x] UCI parsing and printing
+  - [x] SAN parsing
+  - [ ] SAN printing
   - [x] Human readable display
     - [x] Basic characters
     - [x] Unicode characters
@@ -287,18 +288,12 @@ uv pip install target/wheels/rust_chess-0.4.0-cp313-cp313-linux_x86_64.whl
     - [x] All pieces
   - [x] Zobrist hashing for each board
   - [x] Comparison operators (using Zobrist hash)
-  - [x] Move history
+  - [x] Board history
     - [x] Repetition detection for each board
-  - [x] Generate the next move, legal move, and legal capture for a batch
-  - [x] Generate moves, legal moves, and legal captures for a batch
-  - [x] Return a list of the generators
-  - [x] Set the retain generator masks
-  - [x] Set the exclude generator masks
-  - [x] Remove moves from the generators
-  - [x] Reset the generators
 - [ ] Miscellaneous
-  - [ ] Cache default board for faster creation?
+  - [x] Cache default board for faster initialization
   - [ ] Piece-Square Table support?
+  - [ ] Undo moves? (would require storing lots more and would slow down the library)
   - [ ] PGN support (parsing and writing)
   - [ ] UCI protocol basics
   - [ ] Opening book support

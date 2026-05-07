@@ -113,23 +113,6 @@ def python_board_ops(boards, move):
         board.piece_at(chess.E2)
 
 
-def rust_board_ops2(boards2, moves2, squares2):
-    boards2.is_legal_move(moves2)
-    boards2.is_zeroing(moves2)
-    boards2.get_piece_type_on(squares2)
-    boards2.get_color_on(squares2)
-    boards2.get_piece_on(squares2)
-
-
-def python_board_ops2(boards2, move2):
-    for board in boards2:
-        board.is_legal(move2)
-        board.is_zeroing(move2)
-        board.piece_type_at(chess.E2)
-        board.color_at(chess.E2)
-        board.piece_at(chess.E2)
-
-
 def rust_make_move():
     boards = rc.BoardBatch(25)
     moves = [rc.Move.from_uci("g1f3")] * 25
@@ -322,8 +305,8 @@ if __name__ == "__main__":
         ("Board Ops", rust_board_ops, python_board_ops, (rc_boards, rc_moves, rc_squares), (py_boards, py_move)),
         (
             "Board Ops 2",
-            rust_board_ops2,
-            python_board_ops2,
+            rust_board_ops,
+            python_board_ops,
             (rc_boards_fens, rc_moves2, rc_squares2),
             (py_boards_fens, py_move2),
         ),

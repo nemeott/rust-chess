@@ -3,7 +3,7 @@ requires = ["maturin>=1.8,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "rust_chess"
+name = "rust-chess"
 dynamic = ["version"]
 requires-python = ">=3.10"
 description = "A bridge between the Rust chess crate and Python."

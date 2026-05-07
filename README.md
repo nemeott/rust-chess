@@ -8,7 +8,7 @@ This repository provides:
 
 - A Python package `rust-chess` created using Maturin.
 - A type stub (`rust_chess.pyi`) providing hover documentation and examples in IDEs.
-- A micro-benchmark comparison against `python-chess` in the file `tests/benchmark.py`.
+- A benchmark comparison against `python-chess` with `tests/benchmark.py` and `tests/batchmark.py`.
 
 ## WARNING
 
@@ -61,9 +61,9 @@ Use IDE completion or read the generated stub (`rust_chess.pyi`) for detailed fu
 - `Color`: `WHITE`, `BLACK`, `COLORS`
 - `PieceType`: `PAWN`, `KNIGHT`, `BISHOP`, `ROOK`, `QUEEN`, `KING`, `PIECE_TYPES`
 - `Piece`: `WHITE_PAWN` ... `BLACK_KING`, `COLORED_PIECES`
-- `Square`: `A1` .. `H8`, `SQUARES`
+- `Square`: `A1` ... `H8`, `SQUARES`
 - `Bitboard`: `BB_EMPTY`, `BB_FULL`, `BB_FILE_A` ... `BB_FILE_H`, `BB_RANK_1` ... `BB_RANK_8`, `BB_FILES`, `BB_RANKS`
-- `Move`: TODO: Add castling and null moves?
+- `Move`: `WHITE_QUEENSIDE_CASTLE`, `WHITE_KINGSIDE_CASTLE`, `BLACK_QUEENSIDE_CASTLE`, `BLACK_KINGSIDE_CASTLE`
 - `PyRepetitionDetectionMode` enum: `.NONE`, `.PARTIAL`, `.FULL`
   - Currently no difference between partial and full for now, but the plan is to have partial have a smaller history list
 - `CastleRights` enum: `.NO_RIGHTS`, `.QUEENSIDE`, `.KINGSIDE`, `.BOTH`
@@ -141,9 +141,9 @@ cd rust-chess
 
 ```sh
 ./scripts/build.sh
-pip install target/wheels/rust_chess-0.4.2-cp313-cp313-linux_x86_64.whl
+pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
 # Or
-uv pip install target/wheels/rust_chess-0.4.2-cp313-cp313-linux_x86_64.whl
+uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
 
 # Or build and install in current virtual environment
 ./scripts/develop.sh
@@ -235,7 +235,7 @@ uv pip install target/wheels/rust_chess-0.4.2-cp313-cp313-linux_x86_64.whl
   - [x] Quick legality detection for psuedo-legal moves
   - [x] Check if move is a capture or en passant or is castling
   - [x] Make moves on the current or new board
-  - [ ] Make null moves (make_null_move)
+  - [ ] Make null moves (make_null_move) (would require move history to undo this)
   - [x] Make null moves on new board
   - [x] Get bitboards
     - [x] Pinned pieces
@@ -276,9 +276,8 @@ uv pip install target/wheels/rust_chess-0.4.2-cp313-cp313-linux_x86_64.whl
   - [x] Quick legality detection for psuedo-legal moves
   - [x] Check if a respective move is a capture or en passant or is castling for each board
   - [x] Make moves on the current or new board batch
-  - [ ] Make null moves (make_null_move)
+  - [ ] Make null moves (make_null_move) (would require move history to undo this)
   - [x] Make null moves on new board batch
-  - [ ] Undo moves
   - [x] Get bitboards for the batch
     - [x] Pinned pieces
     - [x] Checking pieces
@@ -301,7 +300,7 @@ uv pip install target/wheels/rust_chess-0.4.2-cp313-cp313-linux_x86_64.whl
   - [ ] Comprehensive test suite
     - [x] Docstring tests
     - [x] Benchmark comparision to `python-chess`
-    - [ ] Benchmarking individual functions (Criterion?)
+    - [x] Benchmarking individual functions with Criterion
     - [ ] Other tests
   - [ ] Multi-threading
   - [ ] Python thread support?

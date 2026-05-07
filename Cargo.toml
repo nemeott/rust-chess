@@ -1,6 +1,6 @@
 [package]
 name = "rust-chess"
-version = "0.4.2"
+version = "0.4.3"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -18,6 +18,13 @@ terminal_size = "0.4.4" # Minimal binary to detect terminal size for dynamic til
 [target.'cfg(not(all(target_arch = "aarch64", target_os = "linux")))'.dependencies]
 mimalloc = "0.1.50" # Faster allocater than the default system allocator
 
+[dev-dependencies]
+criterion = "0.8.2" # Benchmarking library for performance testing
+
+[[bench]]
+name = "default"
+harness = false
+
 [lints.clippy]
 correctness = "warn"
 suspicious = "warn"
@@ -26,6 +33,9 @@ perf = "warn"
 style = "warn"
 pedantic = "warn"
 nursery = "warn"
+
+[profile.bench]
+inherits = "release"
 
 [profile.dev] # Faster build time
 lto = "off"

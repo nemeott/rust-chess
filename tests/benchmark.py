@@ -12,33 +12,33 @@ Benchmark Results (n=100,000)
 ============================================================
 Category          | Rust Time | Python Time |    Speedup
 ------------------------------------------------------------
-Colors            |  0.006622 |    0.005583 |   0.843214
-Pieces            |  0.018807 |    0.010251 |   0.545047
-Squares           |  0.090577 |    0.044927 |   0.496016
-Moves             |  0.076587 |    0.217583 |   2.840988
-Board Init        |  0.066030 |    5.094908 |  77.160674
-Board Props       |  0.349438 |    6.110863 |  17.487675
-Board Ops         |  0.033388 |    0.468387 |  14.028470
-Board Ops 2       |  0.029917 |    0.126599 |   4.231668
-Make Move         |  0.052464 |    0.607373 |  11.576909
-Make Move (New)   |  0.024611 |    0.492972 |  20.030613
-Undo Move         |  0.064030 |    0.528625 |   8.255924
-Next Move         |  0.030804 |    0.375795 |  12.199372
-Generate Moves    |  0.027474 |    5.230344 | 190.373947
-SAN Parse         |  0.025358 |    0.571996 |  22.556816
-King Square       |  0.010181 |    0.020101 |   1.974365
-Zobrist Hash      |  0.009077 |    1.781595 | 196.277714
-Checkmate         |  0.011072 |    0.098640 |   8.909011
-Insufficient Mat. |  0.006351 |    0.054583 |   8.593791
-Bitboard Ops      |  0.041536 |    0.076017 |   1.830163
-Board Bitboards   |  0.034426 |    0.024426 |   0.709532
-Castle Rights     |  0.021094 |    0.248873 |  11.798300
+Colors            |  0.006622 |    0.005583 |    0.843214
+Pieces            |  0.018807 |    0.010251 |    0.545047
+Squares           |  0.090577 |    0.044927 |    0.496016
+Moves             |  0.076587 |    0.217583 |    2.840988
+Board Init        |  0.066030 |    5.094908 |   77.160674
+Board Props       |  0.349438 |    6.110863 |   17.487675
+Board Ops         |  0.033388 |    0.468387 |   14.028470
+Board Ops 2       |  0.029917 |    0.126599 |    4.231668
+Make Move         |  0.052464 |    0.607373 |   11.576909
+Make Move (New)   |  0.024611 |    0.492972 |   20.030613
+Undo Move         |  0.064030 |    0.528625 |    8.255924
+Next Move         |  0.030804 |    0.375795 |   12.199372
+Generate Moves    |  0.027474 |    5.230344 |  190.373947
+SAN Parse         |  0.025358 |    0.571996 |   22.556816
+King Square       |  0.010181 |    0.020101 |    1.974365
+Zobrist Hash      |  0.009077 |    1.781595 |  196.277714
+Checkmate         |  0.011072 |    0.098640 |    8.909011
+Insufficient Mat. |  0.006351 |    0.054583 |    8.593791
+Bitboard Ops      |  0.041536 |    0.076017 |    1.830163
+Board Bitboards   |  0.034426 |    0.024426 |    0.709532
+Castle Rights     |  0.021094 |    0.248873 |   11.798300
 Repetitions       |  0.012021 |   14.161510 | 1178.080356
-Board Status      |  0.011402 |    0.544159 |  47.722964
-Square/Piece Adv. |  0.034012 |    0.048505 |   1.426100
-Null Move         |  0.010831 |    0.170929 |  15.782040
+Board Status      |  0.011402 |    0.544159 |   47.722964
+Square/Piece Adv. |  0.034012 |    0.048505 |    1.426100
+Null Move         |  0.010831 |    0.170929 |   15.782040
 ------------------------------------------------------------
-Total             |  1.098110 |   37.115544 |  33.799470
+Total             |  1.098110 |   37.115544 |   33.799470
 """
 
 import time
@@ -429,19 +429,19 @@ if __name__ == "__main__":
 
     print("Benchmark Results (n=100,000)")
     print("=" * 60)
-    print(f"{'Category':<17} | {'Rust Time':>9} | {'Python Time':>11} | {'Speedup':>10}")
+    print(f"{'Category':<17} | {'Rust Time':>9} | {'Python Time':>11} | {'Speedup':>11}")
     print("-" * 60)
 
     times = []
     for name, rust_func, python_func, r_args, p_args in benchmarks:
         rust_time, python_time, speedup = benchmark(name, rust_func, python_func, r_args, p_args, n)
         times.append((rust_time, python_time, speedup))
-        print(f"{name:<17} | {rust_time:>9f} | {python_time:>11f} | {speedup:>10f}")
+        print(f"{name:<17} | {rust_time:>9f} | {python_time:>11f} | {speedup:>11f}")
 
     print("-" * 60)
     total_rust = sum(r for r, p, s in times)
     total_python = sum(p for r, p, s in times)
     total_speedup = total_python / total_rust if total_rust > 0 else float("inf")
-    print(f"{'Total':<17} | {total_rust:>9f} | {total_python:>11f} | {total_speedup:>10f}")
+    print(f"{'Total':<17} | {total_rust:>9f} | {total_python:>11f} | {total_speedup:>11f}")
 
     print()

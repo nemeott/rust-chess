@@ -33,7 +33,12 @@ pub static DEFAULT_BOARD: LazyLock<PyBoard> = LazyLock::new(|| {
 /// The status can be one of the following:
 ///     Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
 /// Supports comparison and equality.
-/// TODO: docs
+///
+/// ```python
+/// >>> rust_chess.Board().get_status()
+/// BoardStatus.ONGOING
+/// ```
+// TODO: docs
 #[gen_stub_pyclass_enum]
 #[pyclass(name = "BoardStatus", frozen, eq, ord, from_py_object)]
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd)]
@@ -111,10 +116,32 @@ pub struct PyBoard {
     pub(crate) fullmove_number: u8, // Fullmove number; increments after black moves (theoretical max 218, fits in u8)
 
     /// The repetition dectection mode the board will use.
+    ///
+    /// ```python
+    /// >>> rust_chess.Board().repetition_detection_mode
+    /// RepetitionDetectionMode.FULL
+    /// >>> board = rust_chess.Board(mode=rust_chess.RepetitionDetectionMode.NONE)
+    /// >>> board.repetition_detection_mode
+    /// RepetitionDetectionMode.NONE
+    /// ```
     #[pyo3(get)]
     pub(crate) repetition_detection_mode: PyRepetitionDetectionMode,
 
     /// Stores board Zobrist hashes for board history.
+    /// Previous history is cleared when an irreversible move is made (pawn move or capture).
+    /// Used for repetition detection.
+    ///
+    /// ```python
+    /// >>> board = rust_chess.Board()
+    /// >>> board.board_history
+    /// [9023329949471135578]
+    /// >>> board.make_move(rust_chess.Move("e2e4"))
+    /// >>> board.board_history # Pawn moves are irreversible so previous history is cleared
+    /// [9322854110900140515]
+    /// >>> board.make_move(rust_chess.Move("g8f6"))
+    /// >>> board.board_history # Knight move is reversible so previous history is retained
+    /// [9322854110900140515, 3591521366731885836]
+    /// ```
     #[pyo3(get)]
     pub(crate) board_history: Option<Vec<u64>>,
 }
@@ -226,7 +253,6 @@ impl PyBoard {
     }
 
     // TODO: Make this look less ugly?
-    // TODO: Add picture of this to demo
     #[inline]
     pub(crate) fn _display_color(
         board: &chess::Board,
@@ -868,6 +894,7 @@ impl PyBoard {
     #[new]
     #[pyo3(signature = (fen = None, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
     #[allow(clippy::missing_errors_doc)]
+    #[inline]
     fn new(fen: Option<&str>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
         fen.map_or_else(
             // If no FEN string is provided, use the default starting position
@@ -1105,7 +1132,7 @@ impl PyBoard {
         Self::_get_move_from_san(&self.board, san)
     }
 
-    // TODO: get_san_from_move
+    // TODO: get_san_from_move (would require move history or something similar to detect captures)
 
     // Get the Zobrist hash of the board.
     //
@@ -1184,7 +1211,6 @@ impl PyBoard {
     /// True
     /// >>> print(board.turn)
     /// WHITE
-    ///
     /// >>> board.make_move(rust_chess.Move("e2e4"))
     /// >>> board.turn
     /// False

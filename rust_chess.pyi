@@ -878,11 +878,33 @@ class Board:
     def repetition_detection_mode(self) -> RepetitionDetectionMode:
         r"""
         The repetition dectection mode the board will use.
+        
+        ```python
+        >>> rust_chess.Board().repetition_detection_mode
+        RepetitionDetectionMode.FULL
+        >>> board = rust_chess.Board(mode=rust_chess.RepetitionDetectionMode.NONE)
+        >>> board.repetition_detection_mode
+        RepetitionDetectionMode.NONE
+        ```
         """
     @property
     def board_history(self) -> typing.Optional[builtins.list[builtins.int]]:
         r"""
         Stores board Zobrist hashes for board history.
+        Previous history is cleared when an irreversible move is made (pawn move or capture).
+        Used for repetition detection.
+        
+        ```python
+        >>> board = rust_chess.Board()
+        >>> board.board_history
+        [9023329949471135578]
+        >>> board.make_move(rust_chess.Move("e2e4"))
+        >>> board.board_history # Pawn moves are irreversible so previous history is cleared
+        [9322854110900140515]
+        >>> board.make_move(rust_chess.Move("g8f6"))
+        >>> board.board_history # Knight move is reversible so previous history is retained
+        [9322854110900140515, 3591521366731885836]
+        ```
         """
     @property
     def zobrist_hash(self) -> builtins.int:
@@ -907,7 +929,6 @@ class Board:
         True
         >>> print(board.turn)
         WHITE
-        
         >>> board.make_move(rust_chess.Move("e2e4"))
         >>> board.turn
         False
@@ -1993,18 +2014,58 @@ class BoardBatch:
     Uses the same method names as `Board`, however they operate on a batch now.
     """
     @property
-    def halfmove_clocks(self) -> builtins.list[builtins.int]: ...
-    @property
-    def fullmove_numbers(self) -> builtins.list[builtins.int]: ...
-    @property
     def repetition_detection_mode(self) -> RepetitionDetectionMode:
         r"""
-        The repetition dectection mode the board will use.
+        The repetition dectection mode the board batch will use.
+        
+        ```python
+        >>> rust_chess.BoardBatch(2).repetition_detection_mode
+        RepetitionDetectionMode.FULL
+        >>> boards = rust_chess.BoardBatch(2, mode=rust_chess.RepetitionDetectionMode.NONE)
+        >>> boards.repetition_detection_mode
+        RepetitionDetectionMode.NONE
+        ```
         """
     @property
     def board_histories(self) -> builtins.list[typing.Optional[builtins.list[builtins.int]]]:
         r"""
-        Store board Zobrist hashes for board history
+        Stores board Zobrist hashes for board history for each board.
+        Previous history is cleared when an irreversible move is made (pawn move or capture).
+        Used for repetition detection.
+        
+        ```python
+        >>> boards = rust_chess.BoardBatch(2)
+        >>> boards.board_histories
+        [[9023329949471135578], [9023329949471135578]]
+        >>> boards.make_move([rust_chess.Move("e2e4")] * 2)
+        >>> boards.board_histories # Pawn moves are irreversible so previous history is cleared
+        [[9322854110900140515], [9322854110900140515]]
+        >>> boards.make_move([rust_chess.Move("g8f6")] * 2)
+        >>> boards.board_histories # Knight move is reversible so previous history is retained
+        [[9322854110900140515, 3591521366731885836], [9322854110900140515, 3591521366731885836]]
+        ```
+        """
+    @property
+    def halfmove_clocks(self) -> builtins.list[builtins.int]:
+        r"""
+        Get the halfmove clocks of all boards in the batch.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.halfmove_clocks
+        [0, 0]
+        ```
+        """
+    @property
+    def fullmove_numbers(self) -> builtins.list[builtins.int]:
+        r"""
+        Get the fullmove numbers of all boards in the batch.
+        
+        ```python
+        >>> batch = rust_chess.BoardBatch(2)
+        >>> batch.fullmove_numbers
+        [1, 1]
+        ```
         """
     @property
     def zobrist_hashes(self) -> builtins.list[builtins.int]:
@@ -2056,17 +2117,29 @@ class BoardBatch:
         Create a new batch of boards from a list of FEN strings.
         
         ```python
-        >>> batch = rust_chess.BoardBatch.from_fens([
+        >>> boards = rust_chess.BoardBatch.from_fens([
         ...     "rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2",
         ...     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         ... ])
-        >>> batch
+        >>> boards
         rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
         rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
         ```
         """
     @staticmethod
-    def from_boards(boards: list, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch: ...
+    def from_boards(boards: list, mode: RepetitionDetectionMode = RepetitionDetectionMode.FULL) -> BoardBatch:
+        r"""
+        Create a new batch of boards from a list of `Board` objects.
+        
+        ```python
+        >>> board1 = rust_chess.Board("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
+        >>> board2 = rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        >>> boards = rust_chess.BoardBatch.from_boards([board1, board2])
+        >>> boards
+        rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+        rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+        ```
+        """
     def get_fens(self) -> builtins.str:
         r"""
         Get the FEN string representation of each board on a newline.
@@ -3582,7 +3655,11 @@ class BoardStatus(enum.Enum):
     The status can be one of the following:
         Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
     Supports comparison and equality.
-    TODO: docs
+    
+    ```python
+    >>> rust_chess.Board().get_status()
+    BoardStatus.ONGOING
+    ```
     """
     ONGOING = ...
     SEVENTY_FIVE_MOVES = ...

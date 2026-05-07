@@ -20,6 +20,7 @@ classifiers = [
 Repository = "https://github.com/nemeott/rust-chess"
 
 [tool.maturin]
+module-name = "rust_chess" # Fix maturin detecting rust-chess and rust_chess as separate modules
 profile = "release" # Use release profile for building
 features = ["pyo3/extension-module"]
 rustc-args = [

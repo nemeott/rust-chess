@@ -215,19 +215,14 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
     - [x] Threefold repetition
     - [x] Fifty moves
   - [x] Rich comparison operators
-- [ ] `Board`
+- [x] `Board`
   - [x] FEN parsing and printing
   - [x] UCI parsing and printing
   - [x] SAN parsing
-  - [ ] SAN printing
   - [x] Human readable display
     - [x] Basic characters
     - [x] Unicode characters
     - [x] Unicode with colors (ANSI)
-  - [ ] Dynamic tiled display for previous moves
-    - [ ] Basic characters
-    - [ ] Unicode characters
-    - [ ] Unicode with colors (ANSI)
   - [x] Get the color, piece type, and piece on a square
   - [x] Get the king and en passant squares
   - [x] Get castle rights
@@ -235,7 +230,6 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
   - [x] Quick legality detection for psuedo-legal moves
   - [x] Check if move is a capture or en passant or is castling
   - [x] Make moves on the current or new board
-  - [ ] Make null moves (make_null_move) (would require move history to undo this)
   - [x] Make null moves on new board
   - [x] Get bitboards
     - [x] Pinned pieces
@@ -248,7 +242,7 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
   - [x] Comparison operators (using Zobrist hash)
   - [x] Board history
     - [x] Repetition detection
-- [ ] `BoardBatch`
+- [x] `BoardBatch`
   - [x] Initialization
     - [x] Create a batch of boards from a count
     - [x] Create a batch of boards from a list of FEN strings.
@@ -256,7 +250,6 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
   - [x] FEN parsing and printing
   - [x] UCI parsing and printing
   - [x] SAN parsing
-  - [ ] SAN printing
   - [x] Human readable display
     - [x] Basic characters
     - [x] Unicode characters
@@ -265,10 +258,6 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
     - [x] Basic characters
     - [x] Unicode characters
     - [x] Unicode with colors (ANSI)
-  - [ ] Dynamic tiled display for previous moves
-    - [ ] Basic characters
-    - [ ] Unicode characters
-    - [ ] Unicode with colors (ANSI)
   - [x] Get the color, piece type, and piece on a respective square
   - [x] Get the king and en passant squares for each board
   - [x] Get castle rights for each board
@@ -276,7 +265,6 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
   - [x] Quick legality detection for psuedo-legal moves
   - [x] Check if a respective move is a capture or en passant or is castling for each board
   - [x] Make moves on the current or new board batch
-  - [ ] Make null moves (make_null_move) (would require move history to undo this)
   - [x] Make null moves on new board batch
   - [x] Get bitboards for the batch
     - [x] Pinned pieces
@@ -297,13 +285,13 @@ uv pip install target/wheels/rust_chess-0.4.3-cp313-cp313-linux_x86_64.whl
   - [ ] UCI protocol basics
   - [ ] Opening book support
   - [ ] Improved Python ergonomics (e.g., more Pythonic wrappers where appropriate)
+  - [ ] Multi-threading
+  - [ ] Python thread support?
   - [ ] Comprehensive test suite
     - [x] Docstring tests
     - [x] Benchmark comparision to `python-chess`
     - [x] Benchmarking individual functions with Criterion
     - [ ] Other tests
-  - [ ] Multi-threading
-  - [ ] Python thread support?
   - [x] Working GitHub action
 
 ## Comparison with python-chess

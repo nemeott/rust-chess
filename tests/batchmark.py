@@ -35,7 +35,6 @@ Null Move         |  0.009174 |    0.453783 |   49.461692
 Total             |  0.561356 |   67.678473 |  120.562514
 """
 
-import inspect
 import time
 
 import chess

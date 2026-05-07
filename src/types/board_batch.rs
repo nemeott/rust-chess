@@ -29,19 +29,37 @@ pub struct PyBoardBatch {
     // Lazily initialized per board, reset to None when a move is applied
     move_gens: Vec<OnceLock<Py<PyMoveGenerator>>>, // Use a Py to be able to share between Python and Rust
 
-    #[pyo3(get)]
-    // FIXME: __repr__ returns raw bytes (u8 converted to bytes in PyO3)
     halfmove_clocks: Vec<u8>, // Halfmoves since last pawn move or capture
 
-    #[pyo3(get)]
-    // FIXME: __repr__ returns raw bytes (u8 converted to bytes in PyO3)
     fullmove_numbers: Vec<u8>, // Fullmove number; increments after black moves (theoretical max 218, fits in u8)
 
-    /// The repetition dectection mode the board will use.
+    /// The repetition dectection mode the board batch will use.
+    ///
+    /// ```python
+    /// >>> rust_chess.BoardBatch(2).repetition_detection_mode
+    /// RepetitionDetectionMode.FULL
+    /// >>> boards = rust_chess.BoardBatch(2, mode=rust_chess.RepetitionDetectionMode.NONE)
+    /// >>> boards.repetition_detection_mode
+    /// RepetitionDetectionMode.NONE
+    /// ```
     #[pyo3(get)]
     repetition_detection_mode: PyRepetitionDetectionMode,
 
-    /// Store board Zobrist hashes for board history
+    /// Stores board Zobrist hashes for board history for each board.
+    /// Previous history is cleared when an irreversible move is made (pawn move or capture).
+    /// Used for repetition detection.
+    ///
+    /// ```python
+    /// >>> boards = rust_chess.BoardBatch(2)
+    /// >>> boards.board_histories
+    /// [[9023329949471135578], [9023329949471135578]]
+    /// >>> boards.make_move([rust_chess.Move("e2e4")] * 2)
+    /// >>> boards.board_histories # Pawn moves are irreversible so previous history is cleared
+    /// [[9322854110900140515], [9322854110900140515]]
+    /// >>> boards.make_move([rust_chess.Move("g8f6")] * 2)
+    /// >>> boards.board_histories # Knight move is reversible so previous history is retained
+    /// [[9322854110900140515, 3591521366731885836], [9322854110900140515, 3591521366731885836]]
+    /// ```
     #[pyo3(get)]
     board_histories: Vec<Option<Vec<u64>>>,
 }
@@ -87,11 +105,11 @@ impl PyBoardBatch {
     /// Create a new batch of boards from a list of FEN strings.
     ///
     /// ```python
-    /// >>> batch = rust_chess.BoardBatch.from_fens([
+    /// >>> boards = rust_chess.BoardBatch.from_fens([
     /// ...     "rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2",
     /// ...     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     /// ... ])
-    /// >>> batch
+    /// >>> boards
     /// rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
     /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     /// ```
@@ -155,6 +173,16 @@ impl PyBoardBatch {
         })
     }
 
+    /// Create a new batch of boards from a list of `Board` objects.
+    ///
+    /// ```python
+    /// >>> board1 = rust_chess.Board("rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2")
+    /// >>> board2 = rust_chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    /// >>> boards = rust_chess.BoardBatch.from_boards([board1, board2])
+    /// >>> boards
+    /// rnbqkbnr/ppp1pppp/8/3p4/2P1P3/8/PP1P1PPP/RNBQKBNR b KQkq - 0 2
+    /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    /// ```
     #[staticmethod]
     #[pyo3(signature = (boards, mode = PyRepetitionDetectionMode::Full))] // Default to full repetition detection
     fn from_boards(boards: &Bound<'_, PyList>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
@@ -519,7 +547,7 @@ impl PyBoardBatch {
             .collect()
     }
 
-    // TODO: get_san_from_move
+    // TODO: get_san_from_move (would require move history or something similar to detect captures)
 
     /// Get the number of boards in the batch.
     ///
@@ -532,6 +560,40 @@ impl PyBoardBatch {
     #[inline]
     const fn __len__(&self) -> usize {
         self.boards.len()
+    }
+
+    /// Get the halfmove clocks of all boards in the batch.
+    ///
+    /// ```python
+    /// >>> batch = rust_chess.BoardBatch(2)
+    /// >>> batch.halfmove_clocks
+    /// [0, 0]
+    /// ```
+    #[getter]
+    #[inline]
+    fn get_halfmove_clocks(&self) -> Vec<u16> {
+        // Convert to u16 since PyO3 automatically makes Vec<u8> into PyBytes
+        self.halfmove_clocks
+            .iter()
+            .map(|clock| u16::from(*clock))
+            .collect()
+    }
+
+    /// Get the fullmove numbers of all boards in the batch.
+    ///
+    /// ```python
+    /// >>> batch = rust_chess.BoardBatch(2)
+    /// >>> batch.fullmove_numbers
+    /// [1, 1]
+    /// ```
+    #[getter]
+    #[inline]
+    fn get_fullmove_numbers(&self) -> Vec<u16> {
+        // Convert to u16 since PyO3 automatically makes Vec<u8> into PyBytes
+        self.fullmove_numbers
+            .iter()
+            .map(|number| u16::from(*number))
+            .collect()
     }
 
     // Get the Zobrist hash of each board.
@@ -635,8 +697,6 @@ impl PyBoardBatch {
             .map(|board| PyColor(PyBoard::_get_turn(board)))
             .collect()
     }
-
-    // TODO: List of colors for below functions?
 
     /// Get the king square of each board for a color.
     ///

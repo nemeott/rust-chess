@@ -1,6 +1,6 @@
+use std::fmt::Write;
 use std::str::FromStr;
-use std::sync::OnceLock;
-use std::{fmt::Write, sync::LazyLock};
+use std::sync::{LazyLock, OnceLock};
 
 use pyo3::{exceptions::PyValueError, prelude::*};
 use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyclass_enum, gen_stub_pymethods};
@@ -29,6 +29,7 @@ pub static DEFAULT_BOARD: LazyLock<PyBoard> = LazyLock::new(|| {
 
 /// Board status enum class.
 /// Represents the status of a chess board.
+///
 /// The status can be one of the following:
 ///     Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
 /// Supports comparison and equality.
@@ -175,7 +176,7 @@ impl PyBoard {
                     s.push_str(&piece.get_string()); // TODO: as_str()?
                     s.push(' ');
                 } else {
-                    s.push_str(". ")
+                    s.push_str(". ");
                 }
             }
             s.push('\n');
@@ -209,7 +210,7 @@ impl PyBoard {
                     s.push_str(piece.get_unicode(dark_mode));
                     s.push(' ');
                 } else {
-                    s.push_str("· ") // This is a unicode middle dot, not a period
+                    s.push_str("· "); // This is a unicode middle dot, not a period
                 }
             }
             s.push('\n');
@@ -236,11 +237,12 @@ impl PyBoard {
         let white_code = "255;255;255";
         let black_code = "0;0;0";
 
-        let (light_square_code, dark_square_code) = match green_mode {
-            // Tan/Brown
-            false => ("230;207;171", "181;136;99"),
+        let (light_square_code, dark_square_code) = if green_mode {
             // Olive/Sand
-            true => ("215;220;200", "118;150;86"),
+            ("215;220;200", "118;150;86")
+        } else {
+            // Tan/Brown
+            ("230;207;171", "181;136;99")
         };
 
         let mut s = String::with_capacity(2666); // Default board string size with labels
@@ -253,18 +255,16 @@ impl PyBoard {
             for file in 0..8 {
                 let square = PySquare(unsafe { chess::Square::new(file + (rank * 8)) });
 
-                let (symbol_color, symbol) = if let Some(piece) = Self::_get_piece_on(board, square)
-                {
-                    (
-                        match piece.color.0 {
-                            chess::Color::White => white_code,
-                            chess::Color::Black => black_code,
-                        },
-                        piece.piece_type.get_solid_unicode(),
-                    )
-                } else {
-                    (white_code, " ") // Color doesn't matter, empty square
-                };
+                let (symbol_color, symbol) =
+                    Self::_get_piece_on(board, square).map_or((white_code, " "), |piece| {
+                        (
+                            match piece.color.0 {
+                                chess::Color::White => white_code,
+                                chess::Color::Black => black_code,
+                            },
+                            piece.piece_type.get_solid_unicode(),
+                        )
+                    });
 
                 let square_color = match square.get_color() {
                     WHITE => light_square_code,
@@ -275,10 +275,9 @@ impl PyBoard {
                 unsafe {
                     write!(
                         s,
-                        "\x1b[38;2;{};48;2;{}m{} \x1b[0m",
-                        symbol_color, square_color, symbol
+                        "\x1b[38;2;{symbol_color};48;2;{square_color}m{symbol} \x1b[0m"
                     )
-                    .unwrap_unchecked()
+                    .unwrap_unchecked();
                 }
             }
             s.push('\n');
@@ -297,7 +296,7 @@ impl PyBoard {
     pub(crate) fn _display_tiled<F>(
         display_fn: F,
         board_string_size: usize,
-        boards: &Vec<chess::Board>,
+        boards: &[chess::Board],
         show_labels: bool,
         color_mode: bool,
     ) where
@@ -306,8 +305,7 @@ impl PyBoard {
         let num_boards: usize = boards.len();
 
         let terminal_width: usize = terminal_size::terminal_size()
-            .map(|(terminal_size::Width(w), _)| w)
-            .unwrap_or(80) as usize; // Default to 80 if we can't get the terminal size
+            .map_or(80usize, |(terminal_size::Width(w), _)| w as usize); // Default to 80 if we can't get the terminal size
 
         let tile_width: usize = if show_labels { 18 } else { 16 }; // (8 squares * 2 chars per square) + (2 chars for labels)
         let tile_height: usize = if show_labels { 9 } else { 8 }; // Bottom labels add an extra line
@@ -343,7 +341,7 @@ impl PyBoard {
         // dbg!(final_string.len()); // Actual num bytes
         // dbg!((num_boards * board_string_size) + num_tiles_high); // Predicted num bytes
 
-        print!("{}", final_string);
+        print!("{final_string}");
     }
 
     #[inline]
@@ -414,7 +412,7 @@ impl PyBoard {
         {
             // Check if the move is two squares horizontally
             let dest = chess_move.0.get_dest();
-            return (dest.to_int() as i8 - source.to_int() as i8).abs() == 2;
+            return (dest.to_int().cast_signed() - source.to_int().cast_signed()).abs() == 2;
         }
         false
     }
@@ -430,8 +428,7 @@ impl PyBoard {
         {
             // Check if the move is two squares to the left
             let dest = chess_move.0.get_dest();
-            #[allow(clippy::cast_possible_truncation)]
-            return dest.to_int() as i8 - source.to_int() as i8 == -2;
+            return dest.to_int().cast_signed() - source.to_int().cast_signed() == -2;
         }
         false
     }
@@ -447,8 +444,7 @@ impl PyBoard {
         {
             // Check if the move is two squares to the right
             let dest = chess_move.0.get_dest();
-            #[allow(clippy::cast_possible_truncation)]
-            return dest.to_int() as i8 - source.to_int() as i8 == 2;
+            return dest.to_int().cast_signed() - source.to_int().cast_signed() == 2;
         }
         false
     }
@@ -505,8 +501,7 @@ impl PyBoard {
             && board.piece_on(source).is_some_and(|p| p == chess::Piece::Pawn) // Moving pawn
             && {
                 // Moving diagonally
-                #[allow(clippy::cast_possible_truncation)]
-                let diff = (dest.to_int() as i8 - source.to_int() as i8).abs();
+                let diff = (dest.to_int().cast_signed() - source.to_int().cast_signed()).abs();
                 diff == 7 || diff == 9
             }
             && board.piece_on(dest).is_none() // Target square is empty
@@ -755,7 +750,7 @@ impl PyBoard {
     /// TODO: Add option to use full, or no repetition checks
     #[inline]
     pub(crate) fn _is_n_repetition(
-        board_history: &Option<Vec<u64>>,
+        board_history: Option<&Vec<u64>>,
         halfmove_clock: u8,
         n: u8,
     ) -> bool {
@@ -821,7 +816,7 @@ impl PyBoard {
     #[inline]
     pub(crate) fn _get_status(
         board: &chess::Board,
-        board_history: &Option<Vec<u64>>,
+        board_history: Option<&Vec<u64>>,
         halfmove_clock: u8,
     ) -> PyBoardStatus {
         match board.status() {
@@ -842,8 +837,8 @@ impl PyBoard {
     }
 }
 
-/// Implement clone for PyBoard manually since OnceLock doesn't implement clone
-/// Allows us to use a default board constant
+/// Implement clone for `PyBoard` manually since `OnceLock` doesn't implement clone.
+/// Allows us to use a default board constant.
 impl Clone for PyBoard {
     fn clone(&self) -> Self {
         Self {
@@ -872,11 +867,11 @@ impl PyBoard {
     /// ```
     #[new]
     #[pyo3(signature = (fen = None, mode = PyRepetitionDetectionMode::Full))] // Default to no fen and full repetition detection
+    #[allow(clippy::missing_errors_doc)]
     fn new(fen: Option<&str>, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
-        #[allow(clippy::option_if_let_else)]
-        match fen {
+        fen.map_or_else(
             // If no FEN string is provided, use the default starting position
-            None => match mode {
+            || match mode {
                 // Used cached board if full repetition detection
                 PyRepetitionDetectionMode::Full => Ok(DEFAULT_BOARD.clone()),
                 PyRepetitionDetectionMode::None => Ok(Self {
@@ -889,8 +884,8 @@ impl PyBoard {
                 }),
             },
             // Otherwise, parse the FEN string using the chess crate
-            Some(fen_str) => Self::from_fen(fen_str, mode),
-        }
+            |fen_str| Self::from_fen(fen_str, mode),
+        )
     }
 
     /// Create a new board from a FEN string.
@@ -994,7 +989,7 @@ impl PyBoard {
     #[pyo3(signature = (show_labels = false))]
     #[inline]
     fn display(&self, show_labels: bool) {
-        print!("{}", Self::_display(&self.board, show_labels, false)) // 3rd paramater doesn't do anything
+        print!("{}", Self::_display(&self.board, show_labels, false)); // 3rd paramater doesn't do anything
     }
 
     /// Get the string representation of the board.
@@ -1055,7 +1050,7 @@ impl PyBoard {
         print!(
             "{}",
             Self::_display_unicode(&self.board, show_labels, dark_mode)
-        )
+        );
     }
 
     /// Print the unicode string representation of the board with ANSI color codes.
@@ -1095,7 +1090,7 @@ impl PyBoard {
         print!(
             "{}",
             Self::_display_color(&self.board, show_labels, green_mode)
-        )
+        );
     } // TODO: Make colors better
 
     /// Create a new move from a SAN string (e.g. "e4").
@@ -1658,6 +1653,7 @@ impl PyBoard {
     /// ```
     //TODO: Make move new quick legal?
     #[pyo3(signature = (chess_move, check_legality = true))]
+    #[allow(clippy::missing_errors_doc)]
     #[inline]
     fn make_move_new(&self, chess_move: PyMove, check_legality: bool) -> PyResult<Self> {
         // Check if draw by fivefold
@@ -1907,7 +1903,7 @@ impl PyBoard {
     fn remove_generator_move(&mut self, chess_move: PyMove) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        Self::_remove_generator_move(py, &self.board, &self.move_gen, chess_move)
+        Self::_remove_generator_move(py, &self.board, &self.move_gen, chess_move);
     }
 
     /// Retains only moves whose destination squares are in the given mask.
@@ -1932,7 +1928,7 @@ impl PyBoard {
     fn retain_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        Self::_retain_generator_mask(py, &self.board, &self.move_gen, mask)
+        Self::_retain_generator_mask(py, &self.board, &self.move_gen, mask);
     }
 
     /// Excludes moves whose destination squares are in the given mask.
@@ -1959,7 +1955,7 @@ impl PyBoard {
     fn exclude_generator_mask(&mut self, mask: PyBitboard) {
         // We can assume the GIL is acquired, since this function is only called from Python
         let py = unsafe { Python::assume_attached() };
-        Self::_exclude_generator_mask(py, &self.board, &self.move_gen, mask)
+        Self::_exclude_generator_mask(py, &self.board, &self.move_gen, mask);
     }
 
     /// Get the next remaining move in the generator.
@@ -2192,7 +2188,7 @@ impl PyBoard {
     /// TODO: Add option to use full, or no repetition checks
     #[inline]
     fn is_n_repetition(&self, n: u8) -> bool {
-        Self::_is_n_repetition(&self.board_history, self.halfmove_clock, n)
+        Self::_is_n_repetition(self.board_history.as_ref(), self.halfmove_clock, n)
     }
 
     /// Checks if the current position is a threefold repetition.
@@ -2288,6 +2284,10 @@ impl PyBoard {
     /// TODO
     #[inline]
     fn get_status(&self) -> PyBoardStatus {
-        Self::_get_status(&self.board, &self.board_history, self.halfmove_clock)
+        Self::_get_status(
+            &self.board,
+            self.board_history.as_ref(),
+            self.halfmove_clock,
+        )
     }
 }

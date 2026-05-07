@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::str::FromStr;
 use std::sync::OnceLock;
 
@@ -14,7 +15,7 @@ use crate::types::{
     square::PySquare,
 };
 
-/// BoardBatch class.
+/// Board batch class.
 /// Represents a batch of chess boards.
 /// Uses the same method names as `Board`, however they operate on a batch now.
 ///
@@ -61,7 +62,9 @@ impl PyBoardBatch {
     /// ```
     #[new]
     #[pyo3(signature = (count, mode = PyRepetitionDetectionMode::Full))] // Default to full repetition detection
-    fn new(count: usize, mode: PyRepetitionDetectionMode) -> PyResult<Self> {
+    #[must_use]
+    #[inline]
+    fn new(count: usize, mode: PyRepetitionDetectionMode) -> Self {
         let boards = vec![DEFAULT_BOARD.board; count];
 
         let board_histories = match mode {
@@ -71,14 +74,14 @@ impl PyBoardBatch {
 
         let move_gens = (0..count).map(|_| OnceLock::new()).collect();
 
-        Ok(Self {
+        Self {
             boards,
             move_gens,
             halfmove_clocks: vec![0; count],
             fullmove_numbers: vec![1; count],
             repetition_detection_mode: mode,
             board_histories,
-        })
+        }
     }
 
     /// Create a new batch of boards from a list of FEN strings.
@@ -173,7 +176,7 @@ impl PyBoardBatch {
         for pyboard in pyboards {
             let b = pyboard.borrow(py);
 
-            boards.push(b.board.clone());
+            boards.push(b.board);
             move_gens.push(OnceLock::new());
             halfmove_clocks.push(b.halfmove_clock);
             fullmove_numbers.push(b.fullmove_number);
@@ -207,32 +210,38 @@ impl PyBoardBatch {
     /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     /// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     /// ```
+    #[must_use]
     #[inline]
     fn get_fens(&self) -> String {
+        let mut fens = String::with_capacity(self.boards.len() * 56); // Default fen len is 56
+
         self.boards
             .iter()
             .zip(self.halfmove_clocks.iter())
             .zip(self.fullmove_numbers.iter())
-            .map(|((board, halfmove_clock), fullmove_number)| {
+            .for_each(|((board, halfmove_clock), fullmove_number)| {
                 let base_fen = board.to_string();
 
                 // 0: board, 1: player, 2: castling, 3: en passant, 4: halfmove clock, 5: fullmove number
                 let base_parts: Vec<&str> = base_fen.split_whitespace().collect();
 
                 // The chess crate doesn't handle the halfmove and fullmove values so we need to do it ourselves
-                format!(
-                    "{} {} {} {} {} {}\n",
-                    base_parts[0],   // board
-                    base_parts[1],   // player
-                    base_parts[2],   // castling
-                    base_parts[3],   // en passant
-                    halfmove_clock,  // halfmove clock
-                    fullmove_number, // fullmove number
-                )
-            })
-            .collect::<String>()
-            .trim_end()
-            .to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
+                unsafe {
+                    writeln!(
+                        fens,
+                        "{} {} {} {} {} {}",
+                        base_parts[0],   // board
+                        base_parts[1],   // player
+                        base_parts[2],   // castling
+                        base_parts[3],   // en passant
+                        halfmove_clock,  // halfmove clock
+                        fullmove_number, // fullmove number
+                    )
+                    .unwrap_unchecked();
+                }
+            });
+
+        fens.trim_end().to_string() // Could ignore the extra line at the end for a little more speed (fast enough for now)
     }
 
     /// Get the FEN string representation of each board.
@@ -282,7 +291,7 @@ impl PyBoardBatch {
                 .iter()
                 .map(|board| PyBoard::_display(board, show_labels, false)) // 3rd parameter unused
                 .collect::<String>()
-        )
+        );
     }
 
     /// Get the string representation of each board.
@@ -356,7 +365,7 @@ impl PyBoardBatch {
                 .iter()
                 .map(|board| PyBoard::_display_unicode(board, show_labels, dark_mode)) // 3rd parameter unused
                 .collect::<String>()
-        )
+        );
     }
 
     /// Print the unicode string representation of each board with ANSI color codes.
@@ -390,6 +399,7 @@ impl PyBoardBatch {
     ///   a b c d e f g h
     ///
     /// ```
+    #[pyo3(signature = (show_labels = false, green_mode = false))]
     #[inline]
     fn display_color(&self, show_labels: bool, green_mode: bool) {
         print!(
@@ -398,7 +408,7 @@ impl PyBoardBatch {
                 .iter()
                 .map(|board| PyBoard::_display_color(board, show_labels, green_mode)) // 3rd parameter unused
                 .collect::<String>()
-        )
+        );
     }
 
     /// Print the string representation of each board separated by newlines.
@@ -499,6 +509,7 @@ impl PyBoardBatch {
     /// >>> batch.get_move_from_san(["e4", "d4"])
     /// [Move(e2, e4, None), Move(d2, d4, None)]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of string to Python
     #[inline]
     fn get_move_from_san(&self, sans: Vec<String>) -> PyResult<Vec<PyMove>> {
         self.boards
@@ -519,7 +530,7 @@ impl PyBoardBatch {
     /// 312
     /// ```
     #[inline]
-    fn __len__(&self) -> usize {
+    const fn __len__(&self) -> usize {
         self.boards.len()
     }
 
@@ -533,10 +544,7 @@ impl PyBoardBatch {
     #[getter]
     #[inline]
     fn get_zobrist_hashes(&self) -> Vec<u64> {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_get_zobrist_hash(board))
-            .collect()
+        self.boards.iter().map(PyBoard::_get_zobrist_hash).collect()
     }
 
     /// Get a hash of the board batch based on the sum of the Zobrist hashes.
@@ -549,10 +557,7 @@ impl PyBoardBatch {
     /// ```
     #[inline]
     fn __hash__(&self) -> u64 {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_get_zobrist_hash(board))
-            .sum()
+        self.boards.iter().map(PyBoard::_get_zobrist_hash).sum()
     }
 
     /// Check if two board batches are equal based on the Zobrist hashes of their boards.
@@ -678,7 +683,7 @@ impl PyBoardBatch {
     fn get_my_castle_rights(&self) -> Vec<PyCastleRights> {
         self.boards
             .iter()
-            .map(|board| PyBoard::_get_my_castle_rights(board))
+            .map(PyBoard::_get_my_castle_rights)
             .collect()
     }
 
@@ -693,7 +698,7 @@ impl PyBoardBatch {
     fn get_their_castle_rights(&self) -> Vec<PyCastleRights> {
         self.boards
             .iter()
-            .map(|board| PyBoard::_get_their_castle_rights(board))
+            .map(PyBoard::_get_their_castle_rights)
             .collect()
     }
 
@@ -761,6 +766,7 @@ impl PyBoardBatch {
     /// >>> batch.is_castling([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [False, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_castling(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         chess_moves
@@ -778,6 +784,7 @@ impl PyBoardBatch {
     /// >>> batch.is_castling_queenside([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [False, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_castling_queenside(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         chess_moves
@@ -795,6 +802,7 @@ impl PyBoardBatch {
     /// >>> batch.is_castling_kingside([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [False, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_castling_kingside(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         chess_moves
@@ -811,6 +819,7 @@ impl PyBoardBatch {
     /// >>> batch.get_color_on([rust_chess.Square("e1"), rust_chess.Square("e8")])
     /// [True, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PySquare to Python
     #[inline]
     fn get_color_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyColor>> {
         self.boards
@@ -828,6 +837,7 @@ impl PyBoardBatch {
     /// >>> batch.get_piece_type_on([rust_chess.Square("e1"), rust_chess.Square("e7")])
     /// [K, P]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PySquare to Python
     #[inline]
     fn get_piece_type_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyPieceType>> {
         self.boards
@@ -845,6 +855,7 @@ impl PyBoardBatch {
     /// >>> batch.get_piece_on([rust_chess.Square("e1"), rust_chess.Square("e7")])
     /// [K, p]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PySquare to Python
     #[inline]
     fn get_piece_on(&self, squares: Vec<PySquare>) -> Vec<Option<PyPiece>> {
         squares
@@ -864,10 +875,7 @@ impl PyBoardBatch {
     #[getter]
     #[inline]
     fn get_en_passant(&self) -> Vec<Option<PySquare>> {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_get_en_passant(board))
-            .collect()
+        self.boards.iter().map(PyBoard::_get_en_passant).collect()
     }
 
     /// Check if a respective move is en passant for each board.
@@ -879,6 +887,7 @@ impl PyBoardBatch {
     /// >>> batch.is_en_passant([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [False, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_en_passant(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         self.boards
@@ -897,6 +906,7 @@ impl PyBoardBatch {
     /// >>> batch.is_capture([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [False, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_capture(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         self.boards
@@ -916,6 +926,7 @@ impl PyBoardBatch {
     /// >>> batch.is_zeroing([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [True, True]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_zeroing(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         self.boards
@@ -935,6 +946,7 @@ impl PyBoardBatch {
     /// >>> batch.is_legal_move(move_list)
     /// [True, False]
     /// ```
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_legal_move(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         self.boards
@@ -954,7 +966,8 @@ impl PyBoardBatch {
     /// >>> batch.is_legal_generator_move([rust_chess.Move("e2e4"), rust_chess.Move("d2d4")])
     /// [True, True]
     /// ```
-    // FIXME: Use generator moves?
+    // FIXME: Use generator moves for docs
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn is_legal_generator_move(&self, chess_moves: Vec<PyMove>) -> Vec<bool> {
         self.boards
@@ -999,7 +1012,7 @@ impl PyBoardBatch {
             move_gens,
             halfmove_clocks,
             fullmove_numbers,
-            repetition_detection_mode: self.repetition_detection_mode.clone(),
+            repetition_detection_mode: self.repetition_detection_mode,
 
             // Don't update move history when making a null move
             board_histories: self.board_histories.clone(),
@@ -1038,13 +1051,18 @@ impl PyBoardBatch {
     // TODO: is_generator_move
     // TODO: Optimize
     #[pyo3(signature = (chess_moves, check_legality = true))]
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn make_move(&mut self, chess_moves: Vec<PyMove>, check_legality: bool) -> PyResult<()> {
         let count = self.boards.len();
 
         for i in 0..count {
             // Check if draw by fivefold
-            if PyBoard::_is_n_repetition(&self.board_histories[i], self.halfmove_clocks[i], 5) {
+            if PyBoard::_is_n_repetition(
+                self.board_histories[i].as_ref(),
+                self.halfmove_clocks[i],
+                5,
+            ) {
                 return Err(PyValueError::new_err(
                     "Game over due to fivefold repetition",
                 ));
@@ -1059,13 +1077,13 @@ impl PyBoardBatch {
             let temp_board: chess::Board = self.boards[i].make_move_new(chess_moves[i].0);
 
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-            let mut is_zeroing = false;
-            if PyBoard::_is_zeroing(&self.boards[i], chess_moves[i]) {
+            let is_zeroing = if PyBoard::_is_zeroing(&self.boards[i], chess_moves[i]) {
                 self.halfmove_clocks[i] = 0;
-                is_zeroing = true;
+                true
             } else {
                 self.halfmove_clocks[i] += 1; // Add one if not zeroing
-            }
+                false
+            };
 
             // Increment fullmove number if black moves
             self.fullmove_numbers[i] += self.boards[i].side_to_move().to_index() as u8; // White is 0, black is 1
@@ -1074,7 +1092,7 @@ impl PyBoardBatch {
             if let Some(history) = &mut self.board_histories[i] {
                 if is_zeroing {
                     // Don't need previous history anymore since it is a zeroing move (irreversible)
-                    history.clear()
+                    history.clear();
                 }
                 history.push(temp_board.get_hash());
             }
@@ -1119,6 +1137,7 @@ impl PyBoardBatch {
     ///
     /// ```
     #[pyo3(signature = (chess_moves, check_legality = true))]
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn make_move_new(&self, chess_moves: Vec<PyMove>, check_legality: bool) -> PyResult<Self> {
         let count = self.boards.len();
@@ -1131,7 +1150,11 @@ impl PyBoardBatch {
 
         for i in 0..count {
             // Check if draw by fivefold
-            if PyBoard::_is_n_repetition(&self.board_histories[i], self.halfmove_clocks[i], 5) {
+            if PyBoard::_is_n_repetition(
+                self.board_histories[i].as_ref(),
+                self.halfmove_clocks[i],
+                5,
+            ) {
                 return Err(PyValueError::new_err(
                     "Game over due to fivefold repetition",
                 ));
@@ -1146,13 +1169,13 @@ impl PyBoardBatch {
             new_boards.push(self.boards[i].make_move_new(chess_moves[i].0));
 
             // Reset the halfmove clock if the move zeroes (is a capture or pawn move and therefore "zeroes" the halfmove clock)
-            let mut is_zeroing = false;
-            if PyBoard::_is_zeroing(&self.boards[i], chess_moves[i]) {
+            let is_zeroing = if PyBoard::_is_zeroing(&self.boards[i], chess_moves[i]) {
                 halfmove_clocks.push(0);
-                is_zeroing = true;
+                true
             } else {
                 halfmove_clocks.push(self.halfmove_clocks[i] + 1); // Add one if not zeroing
-            }
+                false
+            };
 
             // Increment fullmove number if black moves
             fullmove_numbers
@@ -1187,7 +1210,7 @@ impl PyBoardBatch {
     fn get_pinned_bitboard(&self) -> Vec<PyBitboard> {
         self.boards
             .iter()
-            .map(|board| PyBoard::_get_pinned_bitboard(board))
+            .map(PyBoard::_get_pinned_bitboard)
             .collect()
     }
 
@@ -1197,7 +1220,7 @@ impl PyBoardBatch {
     fn get_checkers_bitboard(&self) -> Vec<PyBitboard> {
         self.boards
             .iter()
-            .map(|board| PyBoard::_get_checkers_bitboard(board))
+            .map(PyBoard::_get_checkers_bitboard)
             .collect()
     }
 
@@ -1235,10 +1258,7 @@ impl PyBoardBatch {
     ///
     #[inline]
     fn get_all_bitboard(&self) -> Vec<PyBitboard> {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_get_all_bitboard(board))
-            .collect()
+        self.boards.iter().map(PyBoard::_get_all_bitboard).collect()
     }
 
     /// Get the number of moves remaining in each move generator.
@@ -1288,6 +1308,7 @@ impl PyBoardBatch {
     /// Updates the generator mask to exclude the move.
     /// Useful if you already have a certain move and don't need to generate it again.
     ///
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyMove to Python
     #[inline]
     fn remove_generator_move(&mut self, chess_moves: Vec<PyMove>) {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -1298,12 +1319,13 @@ impl PyBoardBatch {
             .zip(self.move_gens.iter())
             .zip(chess_moves.iter())
             .for_each(|((board, move_gen), chess_move)| {
-                PyBoard::_remove_generator_move(py, board, move_gen, *chess_move)
-            })
+                PyBoard::_remove_generator_move(py, board, move_gen, *chess_move);
+            });
     }
 
     /// Retains only moves whose destination squares are in the given mask respectively.
     ///
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyBitboard to Python
     #[inline]
     fn retain_generator_mask(&mut self, masks: Vec<PyBitboard>) {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -1314,8 +1336,8 @@ impl PyBoardBatch {
             .zip(self.move_gens.iter())
             .zip(masks.iter())
             .for_each(|((board, move_gen), mask)| {
-                PyBoard::_retain_generator_mask(py, board, move_gen, *mask)
-            })
+                PyBoard::_retain_generator_mask(py, board, move_gen, *mask);
+            });
     }
 
     /// Excludes moves whose destination squares are in the given mask respectively.
@@ -1326,6 +1348,7 @@ impl PyBoardBatch {
     ///
     /// Removed moves stay removed even if you change the mask.
     ///
+    #[allow(clippy::needless_pass_by_value)] // Can't pass reference of PyBitboard to Python
     #[inline]
     fn exclude_generator_mask(&mut self, masks: Vec<PyBitboard>) {
         // We can assume the GIL is acquired, since this function is only called from Python
@@ -1336,8 +1359,8 @@ impl PyBoardBatch {
             .zip(self.move_gens.iter())
             .zip(masks.iter())
             .for_each(|((board, move_gen), mask)| {
-                PyBoard::_exclude_generator_mask(py, board, move_gen, *mask)
-            })
+                PyBoard::_exclude_generator_mask(py, board, move_gen, *mask);
+            });
     }
 
     /// Get the next remaining move in each generator.
@@ -1487,7 +1510,7 @@ impl PyBoardBatch {
     fn is_insufficient_material(&self) -> Vec<bool> {
         self.boards
             .iter()
-            .map(|board| PyBoard::_is_insufficient_material(board))
+            .map(PyBoard::_is_insufficient_material)
             .collect()
     }
 
@@ -1501,7 +1524,7 @@ impl PyBoardBatch {
             .iter()
             .zip(self.halfmove_clocks.iter())
             .map(|(board_history, halfmove_clock)| {
-                PyBoard::_is_n_repetition(board_history, *halfmove_clock, n)
+                PyBoard::_is_n_repetition(board_history.as_ref(), *halfmove_clock, n)
             })
             .collect()
     }
@@ -1526,30 +1549,21 @@ impl PyBoardBatch {
     ///
     #[inline]
     fn is_check(&self) -> Vec<bool> {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_is_check(board))
-            .collect()
+        self.boards.iter().map(PyBoard::_is_check).collect()
     }
 
     /// Checks if the side to move is in stalemate for each board.
     ///
     #[inline]
     fn is_stalemate(&self) -> Vec<bool> {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_is_stalemate(board))
-            .collect()
+        self.boards.iter().map(PyBoard::_is_stalemate).collect()
     }
 
     /// Checks if the side to move is in checkmate for each board.
     ///
     #[inline]
     fn is_checkmate(&self) -> Vec<bool> {
-        self.boards
-            .iter()
-            .map(|board| PyBoard::_is_checkmate(board))
-            .collect()
+        self.boards.iter().map(PyBoard::_is_checkmate).collect()
     }
 
     /// Get the status of each board (ongoing, draw, or game-ending).
@@ -1561,7 +1575,7 @@ impl PyBoardBatch {
             .zip(self.board_histories.iter())
             .zip(self.halfmove_clocks.iter())
             .map(|((board, board_history), halfmove_clock)| {
-                PyBoard::_get_status(board, board_history, *halfmove_clock)
+                PyBoard::_get_status(board, board_history.as_ref(), *halfmove_clock)
             })
             .collect()
     }

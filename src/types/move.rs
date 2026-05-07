@@ -91,6 +91,7 @@ impl PyMove {
     /// Move(e2, e4, None)
     /// ```
     #[staticmethod]
+    #[allow(clippy::missing_errors_doc)]
     #[inline]
     fn from_uci(uci: &str) -> PyResult<Self> {
         // Parse the move using the chess crate

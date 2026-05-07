@@ -37,6 +37,7 @@ pub const BB_RANKS: [PyBitboard; 8] = [
 ];
 
 /// Bitboard class.
+///
 /// Represents a 64-bit unsigned integer.
 /// Each bit represents a square on the chessboard.
 /// The least-significant bit represents a1, and the most-significant bit represents h8.

@@ -247,6 +247,7 @@ WHITE_ROOK: Piece
 class Bitboard:
     r"""
     Bitboard class.
+    
     Represents a 64-bit unsigned integer.
     Each bit represents a square on the chessboard.
     The least-significant bit represents a1, and the most-significant bit represents h8.
@@ -1052,11 +1053,11 @@ class Board:
         
         ```
         """
-    def display_color(self, show_labels: builtins.bool = False, green_mode: builtins.bool = False) -> None:
+    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> None:
         r"""
         Print the unicode string representation of the board with ANSI color codes.
         The board is a bit tiny, but it looks pretty good.
-        Labels are hidden default.
+        Labels are shown by default (different than the other display functions).
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
@@ -1987,7 +1988,7 @@ class Board:
 @typing.final
 class BoardBatch:
     r"""
-    BoardBatch class.
+    Board batch class.
     Represents a batch of chess boards.
     Uses the same method names as `Board`, however they operate on a batch now.
     """
@@ -2176,11 +2177,11 @@ class BoardBatch:
         
         ```
         """
-    def display_color(self, show_labels: builtins.bool = True, green_mode: builtins.bool = False) -> None:
+    def display_color(self, show_labels: builtins.bool = False, green_mode: builtins.bool = False) -> None:
         r"""
         Print the unicode string representation of each board with ANSI color codes.
         The boards are a bit tiny, but it looks pretty good.
-        Labels are shown by default (different than the other display functions).
+        Labels are hidden by default.
         
         The default board color is tan/brown.
         Enable the `green_mode` parameter to change the color to olive/sand.
@@ -3083,6 +3084,7 @@ class MoveGenerator:
 class Piece:
     r"""
     Piece class.
+    
     Represents a chess piece with a type and color.
     Uses the `PieceType` and `Color` classes.
     Supports comparison and equality.
@@ -3576,6 +3578,7 @@ class BoardStatus(enum.Enum):
     r"""
     Board status enum class.
     Represents the status of a chess board.
+    
     The status can be one of the following:
         Ongoing, seventy-five moves, five-fold repetition, insufficient material, stalemate, or checkmate.
     Supports comparison and equality.

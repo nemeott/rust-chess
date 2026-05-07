@@ -190,6 +190,7 @@ impl PyPieceType {
 }
 
 /// Piece class.
+///
 /// Represents a chess piece with a type and color.
 /// Uses the `PieceType` and `Color` classes.
 /// Supports comparison and equality.
